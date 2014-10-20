@@ -24,57 +24,46 @@ val _ = Hol_datatype `exp = N of int
                         | Seq of exp => exp
                         | While of exp => exp`;
 
-val (ss_rules, ss_induction, ss_ecases) = Hol_reln `
-    (* Plus *)
-    (!n1 n2 s.small_step (Plus (N n1) (N n2), s) (N (n1 + n2), s)) /\
-    (!e1 e1' e2 s s'.
-          small_step (e1, s) (e1', s')
-      ==> small_step (Plus e1 e2, s) (Plus e1' e2, s')) /\
-    (!n e2 e2' s s'.
-          small_step (e2, s) (e2', s')
-      ==> small_step (Plus (N n) e2, s) (Plus (N n) e2', s')) /\
 
-    (* Geq *)
-    (!n1 n2 s.small_step (Geq (N n1) (N n2), s) (B (n1 >= n2), s)) /\
-    (!e1 e1' e2 s s'.
-          small_step (e1, s) (e1', s')
-      ==> small_step (Geq e1 e2, s) (Geq e1' e2, s')) /\
-    (!n e2 e2' s s'.
-          small_step (e2, s) (e2', s')
-      ==> small_step (Geq (N n) e2, s) (Geq (N n) e2', s)) /\
+val small_step_def = Define `
+(* Plus *)
+(small_step (Plus (N n1) (N n2), s) = (N (n1 + n2), s)) /\
+(small_step (Plus (N n1) e2, s) = (let (e2', s') = small_step (e2, s) in (Plus (N n1) e2', s'))) /\
+(small_step (Plus e1 e2, s) = (let (e1', s') = small_step (e1, s) in (Plus e1' e2, s'))) /\
+(* Geq *)
+(small_step (Geq (N n1) (N n2), s) = (B (n1 >= n2), s)) /\
+(small_step (Geq (N n1) e2, s) = (let (e2', s') = small_step (e2, s) in (Geq (N n1) e2', s'))) /\
+(small_step (Geq e1 e2, s) = (let (e1', s') = small_step (e1, s) in (Geq e1' e2, s'))) /\
+(* Deref (Todo improve) *)
+(small_step (Deref(l), s) = (N (s ' l), s)) /\
+(* Assign (Todo improve) *)
+(small_step (Assign l (N n), s) = (Skip, s |+ (l, n))) /\
+(small_step (Assign l e, s) = (let (e', s') = small_step (e, s) in (Assign l e', s'))) /\
+(* Seq *)
+(small_step (Seq Skip e2, s) = (e2, s)) /\
+(small_step (Seq e1 e2, s) = (let (e1', s') = small_step (e1, s) in (Seq e1' e2, s'))) /\
+(* If *)
+(small_step (If (B T) e2 e3, s) = (e2, s)) /\
+(small_step (If (B F) e2 e3, s) = (e3, s)) /\
+(small_step (If e1 e2 e3, s) = (let (e1', s') = small_step (e1, s) in (If e1' e2 e3, s'))) /\
+(* While *)
+(small_step (While e1 e2, s) = (If e1 (Seq e2 (While e1 e2)) Skip, s))`;
 
-    (* Deref *)
-    (!l s.
-          l ∈ FDOM s
-      ==> small_step (Deref(l), s) (N (s ' l), s)) /\
-
-    (* Assign *)
-    (!l n s.
-          l ∈ FDOM s
-      ==> small_step (Assign l (N n), s) (Skip, s |+ (l, n))) /\
-    (!l e e' s s'.
-          small_step (e, s) (e', s')
-      ==> small_step (Assign l e, s) (Assign l e', s')) /\
-
-    (* Seq *)
-    (!e2 s.small_step (Seq Skip e2, s) (e2, s)) /\
-    (!e1 e1' e2 s s'.
-          small_step (e1, s) (e1', s')
-      ==> small_step (Seq e1 e2, s) (Seq e1' e2, s')) /\
-
-    (* If *)
-    (!e2 e3 s. small_step (If (B T) e2 e3, s) (e2, s)) /\
-    (!e2 e3 s. small_step (If (B F) e2 e3, s) (e3, s)) /\
-    (!e1 e1' e2 e3 s s'.
-          small_step (e1, s) (e1', s')
-      ==> small_step (If e1 e2 e3, s) (If e1' e2 e3, s')) /\
-
-    (* While *)
-    (!e1 e2 s. small_step (While e1 e2, s) (If e1 (Seq e2 (While e1 e2)) Skip, s))`;
-
-val sinduction = derive_strong_induction(ss_rules, ss_induction);
-
-val ss_rulel = CONJUNCTS ss_rules;
+(* Determinacy *)
+val DETERMINACY_THM = store_thm("DETERMINACY_THM",
+``!e s e1 s1 e2 s2.((small_step (e, s) = (e1, s1)) /\ (small_step (e, s) = (e2, s2))) ==> ((e1, s1) = (e2, s2))``,
+REPEAT STRIP_TAC THEN
+Induct_on `e` THENL[
+FULL_SIMP_TAC std_ss [small_step_def],
+FULL_SIMP_TAC std_ss [small_step_def],
+FULL_SIMP_TAC std_ss [small_step_def],
+FULL_SIMP_TAC std_ss [small_step_def],
+FULL_SIMP_TAC std_ss [small_step_def],
+FULL_SIMP_TAC std_ss [small_step_def],
+FULL_SIMP_TAC std_ss [small_step_def],
+FULL_SIMP_TAC std_ss [small_step_def],
+FULL_SIMP_TAC std_ss [small_step_def],
+FULL_SIMP_TAC std_ss [small_step_def]]);
 
 val _ = Hol_datatype `T = intL1 | boolL1 | unitL1`;
 
@@ -105,7 +94,5 @@ val (star_rules, star_induction, star_ecases) = Hol_reln `
 val STAR_TRANS_THM = store_thm("STAR_TRANS_THM",
 ``!r x y z. star r x y ==> star r y z ==> star r x z``,
 METIS_TAC [star_ecases]);
-
-val evals_def = Define `evals x y = star small_step x y`;
 
 val _ = export_theory ();
