@@ -108,4 +108,18 @@ METIS_TAC [star_ecases]);
 
 val evals_def = Define `evals x y = star small_step x y`;
 
+val STUCK_ON_VALUE_THM = store_thm("STUCK_ON_VALUE_THM",
+    ``!e s c.value e ==> ~small_step (e, s) c``,
+        REPEAT STRIP_TAC THEN Cases_on `e` THENL [
+            FULL_SIMP_TAC (srw_ss ()) [Once ss_ecases],
+            FULL_SIMP_TAC (srw_ss ()) [Once ss_ecases],
+            `~value (Plus e' e0)` by EVAL_TAC,
+            `~value (Geq e' e0)` by EVAL_TAC,
+            `~value (If e' e0 e1)` by EVAL_TAC,
+            `~value (Assign c' e')` by EVAL_TAC,
+            `~value (Deref c')` by EVAL_TAC,
+            FULL_SIMP_TAC (srw_ss ()) [Once ss_ecases],
+            `~value (Seq e' e0)` by EVAL_TAC,
+            `~value (While e' e0)` by EVAL_TAC]);
+
 val _ = export_theory ();
