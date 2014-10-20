@@ -123,14 +123,14 @@ val STUCK_ON_VALUE_THM = store_thm("STUCK_ON_VALUE_THM",
             `~value (While e' e0)` by EVAL_TAC]);
 
 val PLUS_THM = store_thm("PLUS_THM",
-``!n1 n2 n s s'.small_step (Plus (N n1) (N n2), s) ((N n), s') ==> ((n = n1 + n2) /\ (s=s'))``,
-REPEAT STRIP_TAC THEN
-FULL_SIMP_TAC std_ss [Once ss_ecases]
-THENL (List.tabulate (22, (fn x => FULL_SIMP_TAC (srw_ss ()) []))));
+    ``!n1 n2 n s s'.small_step (Plus (N n1) (N n2), s) ((N n), s') ==> ((n = n1 + n2) /\ (s=s'))``,
+    REPEAT STRIP_TAC THEN
+    FULL_SIMP_TAC std_ss [Once ss_ecases]
+    THENL (List.tabulate (22, (fn x => FULL_SIMP_TAC (srw_ss ()) []))));
 
 val PLUS2_THM = store_thm("PLUS2_THM",
-``!n1 n2 e s s'. small_step (Plus (N n1) (N n2), s) (e, s') ==> ?n.(e = (N n))``,
-RW_TAC std_ss [Once ss_ecases] THENL
-[`value (N n1)` by EVAL_TAC THEN METIS_TAC [STUCK_ON_VALUE_THM],
-`value (N n2)` by EVAL_TAC THEN METIS_TAC [STUCK_ON_VALUE_THM]]);
+    ``!n1 n2 e s s'. small_step (Plus (N n1) (N n2), s) (e, s') ==> ?n.(e = (N n))``,
+    RW_TAC std_ss [Once ss_ecases] THENL
+    [`value (N n1)` by EVAL_TAC THEN METIS_TAC [STUCK_ON_VALUE_THM],
+    `value (N n2)` by EVAL_TAC THEN METIS_TAC [STUCK_ON_VALUE_THM]]);
 val _ = export_theory ();
