@@ -198,4 +198,13 @@ val OP_PLUS_RULE_THM = store_thm("OP_PLUS_RULE_THM",
                    (`value (N n1)` by EVAL_TAC) THEN METIS_TAC [STUCK_ON_VALUE_THM],
                    (`value (N n2)` by EVAL_TAC) THEN METIS_TAC [STUCK_ON_VALUE_THM]]]@
                (repeat 7 (FULL_SIMP_TAC (srw_ss()) [Once ss_ecases])));
+val PLUS_STEP_DET_THM = store_thm("PLUS_STEP_DET_THM",
+``!e1 e2 e1' e2' s s'.small_step (Plus e1 e2, s) (Plus e1' e2', s') ==> ((e1 = e1') \/ (e2 = e2'))``,
+REPEAT STRIP_TAC THEN Cases_on `e1` THENL repeat 10 (FULL_SIMP_TAC (srw_ss ()) [Once ss_ecases]));
+
+val PLUS_STEP_LEFT_THM = store_thm("PLUS_STEP_LEFT_THM",
+``!e1 e2 s e1' e2' s'.(!n.e1 <> (N n)) ==> small_step (Plus e1 e2, s) (Plus e1' e2', s') ==> ((e2 = e2') /\ small_step (e1, s) (e1', s'))``,
+REPEAT STRIP_TAC THENL [
+FULL_SIMP_TAC (srw_ss ()) [Once ss_ecases] THEN METIS_TAC [],
+FULL_SIMP_TAC (srw_ss ()) [Once ss_ecases] THEN METIS_TAC []]);
 val _ = export_theory ();
