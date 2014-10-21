@@ -132,5 +132,5 @@ val PLUS2_THM = store_thm("PLUS2_THM",
     ``!n1 n2 e s s'. small_step (Plus (N n1) (N n2), s) (e, s') ==> ?n.(e = (N n))``,
     RW_TAC std_ss [Once ss_ecases] THENL
     [`value (N n1)` by EVAL_TAC THEN METIS_TAC [STUCK_ON_VALUE_THM],
-    `value (N n2)` by EVAL_TAC THEN METIS_TAC [STUCK_ON_VALUE_THM]]);
+     `value (N n2)` by EVAL_TAC THEN METIS_TAC [STUCK_ON_VALUE_THM]]);
 val _ = export_theory ();
