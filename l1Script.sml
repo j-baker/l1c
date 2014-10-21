@@ -178,4 +178,24 @@ RW_TAC (srw_ss ()) [EQ_IMP_THM, Once ss_ecases]);
 val PLUS_E2_IFF_THM = store_thm("PLUS_E2_IFF_THM",
 ``!e1 e1' s s'.(?n.small_step (Plus (N n) e1, s) (Plus (N n) e1', s')) <=> small_step (e1, s) (e1', s')``,
 RW_TAC (srw_ss ()) [EQ_IMP_THM, Once ss_ecases] THENL [`value (N n)` by EVAL_TAC THEN METIS_TAC [STUCK_ON_VALUE_THM], METIS_TAC ss_rulel]);
+
+fun repeat n x = List.tabulate (n, fn n => x);
+
+val OP_PLUS_RULE_THM = store_thm("OP_PLUS_RULE_THM",
+    ``!n1 n2 s p3.(small_step (Plus (N n1) (N n2), s) p3) ==> ((N (n1 + n2),s) = p3)``,
+    (REPEAT STRIP_TAC)
+        THEN (Cases_on `p3`)
+        THEN ASM_SIMP_TAC std_ss []
+        THEN REPEAT STRIP_TAC
+        THEN (Cases_on `q`)
+        THENL [METIS_TAC [PLUS_THM], 
+               FULL_SIMP_TAC (srw_ss()) [Once ss_ecases],
+               FULL_SIMP_TAC (srw_ss()) [Once ss_ecases] THENL [
+                   (`value (N n1)` by EVAL_TAC) THEN METIS_TAC [STUCK_ON_VALUE_THM],
+                   (`value (N n2)` by EVAL_TAC) THEN METIS_TAC [STUCK_ON_VALUE_THM]]]
+               @(repeat 9 (FULL_SIMP_TAC (srw_ss()) [Once ss_ecases]))@
+               [FULL_SIMP_TAC (srw_ss()) [Once ss_ecases] THENL [
+                   (`value (N n1)` by EVAL_TAC) THEN METIS_TAC [STUCK_ON_VALUE_THM],
+                   (`value (N n2)` by EVAL_TAC) THEN METIS_TAC [STUCK_ON_VALUE_THM]]]@
+               (repeat 7 (FULL_SIMP_TAC (srw_ss()) [Once ss_ecases])));
 val _ = export_theory ();
