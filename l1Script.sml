@@ -242,16 +242,18 @@ val OP_PLUS_RULE1_THM = store_thm("OP_PLUS_RULE1_THM",
 
 val VALUE_STEP_THM = store_thm("VALUE_STEP_THM",
 ``!e1 s e1' r e2 e0. ~small_step (e1, s) (e1', r) ==> small_step (Plus e1 e2, s) (Plus e1' e0, r) ==> value e1``,
-REPEAT STRIP_TAC THEN
-Cases_on `e1` THENL
-(repeat 2 EVAL_TAC) @
-(repeat 5 (FULL_SIMP_TAC (srw_ss ()) [Once ss_ecases])) @
-[EVAL_TAC] @
-(repeat 2 (FULL_SIMP_TAC (srw_ss ()) [Once ss_ecases])));
+    REPEAT STRIP_TAC THEN
+        Cases_on `e1` THENL
+            (repeat 2 EVAL_TAC) @
+            (repeat 5 (FULL_SIMP_TAC (srw_ss ()) [Once ss_ecases])) @
+            [EVAL_TAC] @
+            (repeat 2 (FULL_SIMP_TAC (srw_ss ()) [Once ss_ecases])));
+
 val PLUS_INT_UNCHANGED_THM = store_thm("PLUS_INT_UNCHANGED_THM",
 ``!n e2 s e1' e2' s'.small_step(Plus (N n) e2, s) (Plus e1' e2', s') ==> (e1' = N n)``,
-REPEAT STRIP_TAC THEN
-Cases_on `e1'` THENL repeat 10
-(FULL_SIMP_TAC (srw_ss ()) [Once ss_ecases] THEN `value (N n)` by EVAL_TAC THEN METIS_TAC [STUCK_ON_VALUE_THM]));
+    REPEAT STRIP_TAC THEN
+        Cases_on `e1'` THENL
+	    repeat 10
+            (FULL_SIMP_TAC (srw_ss ()) [Once ss_ecases] THEN `value (N n)` by EVAL_TAC THEN METIS_TAC [STUCK_ON_VALUE_THM]));
 
 val _ = export_theory ();
