@@ -256,4 +256,40 @@ val PLUS_INT_UNCHANGED_THM = store_thm("PLUS_INT_UNCHANGED_THM",
 	    repeat 10
             (FULL_SIMP_TAC (srw_ss ()) [Once ss_ecases] THEN `value (N n)` by EVAL_TAC THEN METIS_TAC [STUCK_ON_VALUE_THM]));
 
+val OP_PLUS_RULE2_THM = store_thm("OP_PLUS_RULE2_THM",
+``!n e2 s p3 e2' s'.((small_step (Plus (N n) e2, s) p3) /\ (!p3. small_step (e2, s) p3 ==> ((e2', s') = p3)) /\ (small_step (e2, s) (e2', s'))) ==> ((Plus (N n) e2', s') = p3)``,
+    REPEAT STRIP_TAC THEN
+        Cases_on `p3` THEN
+        Cases_on `q` THENL [
+            `?n'.e2 = (N n')` by METIS_TAC [PLUS4_THM] THEN
+                RW_TAC (std_ss) [] THEN
+                `value (N n')` by EVAL_TAC THEN METIS_TAC [STUCK_ON_VALUE_THM],
+            FULL_SIMP_TAC (srw_ss ()) [Once ss_ecases],
+            RW_TAC (srw_ss ()) [] THENL [
+                METIS_TAC [PLUS_INT_UNCHANGED_THM],
+                `((!n'.e2 <> N n') ==> (?e''.small_step (e2, s) (e'', r)))` by METIS_TAC [PLUS7_THM] THEN
+                    `!n'. e2 <> N n'` by ALL_TAC THENL [
+                        STRIP_TAC THEN
+                            CCONTR_TAC THEN
+                            `e2 = N n'` by METIS_TAC [] THEN
+                            RW_TAC std_ss [] THEN
+                            `value (N n')` by EVAL_TAC THEN METIS_TAC [STUCK_ON_VALUE_THM],
+                    `?e''.small_step (e2, s) (e'', r)` by METIS_TAC [] THEN
+                        `(e2', s') = (e'', r)` by METIS_TAC [] THEN
+                        RW_TAC (srw_ss ()) [] THEN
+                        `e = (N n)` by METIS_TAC [PLUS_INT_UNCHANGED_THM] THEN
+                        RW_TAC std_ss [] THEN
+                        `small_step (e2, s) (e0, r)` by METIS_TAC [PLUS_E2_IFF_THM] THEN
+                        `(e'', r) = (e0, r)` by METIS_TAC [] THEN
+                        RW_TAC std_ss []],
+                `((!n'.e2 <> N n') ==> (?e''.small_step (e2, s) (e'', r)))` by METIS_TAC [PLUS7_THM] THEN
+                    `!n'. e2 <> N n'` by ALL_TAC THENL [
+                        STRIP_TAC THEN
+                            CCONTR_TAC THEN
+                            `e2 = N n'` by METIS_TAC [] THEN
+                            RW_TAC std_ss [] THEN
+                            `value (N n')` by EVAL_TAC THEN METIS_TAC [STUCK_ON_VALUE_THM],
+                        `?e''.small_step (e2, s) (e'', r)` by METIS_TAC [] THEN
+                            `(e2', s') = (e'', r)` by METIS_TAC [] THEN
+                            RW_TAC std_ss []]]] @ (repeat 7 (FULL_SIMP_TAC (srw_ss ()) [Once ss_ecases])));
 val _ = export_theory ();
