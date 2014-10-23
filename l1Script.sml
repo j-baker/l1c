@@ -307,4 +307,10 @@ val OP_GEQ_RULE1_THM = store_thm("OP_GEQ_RULE1_THM",
         `(e1', s') = (e1'', s'')` by METIS_TAC [] THEN RW_TAC (srw_ss ()) [Once ss_ecases],
         `value (N n)` by EVAL_TAC THEN METIS_TAC [STUCK_ON_VALUE_THM]]);
 
+val OP_GEQ_RULE2_THM = store_thm("OP_GEQ_RULE2_THM",
+``!n e2 s p3 e2' s'.((small_step (Geq (N n) e2, s) p3) /\ (!p3. small_step (e2, s) p3 ==> ((e2', s') = p3)) /\ (small_step (e2, s) (e2', s'))) ==> ((Geq (N n) e2', s) = p3)``,
+RW_TAC (srw_ss ()) [Once ss_ecases] THENL [
+`value (N n2)` by EVAL_TAC THEN METIS_TAC [STUCK_ON_VALUE_THM],
+`value (N n)` by EVAL_TAC THEN METIS_TAC [STUCK_ON_VALUE_THM],
+(`(e2', s') = (e2'', s'')` by METIS_TAC []) THEN RW_TAC std_ss []]);
 val _ = export_theory ();
