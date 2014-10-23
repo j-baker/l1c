@@ -296,4 +296,15 @@ val OP_GEQ_RULE_THM = store_thm("OP_GEQ_RULE_THM",
                 `value (N n2)` by EVAL_TAC THEN METIS_TAC [STUCK_ON_VALUE_THM] THEN
             FULL_SIMP_TAC (srw_ss ()) [Once ss_ecases]);
 
+
+val GEQ_VALUE_THM = store_thm("GEQ_VALUE_THM",
+``!e1 e2 s b r.small_step (Geq e1 e2, s) (B b, r) ==> (?n1 n2.(e1 = N n1) /\ (e2 = N n2))``, RW_TAC std_ss [Once ss_ecases]);
+
+val OP_GEQ_RULE1_THM = store_thm("OP_GEQ_RULE1_THM",
+    ``!e1 e2 s p3 e1' s'.((small_step (Geq e1 e2, s) p3) /\ (!p3.small_step (e1, s) p3 ==> ((e1', s') = p3)) /\ (small_step (e1, s) (e1', s'))) ==> ((Geq e1' e2, s') = p3)``,
+    RW_TAC (srw_ss ()) [Once ss_ecases] THENL [
+        `value (N n1)` by EVAL_TAC THEN METIS_TAC [STUCK_ON_VALUE_THM],
+        `(e1', s') = (e1'', s'')` by METIS_TAC [] THEN RW_TAC (srw_ss ()) [Once ss_ecases],
+        `value (N n)` by EVAL_TAC THEN METIS_TAC [STUCK_ON_VALUE_THM]]);
+
 val _ = export_theory ();
