@@ -318,4 +318,8 @@ val OP_DEREF_THM = store_thm("OP_DEREF_THM",
     ``!l s p3.((l ∈ FDOM s) /\ (small_step (Deref l,s) p3)) ==> ((N (s ' l),s) = p3)``,
     RW_TAC (srw_ss ()) [Once ss_ecases]);
 
+val OP_ASSIGN_RULE1_THM = store_thm("OP_ASSIGN_RULE1_THM",
+``!l s n p3.((l ∈ FDOM s) /\ (small_step (Assign l (N n),s) p3)) ==> ((Skip,s |+ (l,n)) = p3)``,
+    RW_TAC (srw_ss ()) [Once ss_ecases] THEN
+    `value (N n)` by EVAL_TAC THEN METIS_TAC [STUCK_ON_VALUE_THM]);
 val _ = export_theory ();
