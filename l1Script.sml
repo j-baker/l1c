@@ -313,4 +313,9 @@ RW_TAC (srw_ss ()) [Once ss_ecases] THENL [
 `value (N n2)` by EVAL_TAC THEN METIS_TAC [STUCK_ON_VALUE_THM],
 `value (N n)` by EVAL_TAC THEN METIS_TAC [STUCK_ON_VALUE_THM],
 (`(e2', s') = (e2'', s'')` by METIS_TAC []) THEN RW_TAC std_ss []]);
+
+val OP_DEREF_THM = store_thm("OP_DEREF_THM",
+    ``!l s p3.((l ∈ FDOM s) /\ (small_step (Deref l,s) p3)) ==> ((N (s ' l),s) = p3)``,
+    RW_TAC (srw_ss ()) [Once ss_ecases]);
+
 val _ = export_theory ();
