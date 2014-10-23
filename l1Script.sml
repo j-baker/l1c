@@ -328,4 +328,41 @@ val OP_ASSIGN_RULE2_THM = store_thm("OP_ASSIGN_RULE2_THM",
     RW_TAC (srw_ss ()) [Once ss_ecases] THENL [
         `value (N n)` by EVAL_TAC THEN METIS_TAC [STUCK_ON_VALUE_THM],
         `(e', s') = (e'', s'')` by METIS_TAC [] THEN RW_TAC std_ss []]);
+
+val OP_SEQ_RULE1_THM = store_thm("OP_SEQ_RULE1_THM",
+``!e2 s p3.(small_step (Seq Skip e2,s) p3) ==> ((e2,s) = p3)``,
+RW_TAC (srw_ss ()) [Once ss_ecases] THEN
+`value Skip` by EVAL_TAC THEN METIS_TAC [STUCK_ON_VALUE_THM]);
+
+val SEQ_SKIP_THM = store_thm("SEQ_SKIP_THM",
+    ``!e1 e2 s r.(e1 <> Skip) ==> ~small_step (Seq e1 e2, s) (Skip, r)``,
+    RW_TAC (srw_ss ()) [Once ss_ecases]);
+
+val SEQ_CASE_THM = store_thm("SEQ_CASE_THM",
+    ``!e1 e2 s e e0 r e1' s'.((small_step (Seq e1 e2,s) (Seq e e0,r)) /\ (!p3. small_step (e1,s) p3 ⇒ ((e1',s') = p3)) /\ (small_step (e1,s) (e1',s'))) ==> ((Seq e1' e2,s') = (Seq e e0,r))``,
+    RW_TAC (srw_ss ()) [Once ss_ecases] THENL [
+        FULL_SIMP_TAC (srw_ss ()) [Once ss_ecases],
+        FULL_SIMP_TAC (srw_ss ()) [Once ss_ecases],
+        FULL_SIMP_TAC (srw_ss ()) [Once ss_ecases],
+        `(e1', s') = (e, r)` by METIS_TAC [] THEN RW_TAC std_ss [],
+        `(e1', s') = (e, r)` by METIS_TAC [] THEN RW_TAC std_ss []]);
+
+val OP_SEQ_RULE2_THM = store_thm("OP_SEQ_RULE2_THM",
+    ``!e1 s e1' s' e2 p3.((small_step (e1, s) (e1', s')) /\ (!p3. small_step (e1,s) p3 ⇒ ((e1',s') = p3)) /\ (small_step (Seq e1 e2, s) p3)) ==> ((Seq e1' e2,s') = p3)``,
+    REPEAT STRIP_TAC THEN
+    Cases_on `p3` THEN
+    Cases_on `q` THENL [
+        FULL_SIMP_TAC (srw_ss ()) [Once ss_ecases],
+        FULL_SIMP_TAC (srw_ss ()) [Once ss_ecases],
+        FULL_SIMP_TAC (srw_ss ()) [Once ss_ecases],
+        FULL_SIMP_TAC (srw_ss ()) [Once ss_ecases],
+        FULL_SIMP_TAC (srw_ss ()) [Once ss_ecases],
+        FULL_SIMP_TAC (srw_ss ()) [Once ss_ecases],
+        FULL_SIMP_TAC (srw_ss ()) [Once ss_ecases],
+        `value Skip` by EVAL_TAC THEN
+            `e1 <> Skip` by METIS_TAC [STUCK_ON_VALUE_THM] THEN
+            METIS_TAC [SEQ_SKIP_THM],
+        METIS_TAC [SEQ_CASE_THM],
+        FULL_SIMP_TAC (srw_ss ()) [Once ss_ecases]]);
+
 val _ = export_theory ();
