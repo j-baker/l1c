@@ -142,15 +142,11 @@ val PLUS_THM = store_thm("PLUS_THM",
 
 val PLUS2_THM = store_thm("PLUS2_THM",
     ``!n1 n2 e s s'. small_step (Plus (N n1) (N n2), s) (e, s') ==> ?n.(e = (N n))``,
-    RW_TAC std_ss [Once ss_ecases] THENL
-    [`value (N n1)` by EVAL_TAC THEN METIS_TAC [STUCK_ON_VALUE_THM],
-     `value (N n2)` by EVAL_TAC THEN METIS_TAC [STUCK_ON_VALUE_THM]]);
+    RW_TAC std_ss [Once ss_ecases] THEN METIS_TAC [INT_STUCK_THM]);
 
 val PLUS3_THM = store_thm("PLUS3_THM",
     ``!n1 n2 e s s'.small_step (Plus (N n1) (N n2), s) (e, s') ==> (s = s')``,
-    RW_TAC std_ss [Once ss_ecases] THENL
-    [`value (N n1)` by EVAL_TAC THEN METIS_TAC [STUCK_ON_VALUE_THM],
-     `value (N n2)` by EVAL_TAC THEN METIS_TAC [STUCK_ON_VALUE_THM]]);
+    RW_TAC std_ss [Once ss_ecases] THEN METIS_TAC [INT_STUCK_THM]);
 
 val PLUS4_THM = store_thm("PLUS4_THM",
 ``!e1 e2 n s s'.small_step (Plus e1 e2, s) ((N n), s') ==> ?n1 n2.((e1 = (N n1)) /\ (e2 = (N n2)))``,
@@ -172,8 +168,7 @@ val PLUS_BAD_VALUE_THM = store_thm("ADD_BAD_VALUE_THM",
 ``!e1 e2 s e s'.small_step (Plus e1 e2, s) (e, s') ==> ~?b.(e1 = B b) /\ ~(e1 = Skip)``,
 Cases_on `e1` THENL
 (RW_TAC (srw_ss ()) [Once ss_ecases])
-::(RW_TAC (srw_ss ()) [Once ss_ecases] THEN `value (B b)` by EVAL_TAC THEN
-METIS_TAC [STUCK_ON_VALUE_THM])
+::(RW_TAC (srw_ss ()) [Once ss_ecases] THEN METIS_TAC [BOOL_STUCK_THM])
 ::List.tabulate (8, (fn x => FULL_SIMP_TAC (srw_ss ()) [Once ss_ecases])));
 
 
@@ -193,7 +188,7 @@ RW_TAC (srw_ss ()) [EQ_IMP_THM, Once ss_ecases]);
 
 val PLUS_E2_IFF_THM = store_thm("PLUS_E2_IFF_THM",
 ``!e1 e1' s s'.(?n.small_step (Plus (N n) e1, s) (Plus (N n) e1', s')) <=> small_step (e1, s) (e1', s')``,
-RW_TAC (srw_ss ()) [EQ_IMP_THM, Once ss_ecases] THENL [`value (N n)` by EVAL_TAC THEN METIS_TAC [STUCK_ON_VALUE_THM], METIS_TAC ss_rulel]);
+RW_TAC (srw_ss ()) [EQ_IMP_THM, Once ss_ecases] THENL [METIS_TAC [INT_STUCK_THM], METIS_TAC ss_rulel]);
 
 fun repeat n x = List.tabulate (n, fn n => x);
 
@@ -206,13 +201,9 @@ val OP_PLUS_RULE_THM = store_thm("OP_PLUS_RULE_THM",
         THEN (Cases_on `q`)
         THENL [METIS_TAC [PLUS_THM], 
                FULL_SIMP_TAC (srw_ss()) [Once ss_ecases],
-               FULL_SIMP_TAC (srw_ss()) [Once ss_ecases] THENL [
-                   (`value (N n1)` by EVAL_TAC) THEN METIS_TAC [STUCK_ON_VALUE_THM],
-                   (`value (N n2)` by EVAL_TAC) THEN METIS_TAC [STUCK_ON_VALUE_THM]]]
+               FULL_SIMP_TAC (srw_ss()) [Once ss_ecases] THEN METIS_TAC [INT_STUCK_THM]]
                @(repeat 9 (FULL_SIMP_TAC (srw_ss()) [Once ss_ecases]))@
-               [FULL_SIMP_TAC (srw_ss()) [Once ss_ecases] THENL [
-                   (`value (N n1)` by EVAL_TAC) THEN METIS_TAC [STUCK_ON_VALUE_THM],
-                   (`value (N n2)` by EVAL_TAC) THEN METIS_TAC [STUCK_ON_VALUE_THM]]]@
+               [FULL_SIMP_TAC (srw_ss()) [Once ss_ecases] THEN METIS_TAC [INT_STUCK_THM]]@
                (repeat 7 (FULL_SIMP_TAC (srw_ss()) [Once ss_ecases])));
 
 val PLUS_STEP_DET_THM = store_thm("PLUS_STEP_DET_THM",
@@ -228,12 +219,12 @@ FULL_SIMP_TAC (srw_ss ()) [Once ss_ecases] THEN METIS_TAC []]);
 val PLUS_STEP_RIGHT_1_THM = store_thm("PLUS_STEP_RIGHT_1_THM",
 ``!n1 e2 e1 s e2' s'.small_step (Plus (N n1) e2, s) (Plus e1 e2', s') ==> (small_step (e2, s) (e2', s'))``,
 REPEAT STRIP_TAC THEN
-FULL_SIMP_TAC (srw_ss ()) [Once ss_ecases] THEN `value (N n1)` by EVAL_TAC THEN METIS_TAC [STUCK_ON_VALUE_THM]);
+FULL_SIMP_TAC (srw_ss ()) [Once ss_ecases] THEN METIS_TAC [INT_STUCK_THM]);
 
 
 val PLUS_STEP_RIGHT_2_THM = store_thm("PLUS_STEP_RIGHT_2_THM",
 ``!n1 e2 e1 s e2' s'.small_step (Plus (N n1) e2, s) (Plus e1 e2', s') ==> ~(small_step ((N n1), s) (e1, s'))``,
-REPEAT STRIP_TAC THEN `value (N n1)` by EVAL_TAC THEN METIS_TAC [STUCK_ON_VALUE_THM]);
+REPEAT STRIP_TAC THEN METIS_TAC [INT_STUCK_THM]);
 
 
 val OP_PLUS_RULE1_THM = store_thm("OP_PLUS_RULE1_THM",
@@ -249,7 +240,7 @@ val OP_PLUS_RULE1_THM = store_thm("OP_PLUS_RULE1_THM",
                      `(e1', s') = (e, r)` by METIS_TAC [] THEN
                       RW_TAC (srw_ss ()) [],
                   `?n.e1 = N n` by METIS_TAC [] THEN
-                  `value (N n)` by EVAL_TAC THEN METIS_TAC [STUCK_ON_VALUE_THM]]]
+                  METIS_TAC [INT_STUCK_THM]]]
              @ (repeat 7 (FULL_SIMP_TAC (srw_ss ()) [Once ss_ecases])));
 
 val VALUE_STEP_THM = store_thm("VALUE_STEP_THM",
@@ -266,11 +257,11 @@ val PLUS_INT_UNCHANGED_THM = store_thm("PLUS_INT_UNCHANGED_THM",
     REPEAT STRIP_TAC THEN
         Cases_on `e1'` THENL
 	    repeat 10
-            (FULL_SIMP_TAC (srw_ss ()) [Once ss_ecases] THEN `value (N n)` by EVAL_TAC THEN METIS_TAC [STUCK_ON_VALUE_THM]));
+            (FULL_SIMP_TAC (srw_ss ()) [Once ss_ecases] THEN METIS_TAC [INT_STUCK_THM]));
 
 val STEP_MEANS_NOT_INT_THM = store_thm("STEP_MEANS_NOT_INT_THM",
 ``!e e' s s'.((small_step (e, s) (e', s')) ==> (!n. e <> N n))``,
-REPEAT STRIP_TAC THEN RW_TAC std_ss [] THEN `value (N n)` by EVAL_TAC THEN METIS_TAC [STUCK_ON_VALUE_THM]);
+REPEAT STRIP_TAC THEN RW_TAC std_ss [] THEN METIS_TAC [INT_STUCK_THM]);
 
 val OP_PLUS_RULE2_THM = store_thm("OP_PLUS_RULE2_THM",
 ``!n e2 s p3 e2' s'.((small_step (Plus (N n) e2, s) p3) /\ (!p3. small_step (e2, s) p3 ==> ((e2', s') = p3)) /\ (small_step (e2, s) (e2', s'))) ==> ((Plus (N n) e2', s') = p3)``,
@@ -279,7 +270,7 @@ val OP_PLUS_RULE2_THM = store_thm("OP_PLUS_RULE2_THM",
         Cases_on `q` THENL [
             `?n'.e2 = (N n')` by METIS_TAC [PLUS4_THM] THEN
                 RW_TAC (std_ss) [] THEN
-                `value (N n')` by EVAL_TAC THEN METIS_TAC [STUCK_ON_VALUE_THM],
+                METIS_TAC [INT_STUCK_THM],
             FULL_SIMP_TAC (srw_ss ()) [Once ss_ecases],
             RW_TAC (srw_ss ()) [] THENL [
                 METIS_TAC [PLUS_INT_UNCHANGED_THM],
@@ -304,10 +295,8 @@ val OP_GEQ_RULE_THM = store_thm("OP_GEQ_RULE_THM",
             FULL_SIMP_TAC (srw_ss ()) [Once ss_ecases] THEN
             FULL_SIMP_TAC (srw_ss ()) [Once ss_ecases] THEN
             FULL_SIMP_TAC (srw_ss ()) [Once ss_ecases] THEN
-                `value (N n1)` by EVAL_TAC THEN METIS_TAC [STUCK_ON_VALUE_THM] THEN
-                `value (N n2)` by EVAL_TAC THEN METIS_TAC [STUCK_ON_VALUE_THM] THEN
+                METIS_TAC [INT_STUCK_THM] THEN
             FULL_SIMP_TAC (srw_ss ()) [Once ss_ecases]);
-
 
 val GEQ_VALUE_THM = store_thm("GEQ_VALUE_THM",
 ``!e1 e2 s b r.small_step (Geq e1 e2, s) (B b, r) ==> (?n1 n2.(e1 = N n1) /\ (e2 = N n2))``, RW_TAC std_ss [Once ss_ecases]);
@@ -315,15 +304,15 @@ val GEQ_VALUE_THM = store_thm("GEQ_VALUE_THM",
 val OP_GEQ_RULE1_THM = store_thm("OP_GEQ_RULE1_THM",
     ``!e1 e2 s p3 e1' s'.((small_step (Geq e1 e2, s) p3) /\ (!p3.small_step (e1, s) p3 ==> ((e1', s') = p3)) /\ (small_step (e1, s) (e1', s'))) ==> ((Geq e1' e2, s') = p3)``,
     RW_TAC (srw_ss ()) [Once ss_ecases] THENL [
-        `value (N n1)` by EVAL_TAC THEN METIS_TAC [STUCK_ON_VALUE_THM],
+        METIS_TAC [INT_STUCK_THM],
         `(e1', s') = (e1'', s'')` by METIS_TAC [] THEN RW_TAC (srw_ss ()) [Once ss_ecases],
-        `value (N n)` by EVAL_TAC THEN METIS_TAC [STUCK_ON_VALUE_THM]]);
+        METIS_TAC [INT_STUCK_THM]]);
 
 val OP_GEQ_RULE2_THM = store_thm("OP_GEQ_RULE2_THM",
 ``!n e2 s p3 e2' s'.((small_step (Geq (N n) e2, s) p3) /\ (!p3. small_step (e2, s) p3 ==> ((e2', s') = p3)) /\ (small_step (e2, s) (e2', s'))) ==> ((Geq (N n) e2', s) = p3)``,
 RW_TAC (srw_ss ()) [Once ss_ecases] THENL [
-`value (N n2)` by EVAL_TAC THEN METIS_TAC [STUCK_ON_VALUE_THM],
-`value (N n)` by EVAL_TAC THEN METIS_TAC [STUCK_ON_VALUE_THM],
+METIS_TAC [INT_STUCK_THM],
+METIS_TAC [INT_STUCK_THM],
 (`(e2', s') = (e2'', s'')` by METIS_TAC []) THEN RW_TAC std_ss []]);
 
 val OP_DEREF_THM = store_thm("OP_DEREF_THM",
@@ -333,18 +322,18 @@ val OP_DEREF_THM = store_thm("OP_DEREF_THM",
 val OP_ASSIGN_RULE1_THM = store_thm("OP_ASSIGN_RULE1_THM",
 ``!l s n p3.((l ∈ FDOM s) /\ (small_step (Assign l (N n),s) p3)) ==> ((Skip,s |+ (l,n)) = p3)``,
     RW_TAC (srw_ss ()) [Once ss_ecases] THEN
-    `value (N n)` by EVAL_TAC THEN METIS_TAC [STUCK_ON_VALUE_THM]);
+    METIS_TAC [INT_STUCK_THM]);
 
 val OP_ASSIGN_RULE2_THM = store_thm("OP_ASSIGN_RULE2_THM",
 ``!l e s p3 e' s'.((small_step (Assign l e,s) p3) /\ (!p3. small_step (e,s) p3 ⇒ ((e',s') = p3)) /\ small_step (e,s) (e',s')) ==> ((Assign l e',s') = p3)``,
     RW_TAC (srw_ss ()) [Once ss_ecases] THENL [
-        `value (N n)` by EVAL_TAC THEN METIS_TAC [STUCK_ON_VALUE_THM],
+        METIS_TAC [INT_STUCK_THM],
         `(e', s') = (e'', s'')` by METIS_TAC [] THEN RW_TAC std_ss []]);
 
 val OP_SEQ_RULE1_THM = store_thm("OP_SEQ_RULE1_THM",
 ``!e2 s p3.(small_step (Seq Skip e2,s) p3) ==> ((e2,s) = p3)``,
 RW_TAC (srw_ss ()) [Once ss_ecases] THEN
-`value Skip` by EVAL_TAC THEN METIS_TAC [STUCK_ON_VALUE_THM]);
+METIS_TAC [SKIP_STUCK_THM]);
 
 val SEQ_SKIP_THM = store_thm("SEQ_SKIP_THM",
     ``!e1 e2 s r.(e1 <> Skip) ==> ~small_step (Seq e1 e2, s) (Skip, r)``,
@@ -371,8 +360,7 @@ val OP_SEQ_RULE2_THM = store_thm("OP_SEQ_RULE2_THM",
         FULL_SIMP_TAC (srw_ss ()) [Once ss_ecases],
         FULL_SIMP_TAC (srw_ss ()) [Once ss_ecases],
         FULL_SIMP_TAC (srw_ss ()) [Once ss_ecases],
-        `value Skip` by EVAL_TAC THEN
-            `e1 <> Skip` by METIS_TAC [STUCK_ON_VALUE_THM] THEN
+        `e1 <> Skip` by METIS_TAC [SKIP_STUCK_THM] THEN
             METIS_TAC [SEQ_SKIP_THM],
         METIS_TAC [SEQ_CASE_THM],
         FULL_SIMP_TAC (srw_ss ()) [Once ss_ecases]]);
