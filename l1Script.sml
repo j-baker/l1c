@@ -122,6 +122,18 @@ val STUCK_ON_VALUE_THM = store_thm("STUCK_ON_VALUE_THM",
             `~value (Seq e' e0)` by EVAL_TAC,
             `~value (While e' e0)` by EVAL_TAC]);
 
+val INT_STUCK_THM = store_thm("INT_STUCK_THM",
+    ``!n s p.~small_step (N n, s) p``,
+    REPEAT STRIP_TAC THEN CCONTR_TAC THEN `value (N n)` by EVAL_TAC THEN METIS_TAC [STUCK_ON_VALUE_THM]);
+
+val BOOL_STUCK_THM = store_thm("INT_STUCK_THM",
+    ``!b s p.~small_step (B b, s) p``,
+    REPEAT STRIP_TAC THEN CCONTR_TAC THEN `value (B b)` by EVAL_TAC THEN METIS_TAC [STUCK_ON_VALUE_THM]);
+
+val SKIP_STUCK_THM = store_thm("INT_STUCK_THM",
+    ``!s p.~small_step (Skip, s) p``,
+    REPEAT STRIP_TAC THEN CCONTR_TAC THEN `value Skip` by EVAL_TAC THEN METIS_TAC [STUCK_ON_VALUE_THM]);
+
 val PLUS_THM = store_thm("PLUS_THM",
     ``!n1 n2 n s s'.small_step (Plus (N n1) (N n2), s) ((N n), s') ==> ((n = n1 + n2) /\ (s=s'))``,
     REPEAT STRIP_TAC THEN
