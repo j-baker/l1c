@@ -76,6 +76,55 @@ val sinduction = derive_strong_induction(ss_rules, ss_induction);
 
 val ss_rulel = CONJUNCTS ss_rules;
 
+val small_step_fun_def = Define `
+    (* Values *)
+    (small_step_fun ((N _), _) = NONE) /\
+    (small_step_fun ((B _), _) = NONE) /\
+    (small_step_fun (Skip,_)   = NONE) /\
+
+    (* Plus *)
+    (small_step_fun (Plus (N n1) (N n2), s) = SOME (N (n1 + n2), s)) /\
+    (small_step_fun (Plus (N n1) e2, s) = (case (small_step_fun (e2, s)) of
+					         SOME (e2',s') => SOME (Plus (N n1) e2', s')
+					       | NONE => NONE)) /\
+    (small_step_fun (Plus e1 e2, s) = (case (small_step_fun (e1, s)) of
+                                                 SOME (e1',s') => SOME (Plus e1' e2, s')
+					       | NONE => NONE)) /\
+
+    (* Geq *)
+    (small_step_fun (Geq (N n1) (N n2), s) = SOME (B (n1 >= n2), s)) /\
+    (small_step_fun (Geq (N n1) e2, s) = (case (small_step_fun (e2, s)) of
+					         SOME (e2',s') => SOME (Geq (N n1) e2', s')
+					       | NONE => NONE)) /\
+    (small_step_fun (Geq e1 e2, s) = (case (small_step_fun (e1, s)) of
+                                                 SOME (e1',s') => SOME (Geq e1' e2, s')
+					       | NONE => NONE)) /\
+
+    (* Deref *)
+    (small_step_fun (Deref l, s) = if (l ∈ FDOM s) then SOME (N (s ' l), s) else NONE) /\
+
+    (* Assign *)
+    (small_step_fun (Assign l (N n), s) = if (l ∈ FDOM s) then (SOME (Skip, s |+ (l, n))) else NONE) /\
+    (small_step_fun (Assign l e, s) = (case (small_step_fun (e, s)) of
+                                              SOME (e', s') => SOME (Assign l e', s')
+					    | NONE => NONE)) /\
+
+    (* Seq *)
+    (small_step_fun (Seq Skip e2, s) = SOME (e2, s)) /\
+    (small_step_fun (Seq e1 e2, s) = (case (small_step_fun (e1, s)) of
+                                              SOME (e1', s') => SOME (Seq e1' e2, s')
+					    | NONE => NONE)) /\
+
+    (* If *)
+    (small_step_fun (If (B T) e2 _, s) = SOME (e2, s)) /\
+    (small_step_fun (If (B F) _ e3, s) = SOME (e3, s)) /\
+    (small_step_fun (If e1 e2 e3, s) = (case (small_step_fun (e1, s)) of
+                                              SOME (e1', s') => SOME (If e1' e2 e3, s')
+					    | NONE => NONE)) /\
+
+    (* While *)
+    (small_step_fun (While e1 e2, s) = SOME (If e1 (Seq e2 (While e1 e2)) Skip, s))`;
+
 val _ = Hol_datatype `T = intL1 | boolL1 | unitL1`;
 
 val _ = Hol_datatype `LT = intrefL1`;
