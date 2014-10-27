@@ -229,6 +229,10 @@ val type_fun_def = Define `
     (type_fun (Seq e1 e2) = if (type_fun e1 = SOME unitL1) then type_fun e2 else NONE) /\
     (type_fun (While e1 e2) = if (type_fun e1 = SOME boolL1) then SOME unitL1 else NONE)`;
 
+val TYPE_IMP_TYPE_FUN_THM = store_thm("TYPE_IMP_TYPE_FUN_THM",
+``!e t.type e t ==> (type_fun e = SOME t)``,
+    HO_MATCH_MP_TAC type_induction THEN REPEAT STRIP_TAC THEN (EVAL_TAC THEN FULL_SIMP_TAC (srw_ss ()) []));
+    
 val value_def = Define `(value (N _) = T) /\
                         (value (B _) = T) /\
                         (value Skip = T) /\
