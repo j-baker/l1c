@@ -194,6 +194,13 @@ val RELATION_IMPLIES_FUNCTION_THM = store_thm("RELATION_IMPLIES_FUNCTION_THM",
     HO_MATCH_MP_TAC ss_induction THEN
         REPEAT STRIP_TAC THEN (EVAL_TAC THEN FULL_SIMP_TAC (srw_ss ()) [PLUS_1_CASE_THM, PLUS_2_CASE_THM, GEQ_1_CASE_THM, GEQ_2_CASE_THM, SEQ_1_CASE_THM, IF_1_CASE_THM, ASSIGN_1_CASE_THM]));
 
+val SMALL_STEP_DETERMINACY_THM = store_thm("SMALL_STEP_DETERMINACY_THM",
+    ``!p p' p''.(small_step p p' /\ small_step p p'') ==> (p' = p'')``,
+    REPEAT STRIP_TAC THEN
+        `small_step_fun p = SOME p'` by METIS_TAC [RELATION_IMPLIES_FUNCTION_THM] THEN
+        `small_step_fun p = SOME p''` by METIS_TAC [RELATION_IMPLIES_FUNCTION_THM] THEN
+        FULL_SIMP_TAC (srw_ss ()) []);
+
 val _ = Hol_datatype `T = intL1 | boolL1 | unitL1`;
 
 val _ = Hol_datatype `LT = intrefL1`;
