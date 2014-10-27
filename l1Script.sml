@@ -189,7 +189,7 @@ val IF_1_CASE_THM = make_constructor_thm "IF_1_CASE_THM" ``!e1 s e1' s' e2 e3.(s
 
 val ASSIGN_1_CASE_THM = make_constructor_thm "ASSIGN_1_CASE_THM" ``!e1 s e1' s' l.(small_step_fun (e1, s) = SOME (e1', s')) ==> (small_step_fun (Assign l e1, s) = SOME (Assign l e1', s'))`` ASSIGN_CASE_ASSIGN_THM;
 
-val ONE_WAY_EQ_THM = store_thm("ONE_WAY_EQ_THM",
+val RELATION_IMPLIES_FUNCTION_THM = store_thm("RELATION_IMPLIES_FUNCTION_THM",
     ``!p1 p2.small_step p1 p2 ==> ((small_step_fun p1) = SOME p2)``,
     HO_MATCH_MP_TAC ss_induction THEN
         REPEAT STRIP_TAC THEN (EVAL_TAC THEN FULL_SIMP_TAC (srw_ss ()) [PLUS_1_CASE_THM, PLUS_2_CASE_THM, GEQ_1_CASE_THM, GEQ_2_CASE_THM, SEQ_1_CASE_THM, IF_1_CASE_THM, ASSIGN_1_CASE_THM]));
