@@ -217,6 +217,22 @@ val (type_rules, type_induction, type_ecases) = Hol_reln `
     (!e1 e2 T.type e1 unitL1 /\ type e2 T ==> type (Seq e1 e2) T) /\
     (!e1 e2. type e1 boolL1 /\ type e2 unitL1 ==> type (While e1 e2) unitL1)`;
 
+val type_fun_def = Define `
+    (type_fun (N n) = SOME intL1) /\
+    (type_fun (B b) = SOME boolL1) /\
+    (type_fun (Plus e1 e2) = if (type_fun e1 = SOME intL1) /\ (type_fun e2 = SOME intL1) then SOME intL1 else NONE) /\
+    (type_fun (Geq e1 e2) = if (type_fun e1 = SOME intL1) /\ (type_fun e2 = SOME intL1) then SOME boolL1 else NONE) /\
+    (type_fun (If e1 e2 e3) = if (type_fun e1 = SOME boolL1) /\ (type_fun e2 = type_fun e3) then type_fun e2 else NONE) /\
+    (type_fun (Assign l e) = if (type_fun e = SOME intL1) then SOME unitL1 else NONE) /\
+    (type_fun (Deref l) = SOME intL1) /\
+    (type_fun (Skip) = SOME unitL1) /\
+    (type_fun (Seq e1 e2) = if (type_fun e1 = SOME unitL1) then type_fun e2 else NONE) /\
+    (type_fun (While e1 e2) = if (type_fun e1 = SOME boolL1) then SOME unitL1 else NONE)`;
+
+val TYPE_IMP_TYPE_FUN_THM = store_thm("TYPE_IMP_TYPE_FUN_THM",
+``!e t.type e t ==> (type_fun e = SOME t)``,
+    HO_MATCH_MP_TAC type_induction THEN REPEAT STRIP_TAC THEN (EVAL_TAC THEN FULL_SIMP_TAC (srw_ss ()) []));
+    
 val value_def = Define `(value (N _) = T) /\
                         (value (B _) = T) /\
                         (value Skip = T) /\
