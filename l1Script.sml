@@ -41,7 +41,7 @@ val (ss_rules, ss_induction, ss_ecases) = Hol_reln `
       ==> small_step (Geq e1 e2, s) (Geq e1' e2, s')) /\
     (!n e2 e2' s s'.
           small_step (e2, s) (e2', s')
-      ==> small_step (Geq (N n) e2, s) (Geq (N n) e2', s)) /\
+      ==> small_step (Geq (N n) e2, s) (Geq (N n) e2', s')) /\
 
     (* Deref *)
     (!l s.
