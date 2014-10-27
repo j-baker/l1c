@@ -125,6 +125,75 @@ val small_step_fun_def = Define `
     (* While *)
     (small_step_fun (While e1 e2, s) = SOME (If e1 (Seq e2 (While e1 e2)) Skip, s))`;
 
+val NO_STEP_FROM_INT_THM = store_thm("NO_STEP_FROM_INT_THM",
+    ``!c s.small_step_fun (N c, s) = NONE``, REPEAT STRIP_TAC THEN EVAL_TAC);
+
+val NO_STEP_FROM_BOOL_THM = store_thm("NO_STEP_FROM_INT_THM",
+    ``!c s.small_step_fun (B c, s) = NONE``, REPEAT STRIP_TAC THEN EVAL_TAC);
+
+val NO_STEP_FROM_SKIP_THM = store_thm("NO_STEP_FROM_INT_THM",
+    ``!s.small_step_fun (Skip, s) = NONE``, REPEAT STRIP_TAC THEN EVAL_TAC);
+
+val ASSIGN_CASE_TAC = (Cases_on `c ∈ FDOM s` THEN1 (EVAL_TAC THEN FULL_SIMP_TAC (srw_ss ()) [] THEN `small_step_fun (Deref c, s) = SOME(N (s ' c), s)` by (EVAL_TAC THEN FULL_SIMP_TAC (srw_ss ()) []) THEN FULL_SIMP_TAC (srw_ss ()) []) THEN1 (`small_step_fun (Deref c, s) = NONE` by (EVAL_TAC THEN FULL_SIMP_TAC (srw_ss ()) []) THEN FULL_SIMP_TAC (srw_ss ()) []));
+
+val WHILE_CASE_TAC = (EVAL_TAC THEN `small_step_fun (While e e0, s) = SOME (If e (Seq e0 (While e e0)) Skip, s)` by (EVAL_TAC THEN FULL_SIMP_TAC (srw_ss ()) []) THEN FULL_SIMP_TAC (srw_ss ()) []);
+
+val ASSIGN_CASE_PLUS_THM = store_thm("ASSIGN_CASE_PLUS_THM",
+``!c s e1' s' e2.(small_step_fun (Deref c, s) = SOME (e1', s')) ==> ((case if c ∈ FDOM s then SOME (N (s ' c), s) else NONE of NONE => NONE | SOME (e1', s') => SOME (Plus e1' e2, s')) = SOME (Plus e1' e2, s'))``,
+EVAL_TAC THEN FULL_SIMP_TAC (srw_ss ()) []);
+
+val ASSIGN_CASE_PLUS_2_THM = store_thm("ASSIGN_CASE_PLUS_THM",
+``!c s n s' e2 e2'.(small_step_fun (Deref c, s) = SOME (e2', s')) ==> ((case if c ∈ FDOM s then SOME (N (s ' c), s) else NONE of NONE => NONE | SOME (e2', s') => SOME (Plus (N n) e2', s')) = SOME (Plus (N n) e2', s'))``,
+EVAL_TAC THEN FULL_SIMP_TAC (srw_ss ()) []);
+
+val ASSIGN_CASE_GEQ_THM = store_thm("ASSIGN_CASE_GEQ_THM",
+``!c s e1' s' e2.(small_step_fun (Deref c, s) = SOME (e1', s')) ==> ((case if c ∈ FDOM s then SOME (N (s ' c), s) else NONE of NONE => NONE | SOME (e1', s') => SOME (Geq e1' e2, s')) = SOME (Geq e1' e2, s'))``,
+EVAL_TAC THEN FULL_SIMP_TAC (srw_ss ()) []);
+
+val ASSIGN_CASE_GEQ2_THM = store_thm("ASSIGN_CASE_PLUS_THM",
+``!c s n s' e2 e2'.(small_step_fun (Deref c, s) = SOME (e2', s')) ==> ((case if c ∈ FDOM s then SOME (N (s ' c), s) else NONE of NONE => NONE | SOME (e2', s') => SOME (Geq (N n) e2', s')) = SOME (Geq (N n) e2', s'))``,
+EVAL_TAC THEN FULL_SIMP_TAC (srw_ss ()) []);
+
+val ASSIGN_CASE_WHILE_THM = store_thm("ASSIGN_CASE_WHILE_THM",
+``!c s e1' s' e2.(small_step_fun (Deref c, s) = SOME (e1', s')) ==> ((case if c ∈ FDOM s then SOME (N (s ' c), s) else NONE of NONE => NONE | SOME (e1', s') => SOME (While e1' e2, s')) = SOME (While e1' e2, s'))``,
+EVAL_TAC THEN FULL_SIMP_TAC (srw_ss ()) []);
+
+val ASSIGN_CASE_IF_THM = store_thm("ASSIGN_CASE_IF_THM",
+``!c s e1' s' e2 e3.(small_step_fun (Deref c, s) = SOME (e1', s')) ==> ((case if c ∈ FDOM s then SOME (N (s ' c), s) else NONE of NONE => NONE | SOME (e1', s') => SOME (If e1' e2 e3, s')) = SOME (If e1' e2 e3, s'))``,
+EVAL_TAC THEN FULL_SIMP_TAC (srw_ss ()) []);
+
+val ASSIGN_CASE_SEQ_THM = store_thm("ASSIGN_CASE_SEQ_THM",
+``!c s e1' s' e2.(small_step_fun (Deref c, s) = SOME (e1', s')) ==> ((case if c ∈ FDOM s then SOME (N (s ' c), s) else NONE of NONE => NONE | SOME (e1', s') => SOME (Seq e1' e2, s')) = SOME (Seq e1' e2, s'))``,
+EVAL_TAC THEN FULL_SIMP_TAC (srw_ss ()) []);
+
+val ASSIGN_CASE_ASSIGN_THM = store_thm("ASSIGN_CASE_ASSIGN_THM",
+``!c s l e' s'.(small_step_fun (Deref c, s) = SOME (e', s')) ==> ((case if c ∈ FDOM s then SOME (N (s ' c), s) else NONE of NONE => NONE | SOME (e', s') => SOME (Assign l e', s')) = SOME (Assign l e', s'))``,
+EVAL_TAC THEN FULL_SIMP_TAC (srw_ss ()) []);
+
+val WHILE_CASE_THM = store_thm("WHILE_CASE_THM",
+``!e e0 s e1' s'.(small_step_fun (While e e0, s) = SOME (e1', s')) ==> ((If e (Seq e0 (While e e0)) Skip = e1') /\ (s = s'))``, WHILE_CASE_TAC);
+
+fun make_constructor_thm name content case_thm = store_thm(name, content, REPEAT STRIP_TAC THEN Cases_on `e1` THEN EVAL_TAC THEN FULL_SIMP_TAC (srw_ss ()) [NO_STEP_FROM_INT_THM, NO_STEP_FROM_SKIP_THM, NO_STEP_FROM_BOOL_THM] THEN METIS_TAC [WHILE_CASE_THM, case_thm]);
+
+val PLUS_1_CASE_THM = make_constructor_thm "PLUS_1_CASE_THM" ``!e1 s e1' s' e2.(small_step_fun (e1, s) = SOME (e1', s')) ==> (small_step_fun (Plus e1 e2, s) = SOME (Plus e1' e2, s'))`` ASSIGN_CASE_PLUS_THM;
+
+val PLUS_2_CASE_THM = make_constructor_thm "PLUS_2_CASE_THM" ``!e1 s e1' n s'.(small_step_fun (e1, s) = SOME (e1', s')) ==> (small_step_fun (Plus (N n) e1, s) = SOME (Plus (N n) e1', s'))`` ASSIGN_CASE_PLUS_2_THM;
+
+val GEQ_1_CASE_THM = make_constructor_thm "GEQ_1_CASE_THM" ``!e1 s e1' s' e2.(small_step_fun (e1, s) = SOME (e1', s')) ==> (small_step_fun (Geq e1 e2, s) = SOME (Geq e1' e2, s'))`` ASSIGN_CASE_GEQ_THM;
+
+val GEQ_2_CASE_THM = make_constructor_thm "GEQ_2_CASE_THM" ``!e1 s e1' n s'.(small_step_fun (e1, s) = SOME (e1', s')) ==> (small_step_fun (Geq (N n) e1, s) = SOME (Geq (N n) e1', s'))`` ASSIGN_CASE_GEQ2_THM;
+
+val SEQ_1_CASE_THM = make_constructor_thm "SEQ_1_CASE_THM" ``!e1 s e1' s' e2.(small_step_fun (e1, s) = SOME (e1', s')) ==> (small_step_fun (Seq e1 e2, s) = SOME (Seq e1' e2, s'))`` ASSIGN_CASE_SEQ_THM;
+
+val IF_1_CASE_THM = make_constructor_thm "IF_1_CASE_THM" ``!e1 s e1' s' e2 e3.(small_step_fun (e1, s) = SOME (e1', s')) ==> (small_step_fun (If e1 e2 e3, s) = SOME (If e1' e2 e3, s'))`` ASSIGN_CASE_IF_THM;
+
+val ASSIGN_1_CASE_THM = make_constructor_thm "ASSIGN_1_CASE_THM" ``!e1 s e1' s' l.(small_step_fun (e1, s) = SOME (e1', s')) ==> (small_step_fun (Assign l e1, s) = SOME (Assign l e1', s'))`` ASSIGN_CASE_ASSIGN_THM;
+
+val ONE_WAY_EQ_THM = store_thm("ONE_WAY_EQ_THM",
+    ``!p1 p2.small_step p1 p2 ==> ((small_step_fun p1) = SOME p2)``,
+    HO_MATCH_MP_TAC ss_induction THEN
+        REPEAT STRIP_TAC THEN (EVAL_TAC THEN FULL_SIMP_TAC (srw_ss ()) [PLUS_1_CASE_THM, PLUS_2_CASE_THM, GEQ_1_CASE_THM, GEQ_2_CASE_THM, SEQ_1_CASE_THM, IF_1_CASE_THM, ASSIGN_1_CASE_THM]));
+
 val _ = Hol_datatype `T = intL1 | boolL1 | unitL1`;
 
 val _ = Hol_datatype `LT = intrefL1`;
