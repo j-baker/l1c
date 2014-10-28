@@ -194,6 +194,23 @@ val RELATION_IMPLIES_FUNCTION_THM = store_thm("RELATION_IMPLIES_FUNCTION_THM",
     HO_MATCH_MP_TAC ss_induction THEN
         REPEAT STRIP_TAC THEN (EVAL_TAC THEN FULL_SIMP_TAC (srw_ss ()) [PLUS_1_CASE_THM, PLUS_2_CASE_THM, GEQ_1_CASE_THM, GEQ_2_CASE_THM, SEQ_1_CASE_THM, IF_1_CASE_THM, ASSIGN_1_CASE_THM]));
 
+val FUNCTION_IMPLIES_RELATION_THM = store_thm("FUNCTION_IMPLIES_RELATION_THM",
+    ``!e1 s e1' s'. (small_step_fun (e1, s) = SOME (e1', s')) ==> (small_step (e1, s) (e1', s'))``,
+    HO_MATCH_MP_TAC (fetch "-" "small_step_fun_ind") THEN
+        REPEAT STRIP_TAC THEN FULL_SIMP_TAC std_ss [small_step_fun_def]
+        THEN FULL_SIMP_TAC (srw_ss ()) [] THEN
+        SRW_TAC[][] THEN
+	TRY BasicProvers.FULL_CASE_TAC THEN
+        FULL_SIMP_TAC (srw_ss ()) [] THEN 
+        TRY (Cases_on `x`) THEN
+        SRW_TAC[][] THEN
+        FULL_SIMP_TAC (srw_ss ()) [] THEN
+        RW_TAC (srw_ss ()) [Once ss_ecases]);
+
+val FUNCTION_EQUALS_RELATION_THM = store_thm("FUNCTION_EQUALS_RELATION_THM",
+    ``!e1 s e1' s'. (small_step_fun (e1, s) = SOME (e1', s')) <=> (small_step (e1, s) (e1', s'))``,
+    METIS_TAC [FUNCTION_IMPLIES_RELATION_THM, RELATION_IMPLIES_FUNCTION_THM]);
+
 val SMALL_STEP_DETERMINACY_THM = store_thm("SMALL_STEP_DETERMINACY_THM",
     ``!p p' p''.(small_step p p' /\ small_step p p'') ==> (p' = p'')``,
     REPEAT STRIP_TAC THEN
