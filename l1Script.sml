@@ -209,7 +209,7 @@ val FUNCTION_IMPLIES_RELATION_THM = store_thm("FUNCTION_IMPLIES_RELATION_THM",
 
 val FUNCTION_EQUALS_RELATION_THM = store_thm("FUNCTION_EQUALS_RELATION_THM",
     ``!e1 s e1' s'. (small_step_fun (e1, s) = SOME (e1', s')) <=> (small_step (e1, s) (e1', s'))``,
-    METIS_TAC [FUNCTION_IMPLIES_RELATION_THM, RELATION_IMPLIES_FUNCTION_THM]);
+    RW_TAC (srw_ss ()) [EQ_IMP_THM, FUNCTION_IMPLIES_RELATION_THM, RELATION_IMPLIES_FUNCTION_THM]);
 
 val SMALL_STEP_DETERMINACY_THM = store_thm("SMALL_STEP_DETERMINACY_THM",
     ``!p p' p''.(small_step p p' /\ small_step p p'') ==> (p' = p'')``,
