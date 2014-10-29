@@ -14,15 +14,15 @@ val _ = type_abbrev("state", ``:loc |-> int``);
 val _ = type_abbrev("pred", ``:state -> bool``);
 
 val _ = Hol_datatype `exp = N of int
-                        | B of bool
-                        | Plus of exp => exp
-                        | Geq of exp => exp
-                        | If of exp => exp => exp
-                        | Assign of loc => exp
-                        | Deref of loc
-                        | Skip
-                        | Seq of exp => exp
-                        | While of exp => exp`;
+                          | B of bool
+                          | Plus of exp => exp
+                          | Geq of exp => exp
+                          | If of exp => exp => exp
+                          | Assign of loc => exp
+                          | Deref of loc
+                          | Skip
+                          | Seq of exp => exp
+                          | While of exp => exp`;
 
 val (ss_rules, ss_induction, ss_ecases) = Hol_reln `
     (* Plus *)
