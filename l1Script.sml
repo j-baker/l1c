@@ -210,6 +210,11 @@ val SKIP_NOT_INT_TYPE_THM = store_thm("SKIP_NOT_INT_TYPE_THM",
 val INT_NOT_BOOL_TYPE_THM = store_thm("INT_NOT_BOOL_TYPE_THM",
     ``!n g.~type (N n) g boolL1``, RW_TAC (srw_ss ()) [Once type_ecases]);
 
+val value_def = Define `(value (N _) = T) /\
+                        (value (B _) = T) /\
+                        (value Skip = T) /\
+                        (value _ = F)`;
+
 val L1_PROGRESS_THM = store_thm("L1_PROGRESS_THM",
     ``!e g t. (type e g t) ==> (!s.(dom_sub g s) ==> (value(e) \/ (?e' s'.small_step_fun (e, s) = SOME (e', s'))))``,
     HO_MATCH_MP_TAC type_sinduction
@@ -227,10 +232,6 @@ val L1_PROGRESS_THM = store_thm("L1_PROGRESS_THM",
 		  THEN (TRY (Cases_on `b`))
 		  THEN EVAL_TAC
 		  THEN FULL_SIMP_TAC (srw_ss ()) []);
-val value_def = Define `(value (N _) = T) /\
-                        (value (B _) = T) /\
-                        (value Skip = T) /\
-                        (value _ = F)`;
 
 val (star_rules, star_induction, star_ecases) = Hol_reln `
 (!x. star r x x) /\
