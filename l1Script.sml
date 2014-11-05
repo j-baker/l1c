@@ -170,33 +170,63 @@ val _ = Hol_datatype `T = intL1 | boolL1 | unitL1`;
 val _ = Hol_datatype `LT = intrefL1`;
 
 val (type_rules, type_induction, type_ecases) = Hol_reln `
-    (!n.type (N n) intL1) /\
-    (!b.type (B b) boolL1) /\
-    (!e1 e2.(type e1 intL1 /\ type e2 intL1) ==> type (Plus e1 e2) intL1) /\
-    (!e1 e2.(type e1 intL1 /\ type e2 intL1) ==> type (Geq e1 e2) boolL1) /\
-    (!e1 e2 e3 T.(type e1 boolL1 /\ type e2 T /\ type e3 T) ==> type (If e1 e2 e3) T) /\
-    (!l e.type e intL1 ==> type (Assign l e) unitL1) /\
-    (!l .type (Deref l) intL1) /\
-    (type Skip unitL1) /\
-    (!e1 e2 T.type e1 unitL1 /\ type e2 T ==> type (Seq e1 e2) T) /\
-    (!e1 e2. type e1 boolL1 /\ type e2 unitL1 ==> type (While e1 e2) unitL1)`;
+    (!n g.type (N n) g intL1) /\
+    (!b g.type (B b) g boolL1) /\
+    (!e1 e2 g.(type e1 g intL1 /\ type e2 g intL1) ==> type (Plus e1 e2) g intL1) /\
+    (!e1 e2 g.(type e1 g intL1 /\ type e2 g intL1) ==> type (Geq e1 e2) g boolL1) /\
+    (!e1 e2 e3 g T.(type e1 g boolL1 /\ type e2 g T /\ type e3 g T) ==> type (If e1 e2 e3) g T) /\
+    (!l e g.(type e g intL1 /\ l ∈ (FDOM g)) ==> type (Assign l e) g unitL1) /\
+    (!l g.l ∈ (FDOM g) ==> type (Deref l) g intL1) /\
+    (type Skip g unitL1) /\
+    (!e1 e2 T g.type e1 g unitL1 /\ type e2 g T ==> type (Seq e1 e2) g T) /\
+    (!e1 e2 g. type e1 g boolL1 /\ type e2 g unitL1 ==> type (While e1 e2) g unitL1)`;
 
 val type_fun_def = Define `
-    (type_fun (N n) = SOME intL1) /\
-    (type_fun (B b) = SOME boolL1) /\
-    (type_fun (Plus e1 e2) = if (type_fun e1 = SOME intL1) /\ (type_fun e2 = SOME intL1) then SOME intL1 else NONE) /\
-    (type_fun (Geq e1 e2) = if (type_fun e1 = SOME intL1) /\ (type_fun e2 = SOME intL1) then SOME boolL1 else NONE) /\
-    (type_fun (If e1 e2 e3) = if (type_fun e1 = SOME boolL1) /\ (type_fun e2 = type_fun e3) then type_fun e2 else NONE) /\
-    (type_fun (Assign l e) = if (type_fun e = SOME intL1) then SOME unitL1 else NONE) /\
-    (type_fun (Deref l) = SOME intL1) /\
-    (type_fun (Skip) = SOME unitL1) /\
-    (type_fun (Seq e1 e2) = if (type_fun e1 = SOME unitL1) then type_fun e2 else NONE) /\
-    (type_fun (While e1 e2) = if (type_fun e1 = SOME boolL1) then SOME unitL1 else NONE)`;
+    (type_fun (N n) g = SOME intL1) /\
+    (type_fun (B b) g = SOME boolL1) /\
+    (type_fun (Plus e1 e2) g = if (type_fun e1 g = SOME intL1) /\ (type_fun e2 g = SOME intL1) then SOME intL1 else NONE) /\
+    (type_fun (Geq e1 e2) g = if (type_fun e1 g = SOME intL1) /\ (type_fun e2 g = SOME intL1) then SOME boolL1 else NONE) /\
+    (type_fun (If e1 e2 e3) g = if (type_fun e1 g = SOME boolL1) /\ (type_fun e2 g = type_fun e3 g) then type_fun e2 g else NONE) /\
+    (type_fun (Assign l e) g = if (l ∈ (FDOM g) /\ (type_fun e g = SOME intL1)) then SOME unitL1 else NONE) /\
+    (type_fun (Deref l) g = if (l ∈ (FDOM g)) then SOME intL1 else NONE) /\
+    (type_fun (Skip) g = SOME unitL1) /\
+    (type_fun (Seq e1 e2) g = if (type_fun e1 g = SOME unitL1) then type_fun e2 g else NONE) /\
+    (type_fun (While e1 e2) g = if (type_fun e1 g = SOME boolL1) then SOME unitL1 else NONE)`;
+
+val type_sinduction = derive_strong_induction(type_rules, type_induction);
 
 val TYPE_IMP_TYPE_FUN_THM = store_thm("TYPE_IMP_TYPE_FUN_THM",
-``!e t.type e t ==> (type_fun e = SOME t)``,
+``!e g t.type e g t ==> (type_fun e g = SOME t)``,
     HO_MATCH_MP_TAC type_induction THEN REPEAT STRIP_TAC THEN (EVAL_TAC THEN FULL_SIMP_TAC (srw_ss ()) []));
-    
+
+val dom_sub_def = Define `dom_sub a b = if !x.x ∈ (FDOM a) ==> x ∈ (FDOM b) then T else F`;
+
+val BOOL_NOT_INT_TYPE_THM = store_thm("BOOL_NOT_INT_TYPE_THM",
+    ``!b g.~type (B b) g intL1``, RW_TAC (srw_ss ()) [Once type_ecases]);
+
+val SKIP_NOT_INT_TYPE_THM = store_thm("SKIP_NOT_INT_TYPE_THM",
+    ``!g.~type Skip g intL1``, RW_TAC (srw_ss ()) [Once type_ecases]);
+
+val INT_NOT_BOOL_TYPE_THM = store_thm("INT_NOT_BOOL_TYPE_THM",
+    ``!n g.~type (N n) g boolL1``, RW_TAC (srw_ss ()) [Once type_ecases]);
+
+val L1_PROGRESS_THM = store_thm("L1_PROGRESS_THM",
+    ``!e g t. (type e g t) ==> (!s.(dom_sub g s) ==> (value(e) \/ (?e' s'.small_step_fun (e, s) = SOME (e', s'))))``,
+    HO_MATCH_MP_TAC type_sinduction
+        THEN FULL_SIMP_TAC (srw_ss ()) []
+	          THEN RW_TAC (srw_ss ()) []
+		  THEN EVAL_TAC
+		  THEN (TRY (Cases_on `e`))
+		  THEN FULL_SIMP_TAC (srw_ss ()) [value_def, dom_sub_def, SKIP_NOT_INT_TYPE_THM, BOOL_NOT_INT_TYPE_THM, INT_NOT_BOOL_TYPE_THM]
+		  THEN (TRY (Cases_on `e'`))
+		  THEN FULL_SIMP_TAC (srw_ss ()) [value_def, dom_sub_def, SKIP_NOT_INT_TYPE_THM, BOOL_NOT_INT_TYPE_THM, INT_NOT_BOOL_TYPE_THM]
+                  THEN EVAL_TAC
+		  THEN RES_TAC
+		  THEN RW_TAC (srw_ss ()) []
+		  THEN FULL_SIMP_TAC (srw_ss ()) [small_step_fun_def, Once type_ecases]
+		  THEN (TRY (Cases_on `b`))
+		  THEN EVAL_TAC
+		  THEN FULL_SIMP_TAC (srw_ss ()) []);
 val value_def = Define `(value (N _) = T) /\
                         (value (B _) = T) /\
                         (value Skip = T) /\
