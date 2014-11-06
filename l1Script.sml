@@ -191,7 +191,7 @@ val type_fun_def = Define `
     (type_fun (Deref l) g = if (l ∈ (FDOM g)) then SOME intL1 else NONE) /\
     (type_fun (Skip) g = SOME unitL1) /\
     (type_fun (Seq e1 e2) g = if (type_fun e1 g = SOME unitL1) then type_fun e2 g else NONE) /\
-    (type_fun (While e1 e2) g = if (type_fun e1 g = SOME boolL1) then SOME unitL1 else NONE)`;
+    (type_fun (While e1 e2) g = if ((type_fun e1 g = SOME boolL1) /\ (type_fun e2 g = SOME unitL1)) then SOME unitL1 else NONE)`;
 
 val type_sinduction = derive_strong_induction(type_rules, type_induction);
 
