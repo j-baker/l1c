@@ -244,4 +244,24 @@ METIS_TAC [star_ecases]);
 
 val evals_def = Define `evals x y = star small_step x y`;
 
+val pair_first_def = Define `pair_first (x, _) = x`;
+val pair_second_def = Define `pair_second (_, x) = x`;
+
+val DOMAIN_CONSTANT_THM = store_thm("DOMAIN_CONSTANT_THM",
+    ``!p1 p2. small_step p1 p2 ==> (FDOM (pair_second p1) = FDOM (pair_second p2))``,
+    HO_MATCH_MP_TAC sinduction THEN RW_TAC (srw_ss ()) [pair_second_def, FDOM_EQ_FDOM_FUPDATE]);
+
+
+val DOM_CONST_2_THM = store_thm("DOM_CONST_2_THM",
+    ``!p1 p2. small_step p1 p2 ==> !e.type_fun e (pair_second p1) = type_fun e (pair_second p2)``,
+    Cases_on `p1` THEN Cases_on `p2` THEN RW_TAC (srw_ss ()) [pair_second_def] THEN Induct_on `e` THEN EVAL_TAC THEN FULL_SIMP_TAC (srw_ss ()) [] THEN `FDOM r = FDOM r'` by METIS_TAC [DOMAIN_CONSTANT_THM, pair_second_def] THEN METIS_TAC []);
+
+val PROGRESS_LEMMA = store_thm("PROGRESS_LEMMA",
+    ``!p p'.small_step p p' ==> (!t.(type_fun (pair_first p) (pair_second p) = SOME t) ==> (type_fun (pair_first p') (pair_second p') = SOME t))``,
+    HO_MATCH_MP_TAC sinduction THEN RW_TAC (srw_ss ()) [pair_first_def, pair_second_def] THEN FULL_SIMP_TAC (srw_ss ()) [type_fun_def] THEN RW_TAC (srw_ss ()) [] THEN METIS_TAC [pair_second_def, DOM_CONST_2_THM, DOMAIN_CONSTANT_THM]);
+
+val PROGRESS_THM = store_thm("PROGRESS_THM",
+    ``!e s e' s'.small_step (e, s) (e', s') ==> (!t.(type_fun e s = SOME t) ==> (type_fun e' s' = SOME t))``,
+    METIS_TAC [PROGRESS_LEMMA, pair_first_def, pair_second_def]);
+
 val _ = export_theory ();
