@@ -199,6 +199,14 @@ val TYPE_IMP_TYPE_FUN_THM = store_thm("TYPE_IMP_TYPE_FUN_THM",
 ``!e g t.type e g t ==> (type_fun e g = SOME t)``,
     HO_MATCH_MP_TAC type_induction THEN REPEAT STRIP_TAC THEN (EVAL_TAC THEN FULL_SIMP_TAC (srw_ss ()) []));
 
+val TYPE_FUN_IMP_TYPE_THM = store_thm("TYPE_FUN_IMP_TYPE_THM",
+    ``!e g t.(type_fun e g = SOME t) ==> type e g t``,
+    Induct_on `e` THEN EVAL_TAC THEN RW_TAC (srw_ss ()) [Once type_ecases] THEN METIS_TAC []);
+
+val TYPE_FUN_EQ_THM = store_thm("TYPE_FUN_EQ_THM",
+    ``!e g t.(type_fun e g = SOME t) <=> type e g t``,
+    RW_TAC (srw_ss ()) [EQ_IMP_THM, TYPE_FUN_IMP_TYPE_THM, TYPE_IMP_TYPE_FUN_THM]);
+
 val dom_sub_def = Define `dom_sub a b = if !x.x ∈ (FDOM a) ==> x ∈ (FDOM b) then T else F`;
 
 val BOOL_NOT_INT_TYPE_THM = store_thm("BOOL_NOT_INT_TYPE_THM",
