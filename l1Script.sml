@@ -24,6 +24,112 @@ val _ = Hol_datatype `exp = N of int
                           | Seq of exp => exp
                           | While of exp => exp`;
 
+val _ = Hol_datatype `bval = B_N of int
+                           | B_B of bool
+                           | B_Skip`;
+
+val _ = Hol_datatype `bexp = B_Value of bval
+                           | B_Plus of bexp => bexp
+                           | B_Geq of bexp => bexp
+                           | B_If of bexp => bexp => bexp
+                           | B_Assign of loc => bexp
+                           | B_Deref of loc
+                           | B_Seq of bexp => bexp
+                           | B_While of bexp => bexp`;
+
+val bs_to_ss_def = Define `
+    (bs_to_ss (B_Value (B_N n)) = (N n)) /\
+    (bs_to_ss (B_Value (B_B b)) = (B b)) /\
+    (bs_to_ss (B_Value (B_Skip)) = Skip) /\
+    (bs_to_ss (B_Plus e1 e2) = Plus (bs_to_ss e1) (bs_to_ss e2)) /\
+    (bs_to_ss (B_Geq e1 e2) = Geq (bs_to_ss e1) (bs_to_ss e2)) /\
+    (bs_to_ss (B_If e1 e2 e3) = If (bs_to_ss e1) (bs_to_ss e2) (bs_to_ss e3)) /\
+    (bs_to_ss (B_Assign l e) = Assign l (bs_to_ss e)) /\
+    (bs_to_ss (B_Deref l) = Deref l) /\
+    (bs_to_ss (B_Seq e1 e2) = Seq (bs_to_ss e1) (bs_to_ss e2)) /\
+    (bs_to_ss (B_While e1 e2) = While (bs_to_ss e1) (bs_to_ss e2))`;
+    
+val ss_to_bs_def = Define `
+    (ss_to_bs (N n) = B_Value (B_N n)) /\
+    (ss_to_bs (B b) = B_Value (B_B b)) /\
+    (ss_to_bs (Skip) = B_Value B_Skip) /\
+    (ss_to_bs (Plus e1 e2) = B_Plus (ss_to_bs e1) (ss_to_bs e2)) /\
+    (ss_to_bs (Geq e1 e2) = B_Geq (ss_to_bs e1) (ss_to_bs e2)) /\
+    (ss_to_bs (If e1 e2 e3) = B_If (ss_to_bs e1) (ss_to_bs e2) (ss_to_bs e3)) /\
+    (ss_to_bs (Assign l e) = B_Assign l (ss_to_bs e)) /\
+    (ss_to_bs (Deref l) = B_Deref l) /\
+    (ss_to_bs (Seq e1 e2) = B_Seq (ss_to_bs e1) (ss_to_bs e2)) /\
+    (ss_to_bs (While e1 e2) = B_While (ss_to_bs e1) (ss_to_bs e2))`;
+
+
+val REP_EQUALITY_THM = store_thm("REP_EQUALITY_THM",
+    ``(!e.(bs_to_ss (ss_to_bs e)) = e) /\ (!e.(ss_to_bs (bs_to_ss e)) = e)``,
+    STRIP_TAC
+    THEN Induct_on `e`
+    THEN EVAL_TAC
+    THEN FULL_SIMP_TAC (srw_ss ()) []
+    THEN Cases_on `b`
+    THEN EVAL_TAC);
+
+val (bs_rules, bs_induction, bs_ecases) = Hol_reln `
+    (* Values *)
+    (!v s.big_step (B_Value v, s) v s) /\
+
+    (* Plus *)
+    (!e1 e2 n1 n2 s s' s''.
+        (big_step (e1, s) (B_N n1) s' /\
+	 big_step (e2, s') (B_N n2) s'')
+     ==> big_step (B_Plus e1 e2, s) (B_N (n1 + n2)) s'') /\
+
+    (* Geq *)
+    (!e1 e2 n1 n2 s s' s''.
+        (big_step (e1, s) (B_N n1) s' /\
+	 big_step (e2, s') (B_N n2) s'')
+     ==> big_step (B_Geq e1 e2, s) (B_B (n1 >= n2)) s'') /\
+
+    (* Deref *)
+    (!l s.
+          l ∈ FDOM s
+      ==> big_step (B_Deref(l), s) (B_N (s ' l)) s) /\
+
+    (* Assign *)
+    (!l e s n s'.
+         big_step (e, s) (B_N n) s'
+     ==> big_step (B_Assign l e, s) (B_Skip) (s' |+ (l, n))) /\
+
+    (* Seq *)
+    (!e1 e2 v s s' s''.
+        (big_step (e1, s) (B_Skip) s' /\
+	 big_step (e2, s') v s'')
+     ==> big_step (B_Seq e1 e2, s) v s'') /\
+
+    (* If *)
+    (!e1 e2 e3 s s' s'' v.
+        (big_step (e1, s) (B_B T) s' /\
+	 big_step (e2, s) v s'')
+     ==> big_step (B_If e1 e2 e3, s) v s'') /\
+     
+    (!e1 e2 e3 s s' s'' v.
+        (big_step (e1, s) (B_B F) s' /\
+	 big_step (e3, s) v s'')
+     ==> big_step (B_If e1 e2 e3, s) v s'') /\
+
+    (* While *)
+    (!e1 e2 s s' s'' s'''.
+        (big_step (e1, s) (B_B T) s' /\
+	 big_step (e2, s') B_Skip s'' /\
+	 big_step (B_While e1 e2, s'') B_Skip s''')
+     ==> big_step (B_While e1 e2, s) B_Skip s''') /\
+
+    (!e1 e2 s s'.
+         big_step (e1, s) (B_B F) s'
+     ==> big_step (B_While e1 e2, s) B_Skip s')`;
+
+
+`
+
+    `
+
 val (ss_rules, ss_induction, ss_ecases) = Hol_reln `
     (* Plus *)
     (!n1 n2 s.small_step (Plus (N n1) (N n2), s) (N (n1 + n2), s)) /\
