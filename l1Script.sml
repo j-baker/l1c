@@ -61,6 +61,12 @@ val ss_to_bs_def = Define `
     (ss_to_bs (Seq e1 e2) = B_Seq (ss_to_bs e1) (ss_to_bs e2)) /\
     (ss_to_bs (While e1 e2) = B_While (ss_to_bs e1) (ss_to_bs e2))`;
 
+val ss_to_bs_value_def = Define `
+    (ss_to_bs_value (N n) = SOME (B_N n)) /\
+    (ss_to_bs_value (B b) = SOME (B_B b)) /\
+    (ss_to_bs_value (Skip) = SOME (B_Skip)) /\
+    (ss_to_bs_value _ = NONE)`;
+
 
 val REP_EQUALITY_THM = store_thm("REP_EQUALITY_THM",
     ``(!e.(bs_to_ss (ss_to_bs e)) = e) /\ (!e.(ss_to_bs (bs_to_ss e)) = e)``,
