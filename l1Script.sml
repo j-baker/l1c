@@ -126,6 +126,8 @@ val (bs_rules, bs_induction, bs_ecases) = Hol_reln `
          big_step (e1, s) (B_B F) s'
      ==> big_step (B_While e1 e2, s) B_Skip s')`;
 
+val bs_rulel = CONJUNCTS bs_rules;
+
 val bs_sinduction = derive_strong_induction(bs_rules, bs_induction);
 
 val (ss_rules, ss_induction, ss_ecases) = Hol_reln `
