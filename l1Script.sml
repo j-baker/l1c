@@ -373,4 +373,163 @@ val PROGRESS_THM = store_thm("PROGRESS_THM",
     ``!e s e' s'.small_step (e, s) (e', s') ==> (!t.(type_fun e s = SOME t) ==> (type_fun e' s' = SOME t))``,
     METIS_TAC [PROGRESS_LEMMA, pair_first_def, pair_second_def]);
 
+val SS_STAR_ASSIGN_THM = store_thm("SS_STAR_ASSIGN_THM",
+    ``!p p'.small_step^* p p' ==> !l.small_step^* (Assign l (pair_first p), pair_second p) (Assign l (pair_first p'), pair_second p')``,
+    HO_MATCH_MP_TAC RTC_INDUCT
+    THEN RW_TAC (srw_ss ()) []
+    THEN Cases_on `p`
+    THEN Cases_on `p'`
+    THEN Cases_on `p''`
+    THEN FULL_SIMP_TAC (srw_ss ()) [pair_first_def, pair_second_def]
+    THEN RW_TAC (srw_ss ()) [Once RTC_CASES1]
+    THEN METIS_TAC ss_rulel);
+
+val SS_STAR_IF_THM = store_thm("SS_STAR_IF_THM",
+``!p p'.small_step^* p p' ==> !e2 e3.small_step^* (If (pair_first p) e2 e3, pair_second p) (If (pair_first p') e2 e3, pair_second p')``,
+    HO_MATCH_MP_TAC RTC_INDUCT
+    THEN RW_TAC (srw_ss ()) []
+    THEN Cases_on `p`
+    THEN Cases_on `p'`
+    THEN Cases_on `p''`
+    THEN FULL_SIMP_TAC (srw_ss ()) [pair_first_def, pair_second_def]
+    THEN RW_TAC (srw_ss ()) [Once RTC_CASES1]
+    THEN METIS_TAC ss_rulel);
+
+val SS_BS_STAR_IF_T_THM = store_thm("SS_BS_STAR_IF_THM",
+    ``!e1 e2 e3 s s'.small_step^* (e1, s) (B T, s') ==> small_step^* (If e1 e2 e3, s) (e2, s')``,
+    METIS_TAC ([pair_first_def, pair_second_def, SS_STAR_IF_THM, RTC_SUBSET, RTC_CASES_RTC_TWICE]@ss_rulel));
+
+val SS_BS_STAR_IF_F_THM = store_thm("SS_BS_STAR_IF_THM",
+    ``!e1 e2 e3 s s'.small_step^* (e1, s) (B F, s') ==> small_step^* (If e1 e2 e3, s) (e3, s')``,
+    METIS_TAC ([pair_first_def, pair_second_def, SS_STAR_IF_THM, RTC_SUBSET, RTC_CASES_RTC_TWICE]@ss_rulel));
+
+val SS_STAR_ASSIGN_CASE_THM = store_thm("SS_STAR_ASSIGN_CASE_THM",
+    ``!e1 n s s' l.small_step^* (e1, s) (N n, s') ==> small_step^* (Assign l e1, s) (Assign l (N n), s')``,
+    METIS_TAC [pair_first_def, pair_second_def, SS_STAR_ASSIGN_THM]);
+
+val SS_BS_STAR_ASSIGN_THM = store_thm("SS_BS_STAR_ASSIGN_THM",
+    ``!e1 n s s' l.l ∈ FDOM s /\ small_step^* (e1, s) (N n, s') ==> small_step^* (Assign l e1, s) (Skip, s' |+ (l, n))``,
+    RW_TAC (srw_ss ()) []
+    THEN `FDOM s = FDOM s'` by METIS_TAC [DOMAIN_CONSTANT_STAR_THM, pair_second_def]
+    THEN METIS_TAC ([SS_STAR_ASSIGN_CASE_THM, RTC_CASES_RTC_TWICE, RTC_SUBSET]@ss_rulel));
+
+val SS_STAR_GEQ_1_THM = store_thm("SS_STAR_GEQ_THM",
+    ``!p p'.small_step^* p p' ==> !e2.small_step^* (Geq (pair_first p) e2, (pair_second p)) (Geq (pair_first p') e2, pair_second p')``,
+    HO_MATCH_MP_TAC RTC_INDUCT
+    THEN RW_TAC (srw_ss ()) []
+    THEN Cases_on `p`
+    THEN Cases_on `p'`
+    THEN Cases_on `p''`
+    THEN FULL_SIMP_TAC (srw_ss ()) [pair_first_def, pair_second_def]
+    THEN RW_TAC (srw_ss ()) [Once RTC_CASES1]
+    THEN METIS_TAC ss_rulel);
+
+val SS_STAR_GEQ_2_THM = store_thm("SS_STAR_GEQ_THM",
+    ``!p p'.small_step^* p p' ==> !n1.small_step^* (Geq (N n1) (pair_first p), (pair_second p)) (Geq (N n1) (pair_first p'), pair_second p')``,
+    HO_MATCH_MP_TAC RTC_INDUCT
+    THEN RW_TAC (srw_ss ()) []
+    THEN Cases_on `p`
+    THEN Cases_on `p'`
+    THEN Cases_on `p''`
+    THEN FULL_SIMP_TAC (srw_ss ()) [pair_first_def, pair_second_def]
+    THEN RW_TAC (srw_ss ()) [Once RTC_CASES1]
+    THEN METIS_TAC ss_rulel);
+
+
+val SS_STAR_PLUS_1_THM = store_thm("SS_STAR_PLUS_THM",
+    ``!p p'.small_step^* p p' ==> !e2.small_step^* (Plus (pair_first p) e2, (pair_second p)) (Plus (pair_first p') e2, pair_second p')``,
+    HO_MATCH_MP_TAC RTC_INDUCT
+    THEN RW_TAC (srw_ss ()) []
+    THEN Cases_on `p`
+    THEN Cases_on `p'`
+    THEN Cases_on `p''`
+    THEN FULL_SIMP_TAC (srw_ss ()) [pair_first_def, pair_second_def]
+    THEN RW_TAC (srw_ss ()) [Once RTC_CASES1]
+    THEN METIS_TAC ss_rulel);
+
+val SS_STAR_PLUS_2_THM = store_thm("SS_STAR_PLUS_THM",
+    ``!p p'.small_step^* p p' ==> !n1.small_step^* (Plus (N n1) (pair_first p), (pair_second p)) (Plus (N n1) (pair_first p'), pair_second p')``,
+    HO_MATCH_MP_TAC RTC_INDUCT
+    THEN RW_TAC (srw_ss ()) []
+    THEN Cases_on `p`
+    THEN Cases_on `p'`
+    THEN Cases_on `p''`
+    THEN FULL_SIMP_TAC (srw_ss ()) [pair_first_def, pair_second_def]
+    THEN RW_TAC (srw_ss ()) [Once RTC_CASES1]
+    THEN METIS_TAC ss_rulel);
+
+
+val SS_STAR_PLUS_1_CASE_THM = store_thm("SS_STAR_PLUS_1_THM",
+    ``!e1 e2 n1 s s'.small_step^* (e1, s) (N n1, s') ==> small_step^* (Plus e1 e2, s) (Plus (N n1) e2, s')``,
+    METIS_TAC [SS_STAR_PLUS_1_THM, pair_first_def, pair_second_def]);
+
+val SS_STAR_PLUS_2_CASE_THM = store_thm("SS_STAR_PLUS_2_THM",
+    ``!e2 n1 n2 s s'.small_step^* (e2, s) (N n2, s') ==> small_step^* (Plus (N n1) e2, s) (Plus (N n1) (N n2), s')``,
+    METIS_TAC [SS_STAR_PLUS_2_THM, pair_first_def, pair_second_def]);
+
+val SS_BS_STAR_PLUS_THM = store_thm("SS_BS_STAR_PLUS_THM",
+    ``!e1 e2 n1 n2 s s' s''.small_step^* (e1, s) (N n1, s') /\ small_step^* (e2, s') (N n2, s'') ==> small_step^* (Plus e1 e2, s) (N (n1 + n2), s'')``,
+    METIS_TAC ([SS_STAR_PLUS_1_CASE_THM, SS_STAR_PLUS_2_CASE_THM, RTC_CASES_RTC_TWICE, RTC_SUBSET]@ss_rulel));
+
+val SS_STAR_GEQ_1_CASE_THM = store_thm("SS_STAR_PLUS_1_THM",
+    ``!e1 e2 n1 s s'.small_step^* (e1, s) (N n1, s') ==> small_step^* (Geq e1 e2, s) (Geq (N n1) e2, s')``,
+    METIS_TAC [SS_STAR_GEQ_1_THM, pair_first_def, pair_second_def]);
+
+val SS_STAR_GEQ_2_CASE_THM = store_thm("SS_STAR_PLUS_2_THM",
+    ``!e2 n1 n2 s s'.small_step^* (e2, s) (N n2, s') ==> small_step^* (Geq (N n1) e2, s) (Geq (N n1) (N n2), s')``,
+    METIS_TAC [SS_STAR_GEQ_2_THM, pair_first_def, pair_second_def]);
+
+val SS_BS_STAR_GEQ_THM = store_thm("SS_BS_STAR_PLUS_THM",
+    ``!e1 e2 n1 n2 s s' s''.small_step^* (e1, s) (N n1, s') /\ small_step^* (e2, s') (N n2, s'') ==> small_step^* (Geq e1 e2, s) (B (n1 >= n2), s'')``,
+    METIS_TAC ([SS_STAR_GEQ_1_CASE_THM, SS_STAR_GEQ_2_CASE_THM, RTC_CASES_RTC_TWICE, RTC_SUBSET]@ss_rulel));
+
+val SS_STAR_SEQ_THM = store_thm("SS_STAR_SEQ_THM",
+    ``!p p'.small_step^* p p' ==> !e2.small_step^* (Seq (pair_first p) e2, (pair_second p)) (Seq (pair_first p') e2, pair_second p')``,
+    HO_MATCH_MP_TAC RTC_INDUCT
+    THEN RW_TAC (srw_ss ()) []
+    THEN Cases_on `p`
+    THEN Cases_on `p'`
+    THEN Cases_on `p''`
+    THEN FULL_SIMP_TAC (srw_ss ()) [pair_first_def, pair_second_def]
+    THEN RW_TAC (srw_ss ()) [Once RTC_CASES1]
+    THEN METIS_TAC ss_rulel);
+
+val SS_STAR_SEQ_CASE_1_THM = store_thm("SS_STAR_PLUS_1_THM",
+    ``!e1 e2 s s'.small_step^* (e1, s) (Skip, s') ==> small_step^* (Seq e1 e2, s) (Seq Skip e2, s')``,
+    METIS_TAC [SS_STAR_SEQ_THM, pair_first_def, pair_second_def]);
+
+val SS_STAR_SEQ_CASE_2_THM = store_thm("SS_BS_STAR_SEQ_CASE_THM",
+    ``!e2 e2' s s'.small_step^* (e2, s) (e2', s') ==> small_step^* (Seq Skip e2, s) (e2', s')``,
+    METIS_TAC ([SS_STAR_SEQ_THM, pair_first_def, pair_second_def, RTC_SUBSET, RTC_CASES_RTC_TWICE]@ss_rulel));
+
+val SS_BS_STAR_SEQ_THM = store_thm("SS_BS_STAR_SEQ_THM",
+    ``!e1 e2 e2' s s' s''.small_step^* (e1, s) (Skip, s') /\ small_step^* (e2, s') (e2', s'') ==> small_step^* (Seq e1 e2, s) (e2', s'')``,
+    METIS_TAC [SS_STAR_SEQ_CASE_1_THM, SS_STAR_SEQ_CASE_2_THM, RTC_CASES_RTC_TWICE]);
+
+val BS_IMP_SS_LEMMA = store_thm("BS_IMP_SS_LEMMA",
+    ``!p v t.big_step p v t ==> small_step^* (bs_to_ss (pair_first p), pair_second p) (bs_to_ss (B_Value v), t)``,
+    HO_MATCH_MP_TAC bs_sinduction
+    THEN RW_TAC (srw_ss ()) [pair_first_def, pair_second_def]
+    THEN FULL_SIMP_TAC (srw_ss ()) [bs_to_ss_def]
+    THEN1 METIS_TAC [SS_BS_STAR_PLUS_THM]
+    THEN1 METIS_TAC [SS_BS_STAR_GEQ_THM]
+    THEN1 METIS_TAC (RTC_SUBSET::ss_rulel)
+    THEN1 METIS_TAC [SS_BS_STAR_ASSIGN_THM]
+    THEN1 METIS_TAC [SS_BS_STAR_SEQ_THM]
+    THEN1 METIS_TAC [SS_BS_STAR_IF_T_THM, RTC_CASES_RTC_TWICE]
+    THEN1 METIS_TAC [SS_BS_STAR_IF_F_THM, RTC_CASES_RTC_TWICE]
+    THEN1 (
+        `small_step (While (bs_to_ss e1) (bs_to_ss e2), s) (If (bs_to_ss e1) (Seq (bs_to_ss e2) (While (bs_to_ss e1) (bs_to_ss e2))) Skip, s)` by METIS_TAC ss_rulel
+	THEN `small_step^* (If (bs_to_ss e1) (Seq (bs_to_ss e2) (While (bs_to_ss e1) (bs_to_ss e2))) Skip, s) (Seq (bs_to_ss e2) (While (bs_to_ss e1) (bs_to_ss e2)), t)` by METIS_TAC [SS_BS_STAR_IF_T_THM]
+	THEN `small_step^* (Seq (bs_to_ss e2) (While (bs_to_ss e1) (bs_to_ss e2)), t) (Skip, t'')` by METIS_TAC [SS_BS_STAR_SEQ_THM]
+       THEN METIS_TAC [RTC_SUBSET, RTC_CASES_RTC_TWICE])
+    THEN1 (
+        `small_step (While (bs_to_ss e1) (bs_to_ss e2), s) (If (bs_to_ss e1) (Seq (bs_to_ss e2) (While (bs_to_ss e1) (bs_to_ss e2))) Skip, s)` by METIS_TAC ss_rulel
+        THEN `small_step^* (If (bs_to_ss e1) (Seq (bs_to_ss e2) (While (bs_to_ss e1) (bs_to_ss e2))) Skip, s) (Skip, t)` by METIS_TAC [SS_BS_STAR_IF_F_THM]
+        THEN METIS_TAC [RTC_SUBSET, RTC_CASES_RTC_TWICE]));
+
+val BS_IMP_SS_THM = store_thm("BS_IMP_SS_THM",
+    ``!e s v t.big_step (e, s) v t ==> small_step^* (bs_to_ss e, s) (bs_to_ss (B_Value v), t)``,
+    METIS_TAC [BS_IMP_SS_LEMMA, pair_first_def, pair_second_def]);
+
 val _ = export_theory ();
