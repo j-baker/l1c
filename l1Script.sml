@@ -1,4 +1,4 @@
-open HolKernel boolLib bossLib wordsTheory wordsLib listTheory Parse IndDefLib finite_mapTheory;
+open HolKernel boolLib bossLib wordsTheory wordsLib listTheory Parse IndDefLib finite_mapTheory relationTheory;
 
 val _ = new_theory "l1";
 
@@ -348,16 +348,7 @@ val L1_PROGRESS_THM = store_thm("L1_PROGRESS_THM",
 		  THEN EVAL_TAC
 		  THEN FULL_SIMP_TAC (srw_ss ()) []);
 
-val (star_rules, star_induction, star_ecases) = Hol_reln `
-(!x. star r x x) /\
-(!x y z.(r x y ==> star r y z) ==> star r x z)`
-
-
-val STAR_TRANS_THM = store_thm("STAR_TRANS_THM",
-``!r x y z. star r x y ==> star r y z ==> star r x z``,
-METIS_TAC [star_ecases]);
-
-val evals_def = Define `evals x y = star small_step x y`;
+val evals_def = Define `evals x y = RTC small_step x y`;
 
 val pair_first_def = Define `pair_first (x, _) = x`;
 val pair_second_def = Define `pair_second (_, x) = x`;
