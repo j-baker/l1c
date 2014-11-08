@@ -357,6 +357,9 @@ val DOMAIN_CONSTANT_THM = store_thm("DOMAIN_CONSTANT_THM",
     ``!p1 p2. small_step p1 p2 ==> (FDOM (pair_second p1) = FDOM (pair_second p2))``,
     HO_MATCH_MP_TAC sinduction THEN RW_TAC (srw_ss ()) [pair_second_def, FDOM_EQ_FDOM_FUPDATE]);
 
+val DOMAIN_CONSTANT_STAR_THM = store_thm("DOMAIN_CONSTANT_STAR_THM",
+    ``!p1 p2. small_step^* p1 p2 ==> (FDOM (pair_second p1) = FDOM (pair_second p2))``,
+    HO_MATCH_MP_TAC RTC_INDUCT THEN METIS_TAC [DOMAIN_CONSTANT_THM]);
 
 val DOM_CONST_2_THM = store_thm("DOM_CONST_2_THM",
     ``!p1 p2. small_step p1 p2 ==> !e.type_fun e (pair_second p1) = type_fun e (pair_second p2)``,
