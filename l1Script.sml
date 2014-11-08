@@ -94,7 +94,8 @@ val (bs_rules, bs_induction, bs_ecases) = Hol_reln `
 
     (* Assign *)
     (!l e s n s'.
-         big_step (e, s) (B_N n) s'
+        (l ∈ FDOM s /\
+         big_step (e, s) (B_N n) s')
      ==> big_step (B_Assign l e, s) (B_Skip) (s' |+ (l, n))) /\
 
     (* Seq *)
@@ -106,12 +107,12 @@ val (bs_rules, bs_induction, bs_ecases) = Hol_reln `
     (* If *)
     (!e1 e2 e3 s s' s'' v.
         (big_step (e1, s) (B_B T) s' /\
-	 big_step (e2, s) v s'')
+	 big_step (e2, s') v s'')
      ==> big_step (B_If e1 e2 e3, s) v s'') /\
      
     (!e1 e2 e3 s s' s'' v.
         (big_step (e1, s) (B_B F) s' /\
-	 big_step (e3, s) v s'')
+	 big_step (e3, s') v s'')
      ==> big_step (B_If e1 e2 e3, s) v s'') /\
 
     (* While *)
