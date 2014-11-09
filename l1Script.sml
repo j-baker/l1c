@@ -597,11 +597,11 @@ val SS_STEP_BS_THM = store_thm("SS_STEP_BS_THM",
     THEN1 (`big_step (B_Value (B_B T), s) (B_B T) s` by METIS_TAC bs_rulel THEN METIS_TAC [])
     THEN1 (`big_step (B_Value (B_B F), s) (B_B F) s` by METIS_TAC bs_rulel THEN METIS_TAC [])
     THEN1 METIS_TAC [BS_IF_BACK_THM]
-    THEN1 (IMP_RES_TAC BS_IF_BACK_THM THEN1(
-        IMP_RES_TAC BS_SEQ_BACK_THM
-        THEN IMP_RES_TAC BS_WHILE_BACK_THM
-        THEN RW_TAC (srw_ss ()) []
-	THEN METIS_TAC [])
+    THEN1 (IMP_RES_TAC BS_IF_BACK_THM
+        THEN1 (IMP_RES_TAC BS_SEQ_BACK_THM
+            THEN IMP_RES_TAC BS_WHILE_BACK_THM
+            THEN RW_TAC (srw_ss ()) []
+	    THEN METIS_TAC [])
 	THEN IMP_RES_TAC BS_IF_BACK_THM
         THEN IMP_RES_TAC BS_SEQ_BACK_THM
         THEN IMP_RES_TAC BS_WHILE_BACK_THM
