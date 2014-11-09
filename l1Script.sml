@@ -67,6 +67,8 @@ val ss_to_bs_value_def = Define `
     (ss_to_bs_value (Skip) = SOME (B_Skip)) /\
     (ss_to_bs_value _ = NONE)`;
 
+val ss_bs_def = Define `ss_bs (e, s) = (ss_to_bs e, s)`;
+
 
 val REP_EQUALITY_THM = store_thm("REP_EQUALITY_THM",
     ``(!e.(bs_to_ss (ss_to_bs e)) = e) /\ (!e.(ss_to_bs (bs_to_ss e)) = e)``,
