@@ -537,4 +537,20 @@ val BS_IMP_SS_THM = store_thm("BS_IMP_SS_THM",
     ``!e s v t.big_step (e, s) v t ==> small_step^* (bs_to_ss e, s) (bs_to_ss (B_Value v), t)``,
     METIS_TAC [BS_IMP_SS_LEMMA, pair_first_def, pair_second_def]);
 
+val SS_IMP_BS_FAKE_THM = store_thm("SS_IMP_BS_FAKE_THM",
+    ``(!p p'.small_step p p' ==> !v t.(big_step (ss_bs p') v t ==> big_step (ss_bs p) v t)) ==> (!p p'.small_step^* p p' ==> value (pair_first p') ==> ?x.((ss_to_bs_value (pair_first p') = SOME x) /\ big_step (ss_to_bs (pair_first p), pair_second p) x (pair_second p')))``,
+    STRIP_TAC
+    THEN HO_MATCH_MP_TAC RTC_STRONG_INDUCT
+    THEN RW_TAC (srw_ss ()) [pair_first_def, pair_second_def, ss_bs_def]
+
+    THEN1 (Cases_on `pair_first p`
+        THEN FULL_SIMP_TAC (srw_ss ()) [value_def]
+	THEN EVAL_TAC
+	THEN RW_TAC (srw_ss ()) [Once bs_ecases])
+
+    THEN Cases_on `p`
+    THEN Cases_on `p'`
+    THEN Cases_on `p''`
+    THEN FULL_SIMP_TAC (srw_ss ()) [pair_first_def, pair_second_def]
+    THEN METIS_TAC [ss_bs_def, pair_first_def, pair_second_def]);
 val _ = export_theory ();
