@@ -608,6 +608,13 @@ val SS_STEP_BS_THM = store_thm("SS_STEP_BS_THM",
         THEN IMP_RES_TAC BS_VALUE_BACK_THM
         THEN `big_step (B_Value B_Skip, s'') B_Skip s''` by METIS_TAC bs_rulel
         THEN RW_TAC (srw_ss ()) []));
+
+val SS_IMP_BS_THM = store_thm("SS_IMP_BS_THM",
+    ``!p p'.small_step^* p p' ==> value (pair_first p') ==> ?x.((ss_to_bs_value (pair_first p') = SOME x) /\ big_step (ss_to_bs (pair_first p), pair_second p) x (pair_second p'))``,
+    METIS_TAC [SS_IMP_BS_FAKE_THM, SS_STEP_BS_THM]);
+
+
+
 val BS_PLUS_BACK_THM = store_thm("BS_PLUS_BACK_THM",
     ``!e1 e2 s v t.big_step (B_Plus e1 e2, s) v t ==> ?n1 n2 s'.big_step (e1, s) (B_N n1) s' /\ big_step (e2, s') (B_N n2) t /\ (v = B_N (n1 + n2))``,
     RW_TAC (srw_ss ()) [Once bs_ecases]
