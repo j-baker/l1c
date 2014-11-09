@@ -556,7 +556,40 @@ val SS_IMP_BS_FAKE_THM = store_thm("SS_IMP_BS_FAKE_THM",
     THEN FULL_SIMP_TAC (srw_ss ()) [pair_first_def, pair_second_def]
     THEN METIS_TAC [ss_bs_def, pair_first_def, pair_second_def]);
 
+val BS_PLUS_BACK_THM = store_thm("BS_PLUS_BACK_THM",
+    ``!e1 e2 s v t.big_step (B_Plus e1 e2, s) v t ==> ?n1 n2 s'.big_step (e1, s) (B_N n1) s' /\ big_step (e2, s') (B_N n2) t /\ (v = B_N (n1 + n2))``,
+    RW_TAC (srw_ss ()) [Once bs_ecases]
+    THEN METIS_TAC []);
 
+val BS_GEQ_BACK_THM = store_thm("BS_GEQ_BACK_THM",
+    ``!e1 e2 s v t.big_step (B_Geq e1 e2, s) v t ==> ?n1 n2 s'.big_step (e1, s) (B_N n1) s' /\ big_step (e2, s') (B_N n2) t /\ (v = B_B (n1 >= n2))``,
+    RW_TAC (srw_ss ()) [Once bs_ecases]
+    THEN METIS_TAC []);
+
+val BS_ASSIGN_BACK_THM = store_thm("BS_ASSIGN_BACK_THM",
+    ``!l e s n t v.big_step (B_Assign l e, s) v t ==> ?n s'. l ∈ FDOM s /\ big_step (e, s) (B_N n) s' /\ (v = B_Skip) /\ (t = s' |+ (l, n))``,
+    RW_TAC (srw_ss ()) [Once bs_ecases]
+    THEN METIS_TAC []);
+
+val BS_SEQ_BACK_THM = store_thm("BS_SEQ_BACK_THM",
+    ``!e1 e2 s t v.big_step (B_Seq e1 e2, s) v t ==> ?s'.big_step (e1, s) B_Skip s' /\ big_step (e2, s') v t``,
+    RW_TAC (srw_ss ()) [Once bs_ecases]
+    THEN METIS_TAC []);
+
+val BS_IF_BACK_THM = store_thm("BS_IF_BACK_THM",
+    ``!e1 e2 e3 s t v.big_step (B_If e1 e2 e3, s) v t ==> (?s'.big_step (e1, s) (B_B T) s' /\ big_step (e2, s') v t) \/ (?s'.big_step (e1, s) (B_B F) s' /\ big_step (e3, s') v t)``,
+    RW_TAC (srw_ss ()) [Once bs_ecases]
+    THEN METIS_TAC []);
+
+val BS_WHILE_BACK_THM = store_thm("BS_WHILE_BACK_THM",
+    ``!e1 e2 s t v.big_step (B_While e1 e2, s) v t ==> (v = B_Skip)``,
+    RW_TAC (srw_ss ()) [Once bs_ecases]
+    THEN METIS_TAC []);
+
+val BS_VALUE_BACK_THM = store_thm("BS_VALUE_BACK_THM",
+    ``!v v' s t.big_step (B_Value v, s) v' t ==> ((v = v') /\ (t = s))``,
+    RW_TAC (srw_ss ()) [Once bs_ecases]
+    THEN METIS_TAC []);
 
 val SS_STEP_BS_THM = store_thm("SS_STEP_BS_THM",
     ``!p p'.small_step p p' ==> !v t.(big_step (ss_bs p') v t ==> big_step (ss_bs p) v t)``,
@@ -613,40 +646,4 @@ val SS_IMP_BS_THM = store_thm("SS_IMP_BS_THM",
     ``!p p'.small_step^* p p' ==> value (pair_first p') ==> ?x.((ss_to_bs_value (pair_first p') = SOME x) /\ big_step (ss_to_bs (pair_first p), pair_second p) x (pair_second p'))``,
     METIS_TAC [SS_IMP_BS_FAKE_THM, SS_STEP_BS_THM]);
 
-
-
-val BS_PLUS_BACK_THM = store_thm("BS_PLUS_BACK_THM",
-    ``!e1 e2 s v t.big_step (B_Plus e1 e2, s) v t ==> ?n1 n2 s'.big_step (e1, s) (B_N n1) s' /\ big_step (e2, s') (B_N n2) t /\ (v = B_N (n1 + n2))``,
-    RW_TAC (srw_ss ()) [Once bs_ecases]
-    THEN METIS_TAC []);
-
-val BS_GEQ_BACK_THM = store_thm("BS_GEQ_BACK_THM",
-    ``!e1 e2 s v t.big_step (B_Geq e1 e2, s) v t ==> ?n1 n2 s'.big_step (e1, s) (B_N n1) s' /\ big_step (e2, s') (B_N n2) t /\ (v = B_B (n1 >= n2))``,
-    RW_TAC (srw_ss ()) [Once bs_ecases]
-    THEN METIS_TAC []);
-
-val BS_ASSIGN_BACK_THM = store_thm("BS_ASSIGN_BACK_THM",
-    ``!l e s n t v.big_step (B_Assign l e, s) v t ==> ?n s'. l ∈ FDOM s /\ big_step (e, s) (B_N n) s' /\ (v = B_Skip) /\ (t = s' |+ (l, n))``,
-    RW_TAC (srw_ss ()) [Once bs_ecases]
-    THEN METIS_TAC []);
-
-val BS_SEQ_BACK_THM = store_thm("BS_SEQ_BACK_THM",
-    ``!e1 e2 s t v.big_step (B_Seq e1 e2, s) v t ==> ?s'.big_step (e1, s) B_Skip s' /\ big_step (e2, s') v t``,
-    RW_TAC (srw_ss ()) [Once bs_ecases]
-    THEN METIS_TAC []);
-
-val BS_IF_BACK_THM = store_thm("BS_IF_BACK_THM",
-    ``!e1 e2 e3 s t v.big_step (B_If e1 e2 e3, s) v t ==> (?s'.big_step (e1, s) (B_B T) s' /\ big_step (e2, s') v t) \/ (?s'.big_step (e1, s) (B_B F) s' /\ big_step (e3, s') v t)``,
-    RW_TAC (srw_ss ()) [Once bs_ecases]
-    THEN METIS_TAC []);
-
-val BS_WHILE_BACK_THM = store_thm("BS_WHILE_BACK_THM",
-    ``!e1 e2 s t v.big_step (B_While e1 e2, s) v t ==> (v = B_Skip)``,
-    RW_TAC (srw_ss ()) [Once bs_ecases]
-    THEN METIS_TAC []);
-
-val BS_VALUE_BACK_THM = store_thm("BS_VALUE_BACK_THM",
-    ``!v v' s t.big_step (B_Value v, s) v' t ==> ((v = v') /\ (t = s))``,
-    RW_TAC (srw_ss ()) [Once bs_ecases]
-    THEN METIS_TAC []);
 val _ = export_theory ();
