@@ -355,8 +355,6 @@ val L1_PROGRESS_THM = store_thm("L1_PROGRESS_THM",
 		  THEN EVAL_TAC
 		  THEN FULL_SIMP_TAC (srw_ss ()) []);
 
-val evals_def = Define `evals x y = RTC small_step x y`;
-
 val pair_first_def = Define `pair_first (x, _) = x`;
 val pair_second_def = Define `pair_second (_, x) = x`;
 
