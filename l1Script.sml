@@ -555,4 +555,91 @@ val SS_IMP_BS_FAKE_THM = store_thm("SS_IMP_BS_FAKE_THM",
     THEN Cases_on `p''`
     THEN FULL_SIMP_TAC (srw_ss ()) [pair_first_def, pair_second_def]
     THEN METIS_TAC [ss_bs_def, pair_first_def, pair_second_def]);
+
+
+
+val SS_STEP_BS_THM = store_thm("SS_STEP_BS_THM",
+    ``!p p'.small_step p p' ==> !v t.(big_step (ss_bs p') v t ==> big_step (ss_bs p) v t)``,
+    HO_MATCH_MP_TAC sinduction THEN
+    RW_TAC (srw_ss ()) [ss_bs_def, ss_to_bs_def] THEN RW_TAC (srw_ss ()) [Once bs_ecases]
+    THEN1 (FULL_SIMP_TAC (srw_ss ()) [Once bs_ecases] THEN
+           RW_TAC (srw_ss ()) [Once bs_ecases])
+    THEN1 METIS_TAC [BS_PLUS_BACK_THM]
+    THEN1 (IMP_RES_TAC BS_PLUS_BACK_THM
+        THEN `s' = s''` by FULL_SIMP_TAC (srw_ss ()) [Once bs_ecases]
+        THEN `n = n1` by FULL_SIMP_TAC (srw_ss ()) [Once bs_ecases]
+        THEN RW_TAC (srw_ss ()) []
+        THEN RES_TAC
+        THEN `big_step (B_Value (B_N n), s) (B_N n) s` by METIS_TAC bs_rulel
+        THEN METIS_TAC [])
+    THEN1 (FULL_SIMP_TAC (srw_ss ()) [Once bs_ecases]
+        THEN RW_TAC (srw_ss ()) [Once bs_ecases])
+    THEN1 METIS_TAC [BS_GEQ_BACK_THM]
+    THEN1 (IMP_RES_TAC BS_GEQ_BACK_THM
+        THEN `s' = s''` by FULL_SIMP_TAC (srw_ss ()) [Once bs_ecases]
+        THEN `n = n1` by FULL_SIMP_TAC (srw_ss ()) [Once bs_ecases]
+        THEN RW_TAC (srw_ss ()) []
+        THEN RES_TAC
+        THEN `big_step (B_Value (B_N n), s) (B_N n) s` by METIS_TAC bs_rulel
+        THEN METIS_TAC [])
+    THEN1 FULL_SIMP_TAC (srw_ss ()) [Once bs_ecases]
+    THEN1 (FULL_SIMP_TAC (srw_ss ()) [Once bs_ecases]
+        THEN RW_TAC (srw_ss ()) [Once bs_ecases])
+    THEN1 FULL_SIMP_TAC (srw_ss ()) [Once bs_ecases]
+    THEN1 FULL_SIMP_TAC (srw_ss ()) [Once bs_ecases]
+    THEN1 (IMP_RES_TAC BS_ASSIGN_BACK_THM
+        THEN `FDOM s = FDOM s'` by METIS_TAC [DOMAIN_CONSTANT_THM, pair_second_def]
+        THEN RW_TAC (srw_ss ()) []
+        THEN METIS_TAC [])
+    THEN1 (`big_step (B_Value B_Skip, s) B_Skip s` by METIS_TAC bs_rulel
+         THEN METIS_TAC [])
+    THEN1 METIS_TAC [BS_SEQ_BACK_THM]
+    THEN1 (`big_step (B_Value (B_B T), s) (B_B T) s` by METIS_TAC bs_rulel THEN METIS_TAC [])
+    THEN1 (`big_step (B_Value (B_B F), s) (B_B F) s` by METIS_TAC bs_rulel THEN METIS_TAC [])
+    THEN1 METIS_TAC [BS_IF_BACK_THM]
+    THEN1 (IMP_RES_TAC BS_IF_BACK_THM THEN1(
+        IMP_RES_TAC BS_SEQ_BACK_THM
+        THEN IMP_RES_TAC BS_WHILE_BACK_THM
+        THEN RW_TAC (srw_ss ()) []
+	THEN METIS_TAC [])
+	THEN IMP_RES_TAC BS_IF_BACK_THM
+        THEN IMP_RES_TAC BS_SEQ_BACK_THM
+        THEN IMP_RES_TAC BS_WHILE_BACK_THM
+        THEN IMP_RES_TAC BS_VALUE_BACK_THM
+        THEN `big_step (B_Value B_Skip, s'') B_Skip s''` by METIS_TAC bs_rulel
+        THEN RW_TAC (srw_ss ()) []));
+val BS_PLUS_BACK_THM = store_thm("BS_PLUS_BACK_THM",
+    ``!e1 e2 s v t.big_step (B_Plus e1 e2, s) v t ==> ?n1 n2 s'.big_step (e1, s) (B_N n1) s' /\ big_step (e2, s') (B_N n2) t /\ (v = B_N (n1 + n2))``,
+    RW_TAC (srw_ss ()) [Once bs_ecases]
+    THEN METIS_TAC []);
+
+val BS_GEQ_BACK_THM = store_thm("BS_GEQ_BACK_THM",
+    ``!e1 e2 s v t.big_step (B_Geq e1 e2, s) v t ==> ?n1 n2 s'.big_step (e1, s) (B_N n1) s' /\ big_step (e2, s') (B_N n2) t /\ (v = B_B (n1 >= n2))``,
+    RW_TAC (srw_ss ()) [Once bs_ecases]
+    THEN METIS_TAC []);
+
+val BS_ASSIGN_BACK_THM = store_thm("BS_ASSIGN_BACK_THM",
+    ``!l e s n t v.big_step (B_Assign l e, s) v t ==> ?n s'. l ∈ FDOM s /\ big_step (e, s) (B_N n) s' /\ (v = B_Skip) /\ (t = s' |+ (l, n))``,
+    RW_TAC (srw_ss ()) [Once bs_ecases]
+    THEN METIS_TAC []);
+
+val BS_SEQ_BACK_THM = store_thm("BS_SEQ_BACK_THM",
+    ``!e1 e2 s t v.big_step (B_Seq e1 e2, s) v t ==> ?s'.big_step (e1, s) B_Skip s' /\ big_step (e2, s') v t``,
+    RW_TAC (srw_ss ()) [Once bs_ecases]
+    THEN METIS_TAC []);
+
+val BS_IF_BACK_THM = store_thm("BS_IF_BACK_THM",
+    ``!e1 e2 e3 s t v.big_step (B_If e1 e2 e3, s) v t ==> (?s'.big_step (e1, s) (B_B T) s' /\ big_step (e2, s') v t) \/ (?s'.big_step (e1, s) (B_B F) s' /\ big_step (e3, s') v t)``,
+    RW_TAC (srw_ss ()) [Once bs_ecases]
+    THEN METIS_TAC []);
+
+val BS_WHILE_BACK_THM = store_thm("BS_WHILE_BACK_THM",
+    ``!e1 e2 s t v.big_step (B_While e1 e2, s) v t ==> (v = B_Skip)``,
+    RW_TAC (srw_ss ()) [Once bs_ecases]
+    THEN METIS_TAC []);
+
+val BS_VALUE_BACK_THM = store_thm("BS_VALUE_BACK_THM",
+    ``!v v' s t.big_step (B_Value v, s) v' t ==> ((v = v') /\ (t = s))``,
+    RW_TAC (srw_ss ()) [Once bs_ecases]
+    THEN METIS_TAC []);
 val _ = export_theory ();
