@@ -2,9 +2,11 @@ open HolKernel boolLib bossLib wordsTheory wordsLib listTheory Parse IndDefLib f
 
 val _ = new_theory "il1";
 
-val _ = Hol_datatype `il1_expr = IL1_ESkip
-                               | IL1_Integer of int
-                               | IL1_Boolean of bool
+val _ = Hol_datatype `il1_value = IL1_ESkip
+                                | IL1_Integer of int
+				| IL1_Boolean of bool`;
+
+val _ = Hol_datatype `il1_expr = IL1_Value of il1_value
                                | IL1_Plus of il1_expr => il1_expr
                                | IL1_Geq of il1_expr => il1_expr
                                | IL1_Deref of loc
