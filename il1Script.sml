@@ -18,4 +18,36 @@ val _ = Hol_datatype `il1_stm = IL1_Expr of il1_expr
                               | IL1_SIf of il1_expr => il1_stm => il1_stm
                               | IL1_While of il1_expr => il1_stm`;
 
+val (bs_il1_expr_rules, bs_il1_expr_induction, bs_il1_expr_ecases) = Hol_reln `
+    (* Values *)
+    (!v s.bs_il1_expr (IL1_Value v, s) v) /\
+
+    (* Plus *)
+    (!e1 e2 n1 n2 s.
+        (bs_il1_expr (e1, s) (IL1_Integer n1) /\
+         bs_il1_expr (e2, s) (IL1_Integer n2))
+     ==> bs_il1_expr (IL1_Plus e1 e2, s) (IL1_Integer (n1 + n2))) /\
+
+    (* Geq *)
+    (!e1 e2 n1 n2 s.
+        (bs_il1_expr (e1, s) (IL1_Integer n1) /\
+         bs_il1_expr (e2, s) (IL1_Integer n2))
+     ==> bs_il1_expr (IL1_Geq e1 e2, s) (IL1_Boolean (n1 >= n2))) /\
+
+    (* Deref *)
+    (!l s.
+        l ∈ FDOM s
+    ==> bs_il1_expr (IL1_Deref l, s) (IL1_Integer (s ' l))) /\
+
+    (* EIf *)
+    (!e1 e2 e3 s v.
+        (bs_il1_expr (e1, s) (IL1_Boolean T) /\
+         bs_il1_expr (e2, s) v)
+     ==> bs_il1_expr (IL1_EIf e1 e2 e3, s) v) /\
+
+    (!e1 e2 e3 s.
+        (bs_il1_expr (e1, s) (IL1_Boolean F) /\
+         bs_il1_expr (e3, s) v)
+     ==> bs_il1_expr (IL1_EIf e1 e2 e3, s) v)`;
+
 val _ = export_theory ();
