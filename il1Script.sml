@@ -90,4 +90,36 @@ val (bs_il1_rules, bs_il1_induction, bs_il1_ecases) = Hol_reln `
         bs_il1_expr (e1, s) (IL1_Boolean F)
     ==> bs_il1 (IL1_While e1 e2, s) IL1_ESkip s)`;
 
+val l1_to_il1_pair_def = Define `
+    (l1_to_il1_pair (B_Value (B_N n)) = (IL1_Expr (IL1_Value IL1_ESkip), IL1_Value (IL1_Integer n))) /\
+    (l1_to_il1_pair (B_Value (B_B b)) = (IL1_Expr (IL1_Value IL1_ESkip), IL1_Value (IL1_Boolean b))) /\
+    (l1_to_il1_pair (B_Value B_Skip) = (IL1_Expr (IL1_Value IL1_ESkip), IL1_Value IL1_ESkip)) /\
+    (l1_to_il1_pair (B_Deref l) = (IL1_Expr (IL1_Value IL1_ESkip), IL1_Deref l)) /\
+
+    (l1_to_il1_pair (B_Assign l e) =
+        let (sl, e') = l1_to_il1_pair e
+        in
+            (IL1_Seq sl (IL1_Assign l e'), IL1_Value IL1_ESkip)) /\
+
+    (l1_to_il1_pair (B_Seq e1 e2) =
+        let (sl1, e1') = l1_to_il1_pair e1
+        and (sl2, e2') = l1_to_il1_pair e2
+        in (IL1_Seq sl1 sl2, e2')) /\
+
+    (l1_to_il1_pair (B_While e1 e2) =
+        let (sl1, e1') = l1_to_il1_pair e1
+        and (sl2, e2') = l1_to_il1_pair e2
+        in
+            (IL1_Seq sl1 (IL1_While e1' (IL1_Seq sl2 sl1)), IL1_Value IL1_ESkip)) /\
+
+    (l1_to_il1_pair (B_If e1 e2 e3) =
+        let (sl1, e1') = l1_to_il1_pair e1
+        and (sl2, e2') = l1_to_il1_pair e2
+        and (sl3, e3') = l1_to_il1_pair e3
+        in
+            (IL1_Seq sl1 (IL1_SIf e1' sl2 sl3), IL1_EIf e1' e2' e3'))`;
+
+val l1_to_il1_def = Define `l1_to_il1 e = let (s, e) = l1_to_il1_pair e in IL1_Seq s (IL1_Expr e)`;
+
+
 val _ = export_theory ();
