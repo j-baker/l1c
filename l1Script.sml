@@ -5,7 +5,7 @@ val _ = new_theory "l1";
 val _ = numLib.prefer_num();
 val _ = wordsLib.prefer_word();
 
-val _ = type_abbrev("loc", ``:word24``);
+val _ = type_abbrev("loc", ``:num``);
 
 val _ = type_abbrev("int", ``:word16``);
 
