@@ -19,10 +19,10 @@ val _ = Hol_datatype `il1_stm = IL1_Expr of il1_expr
                               | IL1_While of il1_expr => il1_stm`;
 
 val contains_expr_def = Define `(contains_expr l (IL1_Value v) = F) /\
-(contains_expr l (IL1_Plus e1 e2) = (contains_expr l e1) \/ (contains_expr l e2)) /\
-(contains_expr l (IL1_Geq e1 e2) = (contains_expr l e1) \/ (contains_expr l e2)) /\
+(contains_expr l (IL1_Plus e1 e2) = contains_expr l e1 \/ contains_expr l e2) /\
+(contains_expr l (IL1_Geq e1 e2) = contains_expr l e1 \/ contains_expr l e2) /\
 (contains_expr l1 (IL1_Deref l2) = (l1 = l2)) /\
-(contains_expr l (IL1_EIf e1 e2 e3) = (contains_expr l e1) \/ (contains_expr l e2) \/ (contains_expr l e3))`;
+(contains_expr l (IL1_EIf e1 e2 e3) = contains_expr l e1 \/ contains_expr l e2 \/ contains_expr l e3)`;
 
 val (bs_il1_expr_rules, bs_il1_expr_induction, bs_il1_expr_ecases) = Hol_reln `
     (* Values *)
