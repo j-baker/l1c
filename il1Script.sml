@@ -24,6 +24,12 @@ val contains_expr_def = Define `(contains_expr l (IL1_Value v) = F) /\
 (contains_expr l1 (IL1_Deref l2) = (l1 = l2)) /\
 (contains_expr l (IL1_EIf e1 e2 e3) = contains_expr l e1 \/ contains_expr l e2 \/ contains_expr l e3)`;
 
+val contains_def = Define `(contains l (IL1_Expr e) = contains_expr l e) /\
+(contains l1 (IL1_Assign l2 e) = (l1 = l2) \/ contains_expr l1 e) /\
+(contains l (IL1_Seq e1 e2) = contains l e1 \/ contains l e2) /\
+(contains l (IL1_SIf e1 e2 e3) = contains_expr l e1 \/ contains l e2 \/ contains l e3) /\
+(contains l (IL1_While e1 e2) = contains_expr l e1 \/ contains l e2)`;
+
 val (bs_il1_expr_rules, bs_il1_expr_induction, bs_il1_expr_ecases) = Hol_reln `
     (* Values *)
     (!v s.bs_il1_expr (IL1_Value v, s) v) /\
