@@ -46,6 +46,18 @@ val max_loc_def = Define `
     (max_loc (IL1_SIf e1 e2 e3) = MAX (MAX (max_loc_expr e1) (max_loc e2)) (max_loc e3)) /\
     (max_loc (IL1_While e1 e2) = MAX (max_loc_expr e1) (max_loc e2))`;
 
+
+val UNUSED_UPPER_LOCS_EXPR_THM = store_thm(
+    "UNUSED_UPPER_LOCS_EXPR_THM",
+    ``!e n.max_loc_expr e < n ==> ~contains_expr n e``,
+    Induct_on `e` THEN EVAL_TAC THEN FULL_SIMP_TAC (srw_ss ()) [MAX_DEF]);
+
+val UNUSED_UPPER_LOCS_THM = store_thm(
+    "UNUSED_UPPER_LOCS_THM",
+    ``!e n.max_loc e < n==> ~contains n e``,
+    Induct_on `e` THEN EVAL_TAC
+    THEN FULL_SIMP_TAC (srw_ss ()) [MAX_DEF, UNUSED_UPPER_LOCS_EXPR_THM]);
+
 val (bs_il1_expr_rules, bs_il1_expr_induction, bs_il1_expr_ecases) = Hol_reln `
     (* Values *)
     (!v s.bs_il1_expr (IL1_Value v, s) v) /\
