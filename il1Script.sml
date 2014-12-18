@@ -1,6 +1,14 @@
-open HolKernel boolLib bossLib wordsTheory wordsLib listTheory Parse IndDefLib finite_mapTheory relationTheory l1Theory arithmeticTheory;
+open HolKernel boolLib bossLib wordsTheory wordsLib listTheory Parse IndDefLib finite_mapTheory relationTheory arithmeticTheory l1Theory;
 
 val _ = new_theory "il1";
+
+val _ = type_abbrev("loc", ``:num``);
+
+val _ = type_abbrev("int", ``:word16``);
+
+val _ = type_abbrev("state", ``:loc |-> int``);
+
+val _ = type_abbrev("pred", ``:state -> bool``);
 
 val _ = Hol_datatype `il1_value = IL1_ESkip
                                 | IL1_Integer of int
@@ -131,35 +139,48 @@ val (bs_il1_rules, bs_il1_induction, bs_il1_ecases) = Hol_reln `
     ==> bs_il1 (IL1_While e1 e2, s) IL1_ESkip s)`;
 
 val l1_to_il1_pair_def = Define `
-    (l1_to_il1_pair (B_Value (B_N n)) = (IL1_Expr (IL1_Value IL1_ESkip), IL1_Value (IL1_Integer n))) /\
-    (l1_to_il1_pair (B_Value (B_B b)) = (IL1_Expr (IL1_Value IL1_ESkip), IL1_Value (IL1_Boolean b))) /\
-    (l1_to_il1_pair (B_Value B_Skip) = (IL1_Expr (IL1_Value IL1_ESkip), IL1_Value IL1_ESkip)) /\
-    (l1_to_il1_pair (B_Deref l) = (IL1_Expr (IL1_Value IL1_ESkip), IL1_Deref l)) /\
+    (l1_to_il1_pair lc (B_Value (B_N n)) = (IL1_Expr (IL1_Value IL1_ESkip), IL1_Value (IL1_Integer n), lc)) /\
+    (l1_to_il1_pair lc (B_Value (B_B b)) = (IL1_Expr (IL1_Value IL1_ESkip), IL1_Value (IL1_Boolean b), lc)) /\
+    (l1_to_il1_pair lc (B_Value B_Skip) = (IL1_Expr (IL1_Value IL1_ESkip), IL1_Value IL1_ESkip, lc)) /\
+    (l1_to_il1_pair lc (B_Deref l) = (IL1_Expr (IL1_Value IL1_ESkip), IL1_Deref l, lc)) /\
 
-    (l1_to_il1_pair (B_Assign l e) =
-        let (sl, e') = l1_to_il1_pair e
+    (l1_to_il1_pair lc (B_Assign l e) =
+        let (sl, e', lc2) = l1_to_il1_pair lc e
         in
-            (IL1_Seq sl (IL1_Assign l e'), IL1_Value IL1_ESkip)) /\
+            (IL1_Seq sl (IL1_Assign l e'), IL1_Value IL1_ESkip,lc2)) /\
 
-    (l1_to_il1_pair (B_Seq e1 e2) =
-        let (sl1, e1') = l1_to_il1_pair e1
-        and (sl2, e2') = l1_to_il1_pair e2
-        in (IL1_Seq sl1 sl2, e2')) /\
+    (l1_to_il1_pair lc (B_Seq e1 e2) =
+        let (sl1, e1', lc2) = l1_to_il1_pair lc e1 in
+        let (sl2, e2', lc3) = l1_to_il1_pair lc2 e2
+        in (IL1_Seq sl1 sl2, e2', lc3)) /\
 
-    (l1_to_il1_pair (B_While e1 e2) =
-        let (sl1, e1') = l1_to_il1_pair e1
-        and (sl2, e2') = l1_to_il1_pair e2
+    (l1_to_il1_pair lc (B_While e1 e2) =
+        let (sl1, e1', lc2) = l1_to_il1_pair lc e1 in
+        let (sl2, e2', lc3) = l1_to_il1_pair lc2 e2
         in
-            (IL1_Seq sl1 (IL1_While e1' (IL1_Seq sl2 sl1)), IL1_Value IL1_ESkip)) /\
+            (IL1_Seq sl1 (IL1_While e1' (IL1_Seq sl2 sl1)), IL1_Value IL1_ESkip, lc3)) /\
 
-    (l1_to_il1_pair (B_If e1 e2 e3) =
-        let (sl1, e1') = l1_to_il1_pair e1
-        and (sl2, e2') = l1_to_il1_pair e2
-        and (sl3, e3') = l1_to_il1_pair e3
+    (l1_to_il1_pair lc (B_If e1 e2 e3) =
+        let (sl1, e1', lc2) = l1_to_il1_pair lc e1 in 
+        let (sl2, e2', lc3) = l1_to_il1_pair lc2 e2 in
+        let (sl3, e3', lc4) = l1_to_il1_pair lc3 e3
         in
-            (IL1_Seq sl1 (IL1_SIf e1' sl2 sl3), IL1_EIf e1' e2' e3'))`;
+            (IL1_Seq sl1 (IL1_SIf e1' sl2 sl3), IL1_EIf e1' e2' e3', lc4)) /\
 
-val l1_to_il1_def = Define `l1_to_il1 e = let (s, e) = l1_to_il1_pair e in IL1_Seq s (IL1_Expr e)`;
+    (l1_to_il1_pair lc (B_Plus e1 e2) =
+        let (sl1, e1', lc2) = l1_to_il1_pair lc e1 in
+        let (sl2, e2', lc3) = l1_to_il1_pair lc2 e2
+        in
+            (IL1_Seq (IL1_Seq sl1 (IL1_Assign (lc3 + 1) e1')) sl2, IL1_Plus (IL1_Deref (lc3 + 1)) e2', lc3 + 1)) /\ 
+
+    (l1_to_il1_pair lc (B_Geq e1 e2) =
+        let (sl1, e1', lc2) = l1_to_il1_pair lc e1 in
+        let (sl2, e2', lc3) = l1_to_il1_pair lc2 e2
+        in
+            (IL1_Seq (IL1_Seq sl1 (IL1_Assign (lc3 + 1) e1')) sl2, IL1_Geq (IL1_Deref (lc3 + 1)) e2', lc3 + 1))
+`;
+
+val l1_to_il1_def = Define `l1_to_il1 e = let (s, te, lc) = l1_to_il1_pair (max_loc_l1 e) e in IL1_Seq s (IL1_Expr te)`;
 
 
 val _ = export_theory ();
