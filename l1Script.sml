@@ -1,4 +1,4 @@
-open HolKernel boolLib bossLib wordsTheory wordsLib listTheory Parse IndDefLib finite_mapTheory relationTheory;
+open HolKernel boolLib bossLib wordsTheory wordsLib listTheory Parse IndDefLib finite_mapTheory relationTheory arithmeticTheory;
 
 val _ = new_theory "l1";
 
@@ -36,6 +36,33 @@ val _ = Hol_datatype `bexp = B_Value of bval
                            | B_Deref of loc
                            | B_Seq of bexp => bexp
                            | B_While of bexp => bexp`;
+
+val contains_l1_def = Define `
+    (contains_l1 l (B_Value v) = F) /\
+    (contains_l1 l (B_Plus e1 e2) = contains_l1 l e1 \/ contains_l1 l e2) /\
+    (contains_l1 l (B_Geq e1 e2) = contains_l1 l e1 \/ contains_l1 l e2) /\
+    (contains_l1 l1 (B_Deref l2) = (l1 = l2)) /\
+    (contains_l1 l (B_If e1 e2 e3) = contains_l1 l e1 \/ contains_l1 l e2 \/ contains_l1 l e3) /\
+    (contains_l1 l1 (B_Assign l2 e) = (l1 = l2) \/ contains_l1 l1 e) /\
+    (contains_l1 l (B_Seq e1 e2) = contains_l1 l e1 \/ contains_l1 l e2) /\
+    (contains_l1 l (B_While e1 e2) = contains_l1 l e1 \/ contains_l1 l e2)`;
+
+val max_loc_l1_def = Define `
+    (max_loc_l1 (B_Value v) = 0) /\
+    (max_loc_l1 (B_Plus e1 e2) = MAX (max_loc_l1 e1) (max_loc_l1 e2)) /\
+    (max_loc_l1 (B_Geq e1 e2) = MAX (max_loc_l1 e1) (max_loc_l1 e2)) /\
+    (max_loc_l1 (B_Deref l) = l) /\
+    (max_loc_l1 (B_If e1 e2 e3) = MAX (MAX (max_loc_l1 e1) (max_loc_l1 e2)) (max_loc_l1 e3)) /\
+    (max_loc_l1 (B_Assign l2 e) = MAX l2 (max_loc_l1 e)) /\
+    (max_loc_l1 (B_Seq e1 e2) = MAX (max_loc_l1 e1) (max_loc_l1 e2)) /\
+    (max_loc_l1 (B_While e1 e2) = MAX (max_loc_l1 e1) (max_loc_l1 e2))`;
+
+val UNUSED_UPPER_LOCS_L1_THM = store_thm(
+    "UNUSED_UPPER_LOCS_THM",
+    ``!e n.max_loc_l1 e < n==> ~contains_l1 n e``,
+    Induct_on `e` THEN EVAL_TAC
+    THEN FULL_SIMP_TAC (srw_ss ()) [MAX_DEF]);
+
 
 val bs_to_ss_def = Define `
     (bs_to_ss (B_Value (B_N n)) = (N n)) /\
