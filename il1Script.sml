@@ -32,6 +32,20 @@ val contains_def = Define `
     (contains l (IL1_SIf e1 e2 e3) = contains_expr l e1 \/ contains l e2 \/ contains l e3) /\
     (contains l (IL1_While e1 e2) = contains_expr l e1 \/ contains l e2)`;
 
+val max_loc_expr_def = Define `
+    (max_loc_expr (IL1_Value v) = 0) /\
+    (max_loc_expr (IL1_Plus e1 e2) = MAX (max_loc_expr e1) (max_loc_expr e2)) /\
+    (max_loc_expr (IL1_Geq e1 e2) = MAX (max_loc_expr e1) (max_loc_expr e2)) /\
+    (max_loc_expr (IL1_Deref l) = l) /\
+    (max_loc_expr (IL1_EIf e1 e2 e3) = MAX (MAX (max_loc_expr e1) (max_loc_expr e2)) (max_loc_expr e3))`;
+
+val max_loc_def = Define `
+    (max_loc (IL1_Expr e) = max_loc_expr e) /\
+    (max_loc (IL1_Assign l2 e) = MAX l2 (max_loc_expr e)) /\
+    (max_loc (IL1_Seq e1 e2) = MAX (max_loc e1) (max_loc e2)) /\
+    (max_loc (IL1_SIf e1 e2 e3) = MAX (MAX (max_loc_expr e1) (max_loc e2)) (max_loc e3)) /\
+    (max_loc (IL1_While e1 e2) = MAX (max_loc_expr e1) (max_loc e2))`;
+
 val (bs_il1_expr_rules, bs_il1_expr_induction, bs_il1_expr_ecases) = Hol_reln `
     (* Values *)
     (!v s.bs_il1_expr (IL1_Value v, s) v) /\
