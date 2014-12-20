@@ -7,7 +7,7 @@ val _ = wordsLib.prefer_word();
 
 val _ = type_abbrev("loc", ``:num``);
 
-val _ = type_abbrev("int", ``:word16``);
+val _ = type_abbrev("int", ``:num``);
 
 val _ = type_abbrev("state", ``:loc |-> int``);
 
