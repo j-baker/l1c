@@ -2,14 +2,6 @@ open HolKernel boolLib bossLib wordsTheory wordsLib listTheory Parse IndDefLib f
 
 val _ = new_theory "il1";
 
-val _ = type_abbrev("loc", ``:num``);
-
-val _ = type_abbrev("int", ``:num``);
-
-val _ = type_abbrev("state", ``:loc |-> int``);
-
-val _ = type_abbrev("pred", ``:state -> bool``);
-
 val _ = Hol_datatype `il1_loc = User of loc
                               | Compiler of loc`; 
 
