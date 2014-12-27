@@ -1,4 +1,4 @@
-open HolKernel boolLib bossLib wordsTheory wordsLib listTheory Parse IndDefLib finite_mapTheory relationTheory arithmeticTheory;
+open HolKernel boolLib bossLib wordsTheory wordsLib listTheory Parse IndDefLib finite_mapTheory relationTheory arithmeticTheory lcsymtacs;
 
 val _ = new_theory "l1";
 
@@ -61,7 +61,7 @@ val UNUSED_UPPER_LOCS_L1_THM = store_thm(
     "UNUSED_UPPER_LOCS_THM",
     ``!e n.max_loc_l1 e < n==> ~contains_l1 n e``,
     Induct_on `e` THEN EVAL_TAC
-    THEN FULL_SIMP_TAC (srw_ss ()) [MAX_DEF]);
+    THEN fs [MAX_DEF]);
 
 
 val bs_to_ss_def = Define `
@@ -102,7 +102,7 @@ val REP_EQUALITY_THM = store_thm("REP_EQUALITY_THM",
     STRIP_TAC
     THEN Induct_on `e`
     THEN EVAL_TAC
-    THEN FULL_SIMP_TAC (srw_ss ()) []
+    THEN fs []
     THEN Cases_on `b`
     THEN EVAL_TAC);
 
@@ -275,36 +275,36 @@ val NO_STEP_FROM_BOOL_THM = store_thm("NO_STEP_FROM_INT_THM",
 val NO_STEP_FROM_SKIP_THM = store_thm("NO_STEP_FROM_INT_THM",
     ``!s.small_step_fun (Skip, s) = NONE``, REPEAT STRIP_TAC THEN EVAL_TAC);
 
-val REL_IMP_FUN_TAC = (Cases_on `e1` ORELSE Cases_on `e2` ORELSE Cases_on `e`) THEN EVAL_TAC THEN FULL_SIMP_TAC (srw_ss ()) [NO_STEP_FROM_INT_THM, NO_STEP_FROM_SKIP_THM, NO_STEP_FROM_BOOL_THM];
+val REL_IMP_FUN_TAC = (Cases_on `e1` ORELSE Cases_on `e2` ORELSE Cases_on `e`) THEN EVAL_TAC THEN fs [NO_STEP_FROM_INT_THM, NO_STEP_FROM_SKIP_THM, NO_STEP_FROM_BOOL_THM];
 
 val RELATION_IMPLIES_FUNCTION_THM = store_thm("RELATION_IMPLIES_FUNCTION_THM",
     ``!p1 p2.small_step p1 p2 ==> ((small_step_fun p1) = SOME p2)``,
     HO_MATCH_MP_TAC ss_induction THEN
-		    (EVAL_TAC THEN FULL_SIMP_TAC (srw_ss ()) [] THEN REPEAT (STRIP_TAC THEN1 REL_IMP_FUN_TAC)));
+		    (EVAL_TAC THEN fs [] THEN REPEAT (STRIP_TAC THEN1 REL_IMP_FUN_TAC)));
 
 val FUNCTION_IMPLIES_RELATION_THM = store_thm("FUNCTION_IMPLIES_RELATION_THM",
     ``!e1 s e1' s'. (small_step_fun (e1, s) = SOME (e1', s')) ==> (small_step (e1, s) (e1', s'))``,
     HO_MATCH_MP_TAC (fetch "-" "small_step_fun_ind") THEN
         REPEAT STRIP_TAC THEN FULL_SIMP_TAC std_ss [small_step_fun_def]
-        THEN FULL_SIMP_TAC (srw_ss ()) [] THEN
+        THEN fs [] THEN
         SRW_TAC[][] THEN
 	TRY BasicProvers.FULL_CASE_TAC THEN
-        FULL_SIMP_TAC (srw_ss ()) [] THEN 
+        fs [] THEN 
         TRY (Cases_on `x`) THEN
         SRW_TAC[][] THEN
-        FULL_SIMP_TAC (srw_ss ()) [] THEN
-        RW_TAC (srw_ss ()) [Once ss_ecases]);
+        fs [] THEN
+        rw [Once ss_ecases]);
 
 val FUNCTION_EQUALS_RELATION_THM = store_thm("FUNCTION_EQUALS_RELATION_THM",
     ``!e1 s e1' s'. (small_step_fun (e1, s) = SOME (e1', s')) <=> (small_step (e1, s) (e1', s'))``,
-    RW_TAC (srw_ss ()) [EQ_IMP_THM, FUNCTION_IMPLIES_RELATION_THM, RELATION_IMPLIES_FUNCTION_THM]);
+    rw [EQ_IMP_THM, FUNCTION_IMPLIES_RELATION_THM, RELATION_IMPLIES_FUNCTION_THM]);
 
 val SMALL_STEP_DETERMINACY_THM = store_thm("SMALL_STEP_DETERMINACY_THM",
     ``!p p' p''.(small_step p p' /\ small_step p p'') ==> (p' = p'')``,
     REPEAT STRIP_TAC THEN
         `small_step_fun p = SOME p'` by METIS_TAC [RELATION_IMPLIES_FUNCTION_THM] THEN
         `small_step_fun p = SOME p''` by METIS_TAC [RELATION_IMPLIES_FUNCTION_THM] THEN
-        FULL_SIMP_TAC (srw_ss ()) []);
+        fs []);
 
 val _ = Hol_datatype `T = intL1 | boolL1 | unitL1`;
 
@@ -338,26 +338,26 @@ val type_sinduction = derive_strong_induction(type_rules, type_induction);
 
 val TYPE_IMP_TYPE_FUN_THM = store_thm("TYPE_IMP_TYPE_FUN_THM",
 ``!e g t.type e g t ==> (type_fun e g = SOME t)``,
-    HO_MATCH_MP_TAC type_induction THEN REPEAT STRIP_TAC THEN (EVAL_TAC THEN FULL_SIMP_TAC (srw_ss ()) []));
+    HO_MATCH_MP_TAC type_induction THEN REPEAT STRIP_TAC THEN (EVAL_TAC THEN fs []));
 
 val TYPE_FUN_IMP_TYPE_THM = store_thm("TYPE_FUN_IMP_TYPE_THM",
     ``!e g t.(type_fun e g = SOME t) ==> type e g t``,
-    Induct_on `e` THEN EVAL_TAC THEN RW_TAC (srw_ss ()) [Once type_ecases] THEN METIS_TAC []);
+    Induct_on `e` THEN EVAL_TAC THEN rw [Once type_ecases] THEN METIS_TAC []);
 
 val TYPE_FUN_EQ_THM = store_thm("TYPE_FUN_EQ_THM",
     ``!e g t.(type_fun e g = SOME t) <=> type e g t``,
-    RW_TAC (srw_ss ()) [EQ_IMP_THM, TYPE_FUN_IMP_TYPE_THM, TYPE_IMP_TYPE_FUN_THM]);
+    rw [EQ_IMP_THM, TYPE_FUN_IMP_TYPE_THM, TYPE_IMP_TYPE_FUN_THM]);
 
 val dom_sub_def = Define `dom_sub a b = if !x.x ∈ (FDOM a) ==> x ∈ (FDOM b) then T else F`;
 
 val BOOL_NOT_INT_TYPE_THM = store_thm("BOOL_NOT_INT_TYPE_THM",
-    ``!b g.~type (B b) g intL1``, RW_TAC (srw_ss ()) [Once type_ecases]);
+    ``!b g.~type (B b) g intL1``, rw [Once type_ecases]);
 
 val SKIP_NOT_INT_TYPE_THM = store_thm("SKIP_NOT_INT_TYPE_THM",
-    ``!g.~type Skip g intL1``, RW_TAC (srw_ss ()) [Once type_ecases]);
+    ``!g.~type Skip g intL1``, rw [Once type_ecases]);
 
 val INT_NOT_BOOL_TYPE_THM = store_thm("INT_NOT_BOOL_TYPE_THM",
-    ``!n g.~type (N n) g boolL1``, RW_TAC (srw_ss ()) [Once type_ecases]);
+    ``!n g.~type (N n) g boolL1``, rw [Once type_ecases]);
 
 val value_def = Define `(value (N _) = T) /\
                         (value (B _) = T) /\
@@ -367,27 +367,27 @@ val value_def = Define `(value (N _) = T) /\
 val L1_PROGRESS_THM = store_thm("L1_PROGRESS_THM",
     ``!e g t. (type e g t) ==> (!s.(dom_sub g s) ==> (value(e) \/ (?e' s'.small_step_fun (e, s) = SOME (e', s'))))``,
     HO_MATCH_MP_TAC type_sinduction
-        THEN FULL_SIMP_TAC (srw_ss ()) []
-	          THEN RW_TAC (srw_ss ()) []
+        THEN fs []
+	          THEN rw []
 		  THEN EVAL_TAC
 		  THEN (TRY (Cases_on `e`))
-		  THEN FULL_SIMP_TAC (srw_ss ()) [value_def, dom_sub_def, SKIP_NOT_INT_TYPE_THM, BOOL_NOT_INT_TYPE_THM, INT_NOT_BOOL_TYPE_THM]
+		  THEN fs [value_def, dom_sub_def, SKIP_NOT_INT_TYPE_THM, BOOL_NOT_INT_TYPE_THM, INT_NOT_BOOL_TYPE_THM]
 		  THEN (TRY (Cases_on `e'`))
-		  THEN FULL_SIMP_TAC (srw_ss ()) [value_def, dom_sub_def, SKIP_NOT_INT_TYPE_THM, BOOL_NOT_INT_TYPE_THM, INT_NOT_BOOL_TYPE_THM]
+		  THEN fs [value_def, dom_sub_def, SKIP_NOT_INT_TYPE_THM, BOOL_NOT_INT_TYPE_THM, INT_NOT_BOOL_TYPE_THM]
                   THEN EVAL_TAC
 		  THEN RES_TAC
-		  THEN RW_TAC (srw_ss ()) []
-		  THEN FULL_SIMP_TAC (srw_ss ()) [small_step_fun_def, Once type_ecases]
+		  THEN rw []
+		  THEN fs [small_step_fun_def, Once type_ecases]
 		  THEN (TRY (Cases_on `b`))
 		  THEN EVAL_TAC
-		  THEN FULL_SIMP_TAC (srw_ss ()) []);
+		  THEN fs []);
 
 val pair_first_def = Define `pair_first (x, _) = x`;
 val pair_second_def = Define `pair_second (_, x) = x`;
 
 val DOMAIN_CONSTANT_THM = store_thm("DOMAIN_CONSTANT_THM",
     ``!p1 p2. small_step p1 p2 ==> (FDOM (pair_second p1) = FDOM (pair_second p2))``,
-    HO_MATCH_MP_TAC sinduction THEN RW_TAC (srw_ss ()) [pair_second_def, FDOM_EQ_FDOM_FUPDATE]);
+    HO_MATCH_MP_TAC sinduction THEN rw [pair_second_def, FDOM_EQ_FDOM_FUPDATE]);
 
 val DOMAIN_CONSTANT_STAR_THM = store_thm("DOMAIN_CONSTANT_STAR_THM",
     ``!p1 p2. small_step^* p1 p2 ==> (FDOM (pair_second p1) = FDOM (pair_second p2))``,
@@ -395,11 +395,11 @@ val DOMAIN_CONSTANT_STAR_THM = store_thm("DOMAIN_CONSTANT_STAR_THM",
 
 val DOM_CONST_2_THM = store_thm("DOM_CONST_2_THM",
     ``!p1 p2. small_step p1 p2 ==> !e.type_fun e (pair_second p1) = type_fun e (pair_second p2)``,
-    Cases_on `p1` THEN Cases_on `p2` THEN RW_TAC (srw_ss ()) [pair_second_def] THEN Induct_on `e` THEN EVAL_TAC THEN FULL_SIMP_TAC (srw_ss ()) [] THEN `FDOM r = FDOM r'` by METIS_TAC [DOMAIN_CONSTANT_THM, pair_second_def] THEN METIS_TAC []);
+    Cases_on `p1` THEN Cases_on `p2` THEN rw [pair_second_def] THEN Induct_on `e` THEN EVAL_TAC THEN fs [] THEN `FDOM r = FDOM r'` by METIS_TAC [DOMAIN_CONSTANT_THM, pair_second_def] THEN METIS_TAC []);
 
 val PROGRESS_LEMMA = store_thm("PROGRESS_LEMMA",
     ``!p p'.small_step p p' ==> (!t.(type_fun (pair_first p) (pair_second p) = SOME t) ==> (type_fun (pair_first p') (pair_second p') = SOME t))``,
-    HO_MATCH_MP_TAC sinduction THEN RW_TAC (srw_ss ()) [pair_first_def, pair_second_def] THEN FULL_SIMP_TAC (srw_ss ()) [type_fun_def] THEN RW_TAC (srw_ss ()) [] THEN METIS_TAC [pair_second_def, DOM_CONST_2_THM, DOMAIN_CONSTANT_THM]);
+    HO_MATCH_MP_TAC sinduction THEN rw [pair_first_def, pair_second_def] THEN fs [type_fun_def] THEN rw [] THEN METIS_TAC [pair_second_def, DOM_CONST_2_THM, DOMAIN_CONSTANT_THM]);
 
 val PROGRESS_THM = store_thm("PROGRESS_THM",
     ``!e s e' s'.small_step (e, s) (e', s') ==> (!t.(type_fun e s = SOME t) ==> (type_fun e' s' = SOME t))``,
@@ -408,23 +408,23 @@ val PROGRESS_THM = store_thm("PROGRESS_THM",
 val SS_STAR_ASSIGN_THM = store_thm("SS_STAR_ASSIGN_THM",
     ``!p p'.small_step^* p p' ==> !l.small_step^* (Assign l (pair_first p), pair_second p) (Assign l (pair_first p'), pair_second p')``,
     HO_MATCH_MP_TAC RTC_INDUCT
-    THEN RW_TAC (srw_ss ()) []
+    THEN rw []
     THEN Cases_on `p`
     THEN Cases_on `p'`
     THEN Cases_on `p''`
-    THEN FULL_SIMP_TAC (srw_ss ()) [pair_first_def, pair_second_def]
-    THEN RW_TAC (srw_ss ()) [Once RTC_CASES1]
+    THEN fs [pair_first_def, pair_second_def]
+    THEN rw [Once RTC_CASES1]
     THEN METIS_TAC ss_rulel);
 
 val SS_STAR_IF_THM = store_thm("SS_STAR_IF_THM",
 ``!p p'.small_step^* p p' ==> !e2 e3.small_step^* (If (pair_first p) e2 e3, pair_second p) (If (pair_first p') e2 e3, pair_second p')``,
     HO_MATCH_MP_TAC RTC_INDUCT
-    THEN RW_TAC (srw_ss ()) []
+    THEN rw []
     THEN Cases_on `p`
     THEN Cases_on `p'`
     THEN Cases_on `p''`
-    THEN FULL_SIMP_TAC (srw_ss ()) [pair_first_def, pair_second_def]
-    THEN RW_TAC (srw_ss ()) [Once RTC_CASES1]
+    THEN fs [pair_first_def, pair_second_def]
+    THEN rw [Once RTC_CASES1]
     THEN METIS_TAC ss_rulel);
 
 val SS_BS_STAR_IF_T_THM = store_thm("SS_BS_STAR_IF_THM",
@@ -441,53 +441,53 @@ val SS_STAR_ASSIGN_CASE_THM = store_thm("SS_STAR_ASSIGN_CASE_THM",
 
 val SS_BS_STAR_ASSIGN_THM = store_thm("SS_BS_STAR_ASSIGN_THM",
     ``!e1 n s s' l.l ∈ FDOM s /\ small_step^* (e1, s) (N n, s') ==> small_step^* (Assign l e1, s) (Skip, s' |+ (l, n))``,
-    RW_TAC (srw_ss ()) []
+    rw []
     THEN `FDOM s = FDOM s'` by METIS_TAC [DOMAIN_CONSTANT_STAR_THM, pair_second_def]
     THEN METIS_TAC ([SS_STAR_ASSIGN_CASE_THM, RTC_CASES_RTC_TWICE, RTC_SUBSET]@ss_rulel));
 
 val SS_STAR_GEQ_1_THM = store_thm("SS_STAR_GEQ_THM",
     ``!p p'.small_step^* p p' ==> !e2.small_step^* (Geq (pair_first p) e2, (pair_second p)) (Geq (pair_first p') e2, pair_second p')``,
     HO_MATCH_MP_TAC RTC_INDUCT
-    THEN RW_TAC (srw_ss ()) []
+    THEN rw []
     THEN Cases_on `p`
     THEN Cases_on `p'`
     THEN Cases_on `p''`
-    THEN FULL_SIMP_TAC (srw_ss ()) [pair_first_def, pair_second_def]
-    THEN RW_TAC (srw_ss ()) [Once RTC_CASES1]
+    THEN fs [pair_first_def, pair_second_def]
+    THEN rw [Once RTC_CASES1]
     THEN METIS_TAC ss_rulel);
 
 val SS_STAR_GEQ_2_THM = store_thm("SS_STAR_GEQ_THM",
     ``!p p'.small_step^* p p' ==> !n1.small_step^* (Geq (N n1) (pair_first p), (pair_second p)) (Geq (N n1) (pair_first p'), pair_second p')``,
     HO_MATCH_MP_TAC RTC_INDUCT
-    THEN RW_TAC (srw_ss ()) []
+    THEN rw []
     THEN Cases_on `p`
     THEN Cases_on `p'`
     THEN Cases_on `p''`
-    THEN FULL_SIMP_TAC (srw_ss ()) [pair_first_def, pair_second_def]
-    THEN RW_TAC (srw_ss ()) [Once RTC_CASES1]
+    THEN fs [pair_first_def, pair_second_def]
+    THEN rw [Once RTC_CASES1]
     THEN METIS_TAC ss_rulel);
 
 
 val SS_STAR_PLUS_1_THM = store_thm("SS_STAR_PLUS_THM",
     ``!p p'.small_step^* p p' ==> !e2.small_step^* (Plus (pair_first p) e2, (pair_second p)) (Plus (pair_first p') e2, pair_second p')``,
     HO_MATCH_MP_TAC RTC_INDUCT
-    THEN RW_TAC (srw_ss ()) []
+    THEN rw []
     THEN Cases_on `p`
     THEN Cases_on `p'`
     THEN Cases_on `p''`
-    THEN FULL_SIMP_TAC (srw_ss ()) [pair_first_def, pair_second_def]
-    THEN RW_TAC (srw_ss ()) [Once RTC_CASES1]
+    THEN fs [pair_first_def, pair_second_def]
+    THEN rw [Once RTC_CASES1]
     THEN METIS_TAC ss_rulel);
 
 val SS_STAR_PLUS_2_THM = store_thm("SS_STAR_PLUS_THM",
     ``!p p'.small_step^* p p' ==> !n1.small_step^* (Plus (N n1) (pair_first p), (pair_second p)) (Plus (N n1) (pair_first p'), pair_second p')``,
     HO_MATCH_MP_TAC RTC_INDUCT
-    THEN RW_TAC (srw_ss ()) []
+    THEN rw []
     THEN Cases_on `p`
     THEN Cases_on `p'`
     THEN Cases_on `p''`
-    THEN FULL_SIMP_TAC (srw_ss ()) [pair_first_def, pair_second_def]
-    THEN RW_TAC (srw_ss ()) [Once RTC_CASES1]
+    THEN fs [pair_first_def, pair_second_def]
+    THEN rw [Once RTC_CASES1]
     THEN METIS_TAC ss_rulel);
 
 
@@ -518,12 +518,12 @@ val SS_BS_STAR_GEQ_THM = store_thm("SS_BS_STAR_PLUS_THM",
 val SS_STAR_SEQ_THM = store_thm("SS_STAR_SEQ_THM",
     ``!p p'.small_step^* p p' ==> !e2.small_step^* (Seq (pair_first p) e2, (pair_second p)) (Seq (pair_first p') e2, pair_second p')``,
     HO_MATCH_MP_TAC RTC_INDUCT
-    THEN RW_TAC (srw_ss ()) []
+    THEN rw []
     THEN Cases_on `p`
     THEN Cases_on `p'`
     THEN Cases_on `p''`
-    THEN FULL_SIMP_TAC (srw_ss ()) [pair_first_def, pair_second_def]
-    THEN RW_TAC (srw_ss ()) [Once RTC_CASES1]
+    THEN fs [pair_first_def, pair_second_def]
+    THEN rw [Once RTC_CASES1]
     THEN METIS_TAC ss_rulel);
 
 val SS_STAR_SEQ_CASE_1_THM = store_thm("SS_STAR_PLUS_1_THM",
@@ -541,8 +541,8 @@ val SS_BS_STAR_SEQ_THM = store_thm("SS_BS_STAR_SEQ_THM",
 val BS_IMP_SS_LEMMA = store_thm("BS_IMP_SS_LEMMA",
     ``!p v t.big_step p v t ==> small_step^* (bs_to_ss (pair_first p), pair_second p) (bs_to_ss (B_Value v), t)``,
     HO_MATCH_MP_TAC bs_sinduction
-    THEN RW_TAC (srw_ss ()) [pair_first_def, pair_second_def]
-    THEN FULL_SIMP_TAC (srw_ss ()) [bs_to_ss_def]
+    THEN rw [pair_first_def, pair_second_def]
+    THEN fs [bs_to_ss_def]
     THEN1 METIS_TAC [SS_BS_STAR_PLUS_THM]
     THEN1 METIS_TAC [SS_BS_STAR_GEQ_THM]
     THEN1 METIS_TAC (RTC_SUBSET::ss_rulel)
@@ -568,86 +568,86 @@ val SS_IMP_BS_FAKE_THM = store_thm("SS_IMP_BS_FAKE_THM",
     ``(!p p'.small_step p p' ==> !v t.(big_step (ss_bs p') v t ==> big_step (ss_bs p) v t)) ==> (!p p'.small_step^* p p' ==> value (pair_first p') ==> ?x.((ss_to_bs_value (pair_first p') = SOME x) /\ big_step (ss_to_bs (pair_first p), pair_second p) x (pair_second p')))``,
     STRIP_TAC
     THEN HO_MATCH_MP_TAC RTC_STRONG_INDUCT
-    THEN RW_TAC (srw_ss ()) [pair_first_def, pair_second_def, ss_bs_def]
+    THEN rw [pair_first_def, pair_second_def, ss_bs_def]
 
     THEN1 (Cases_on `pair_first p`
-        THEN FULL_SIMP_TAC (srw_ss ()) [value_def]
+        THEN fs [value_def]
 	THEN EVAL_TAC
-	THEN RW_TAC (srw_ss ()) [Once bs_ecases])
+	THEN rw [Once bs_ecases])
 
     THEN Cases_on `p`
     THEN Cases_on `p'`
     THEN Cases_on `p''`
-    THEN FULL_SIMP_TAC (srw_ss ()) [pair_first_def, pair_second_def]
+    THEN fs [pair_first_def, pair_second_def]
     THEN METIS_TAC [ss_bs_def, pair_first_def, pair_second_def]);
 
 val BS_PLUS_BACK_THM = store_thm("BS_PLUS_BACK_THM",
     ``!e1 e2 s v t.big_step (B_Plus e1 e2, s) v t ==> ?n1 n2 s'.big_step (e1, s) (B_N n1) s' /\ big_step (e2, s') (B_N n2) t /\ (v = B_N (n1 + n2))``,
-    RW_TAC (srw_ss ()) [Once bs_ecases]
+    rw [Once bs_ecases]
     THEN METIS_TAC []);
 
 val BS_GEQ_BACK_THM = store_thm("BS_GEQ_BACK_THM",
     ``!e1 e2 s v t.big_step (B_Geq e1 e2, s) v t ==> ?n1 n2 s'.big_step (e1, s) (B_N n1) s' /\ big_step (e2, s') (B_N n2) t /\ (v = B_B (n1 >= n2))``,
-    RW_TAC (srw_ss ()) [Once bs_ecases]
+    rw [Once bs_ecases]
     THEN METIS_TAC []);
 
 val BS_ASSIGN_BACK_THM = store_thm("BS_ASSIGN_BACK_THM",
     ``!l e s n t v.big_step (B_Assign l e, s) v t ==> ?n s'. l ∈ FDOM s /\ big_step (e, s) (B_N n) s' /\ (v = B_Skip) /\ (t = s' |+ (l, n))``,
-    RW_TAC (srw_ss ()) [Once bs_ecases]
+    rw [Once bs_ecases]
     THEN METIS_TAC []);
 
 val BS_SEQ_BACK_THM = store_thm("BS_SEQ_BACK_THM",
     ``!e1 e2 s t v.big_step (B_Seq e1 e2, s) v t ==> ?s'.big_step (e1, s) B_Skip s' /\ big_step (e2, s') v t``,
-    RW_TAC (srw_ss ()) [Once bs_ecases]
+    rw [Once bs_ecases]
     THEN METIS_TAC []);
 
 val BS_IF_BACK_THM = store_thm("BS_IF_BACK_THM",
     ``!e1 e2 e3 s t v.big_step (B_If e1 e2 e3, s) v t ==> (?s'.big_step (e1, s) (B_B T) s' /\ big_step (e2, s') v t) \/ (?s'.big_step (e1, s) (B_B F) s' /\ big_step (e3, s') v t)``,
-    RW_TAC (srw_ss ()) [Once bs_ecases]
+    rw [Once bs_ecases]
     THEN METIS_TAC []);
 
 val BS_WHILE_BACK_THM = store_thm("BS_WHILE_BACK_THM",
     ``!e1 e2 s t v.big_step (B_While e1 e2, s) v t ==> (v = B_Skip)``,
-    RW_TAC (srw_ss ()) [Once bs_ecases]
+    rw [Once bs_ecases]
     THEN METIS_TAC []);
 
 val BS_VALUE_BACK_THM = store_thm("BS_VALUE_BACK_THM",
     ``!v v' s t.big_step (B_Value v, s) v' t ==> ((v = v') /\ (t = s))``,
-    RW_TAC (srw_ss ()) [Once bs_ecases]
+    rw [Once bs_ecases]
     THEN METIS_TAC []);
 
 val SS_STEP_BS_THM = store_thm("SS_STEP_BS_THM",
     ``!p p'.small_step p p' ==> !v t.(big_step (ss_bs p') v t ==> big_step (ss_bs p) v t)``,
     HO_MATCH_MP_TAC sinduction THEN
-    RW_TAC (srw_ss ()) [ss_bs_def, ss_to_bs_def] THEN RW_TAC (srw_ss ()) [Once bs_ecases]
-    THEN1 (FULL_SIMP_TAC (srw_ss ()) [Once bs_ecases] THEN
-           RW_TAC (srw_ss ()) [Once bs_ecases])
+    rw [ss_bs_def, ss_to_bs_def] THEN rw [Once bs_ecases]
+    THEN1 (fs [Once bs_ecases] THEN
+           rw [Once bs_ecases])
     THEN1 METIS_TAC [BS_PLUS_BACK_THM]
     THEN1 (IMP_RES_TAC BS_PLUS_BACK_THM
-        THEN `s' = s''` by FULL_SIMP_TAC (srw_ss ()) [Once bs_ecases]
-        THEN `n = n1` by FULL_SIMP_TAC (srw_ss ()) [Once bs_ecases]
-        THEN RW_TAC (srw_ss ()) []
+        THEN `s' = s''` by fs [Once bs_ecases]
+        THEN `n = n1` by fs [Once bs_ecases]
+        THEN rw []
         THEN RES_TAC
         THEN `big_step (B_Value (B_N n), s) (B_N n) s` by METIS_TAC bs_rulel
         THEN METIS_TAC [])
-    THEN1 (FULL_SIMP_TAC (srw_ss ()) [Once bs_ecases]
-        THEN RW_TAC (srw_ss ()) [Once bs_ecases])
+    THEN1 (fs [Once bs_ecases]
+        THEN rw [Once bs_ecases])
     THEN1 METIS_TAC [BS_GEQ_BACK_THM]
     THEN1 (IMP_RES_TAC BS_GEQ_BACK_THM
-        THEN `s' = s''` by FULL_SIMP_TAC (srw_ss ()) [Once bs_ecases]
-        THEN `n = n1` by FULL_SIMP_TAC (srw_ss ()) [Once bs_ecases]
-        THEN RW_TAC (srw_ss ()) []
+        THEN `s' = s''` by fs [Once bs_ecases]
+        THEN `n = n1` by fs [Once bs_ecases]
+        THEN rw []
         THEN RES_TAC
         THEN `big_step (B_Value (B_N n), s) (B_N n) s` by METIS_TAC bs_rulel
         THEN METIS_TAC [])
-    THEN1 FULL_SIMP_TAC (srw_ss ()) [Once bs_ecases]
-    THEN1 (FULL_SIMP_TAC (srw_ss ()) [Once bs_ecases]
-        THEN RW_TAC (srw_ss ()) [Once bs_ecases])
-    THEN1 FULL_SIMP_TAC (srw_ss ()) [Once bs_ecases]
-    THEN1 FULL_SIMP_TAC (srw_ss ()) [Once bs_ecases]
+    THEN1 fs [Once bs_ecases]
+    THEN1 (fs [Once bs_ecases]
+        THEN rw [Once bs_ecases])
+    THEN1 fs [Once bs_ecases]
+    THEN1 fs [Once bs_ecases]
     THEN1 (IMP_RES_TAC BS_ASSIGN_BACK_THM
         THEN `FDOM s = FDOM s'` by METIS_TAC [DOMAIN_CONSTANT_THM, pair_second_def]
-        THEN RW_TAC (srw_ss ()) []
+        THEN rw []
         THEN METIS_TAC [])
     THEN1 (`big_step (B_Value B_Skip, s) B_Skip s` by METIS_TAC bs_rulel
          THEN METIS_TAC [])
@@ -658,14 +658,14 @@ val SS_STEP_BS_THM = store_thm("SS_STEP_BS_THM",
     THEN1 (IMP_RES_TAC BS_IF_BACK_THM
         THEN1 (IMP_RES_TAC BS_SEQ_BACK_THM
             THEN IMP_RES_TAC BS_WHILE_BACK_THM
-            THEN RW_TAC (srw_ss ()) []
+            THEN rw []
 	    THEN METIS_TAC [])
 	THEN IMP_RES_TAC BS_IF_BACK_THM
         THEN IMP_RES_TAC BS_SEQ_BACK_THM
         THEN IMP_RES_TAC BS_WHILE_BACK_THM
         THEN IMP_RES_TAC BS_VALUE_BACK_THM
         THEN `big_step (B_Value B_Skip, s'') B_Skip s''` by METIS_TAC bs_rulel
-        THEN RW_TAC (srw_ss ()) []));
+        THEN rw []));
 
 val SS_IMP_BS_THM = store_thm("SS_IMP_BS_THM",
     ``!p p'.small_step^* p p' ==> value (pair_first p') ==> ?x.((ss_to_bs_value (pair_first p') = SOME x) /\ big_step (ss_to_bs (pair_first p), pair_second p) x (pair_second p'))``,
