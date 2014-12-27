@@ -253,6 +253,9 @@ IMP_RES_TAC IL1_SEQ_BACK_THM THEN
 `s'' = s'` by fs [Once bs_il1_ecases] THEN
 metis_tac []);
 
+val EXPR_PURE_2_THM = store_thm("EXPR_PURE_2_THM",
+``!e s v s'.bs_il1 (IL1_Expr e, s) v s' ==> (s = s')``,
+rw [Once bs_il1_ecases]);
 
 
 
