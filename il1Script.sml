@@ -207,6 +207,14 @@ val USELESS_LOC_THM = store_thm("USELESS_LOC_THM",
 METIS_TAC [FST, SND, B_USELESS_LOC_THM]);
 
 
+val translate_store_equiv_def = Define `translate_store_equiv = !e1 e2 v1 v2 s s' s'' s1 s2 sc1 pe1 lc1 sc2 pe2 lc2.
+(l1_to_il1_pair 0 e1 = (sc1, pe1, lc1)) ==>
+(l1_to_il1_pair lc1 e2 = (sc2, pe2, lc2)) ==>
+(big_step (e1, s) v1 s' /\
+big_step (e2, s') v2 s'' /\
+bs_il1 (sc1, MAP_KEYS User s) IL1_ESkip s1 /\
+bs_il1 (sc2, MAP_KEYS User s') IL1_ESkip s2) ==> ?s2'.bs_il1 (sc2, s1) IL1_ESkip s2' /\ equiv s2 s2'`;
+
 
 
 !p v s'.big_step p v s' ==> ?s1.(bs_il1 (l1_to_il1 (pair_first p), MAP_KEYS User (pair_second p)) (l1_il1_val v) s1)
