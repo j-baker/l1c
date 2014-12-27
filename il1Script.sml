@@ -166,6 +166,12 @@ val l1_il1_val_def = Define `(l1_il1_val (B_N n) = IL1_Integer n) /\
 
 val pair_first_def = Define `pair_first (a, b) = a`;
 val pair_second_def = Define `pair_second (a, b) = b`;
+val equiv_def = Define `equiv s1 s2 = !k.User k ∈ FDOM s1 ==> (User k ∈ FDOM s2 /\ (s1 ' (User k) = s2 ' (User k)))`;
+
+val EQUIV_REFL_THM = store_thm("EQUIV_REFL_THM",
+``!x.equiv x x``,
+fs [equiv_def]);
+
 
 val minimal_store_def = Define `minimal_store e s = !k.k ∈ FDOM s ==> contains_l1 k e`;
 
