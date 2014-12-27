@@ -72,6 +72,8 @@ val (bs_il1_expr_rules, bs_il1_expr_induction, bs_il1_expr_ecases) = Hol_reln `
          bs_il1_expr (e3, s) v)
      ==> bs_il1_expr (IL1_EIf e1 e2 e3, s) v)`;
 
+val bs_il1_expr_sinduction = derive_strong_induction(bs_il1_expr_rules, bs_il1_expr_induction);
+
 val (bs_il1_rules, bs_il1_induction, bs_il1_ecases) = Hol_reln `
     (*  Expressions *)
     (!e v s.
@@ -110,6 +112,9 @@ val (bs_il1_rules, bs_il1_induction, bs_il1_ecases) = Hol_reln `
     (!e1 e2 s.
         bs_il1_expr (e1, s) (IL1_Boolean F)
     ==> bs_il1 (IL1_While e1 e2, s) IL1_ESkip s)`;
+
+val bs_il1_sinduction = derive_strong_induction(bs_il1_rules, bs_il1_induction);
+
 
 val l1_to_il1_pair_def = Define `
     (l1_to_il1_pair lc (B_Value (B_N n)) = (IL1_Expr (IL1_Value IL1_ESkip), IL1_Value (IL1_Integer n), lc)) /\
