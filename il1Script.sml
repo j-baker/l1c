@@ -67,7 +67,7 @@ val (bs_il1_expr_rules, bs_il1_expr_induction, bs_il1_expr_ecases) = Hol_reln `
          bs_il1_expr (e2, s) v)
      ==> bs_il1_expr (IL1_EIf e1 e2 e3, s) v) /\
 
-    (!e1 e2 e3 s.
+    (!e1 e2 e3 s v.
         (bs_il1_expr (e1, s) (IL1_Boolean F) /\
          bs_il1_expr (e3, s) v)
      ==> bs_il1_expr (IL1_EIf e1 e2 e3, s) v)`;
