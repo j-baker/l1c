@@ -216,6 +216,14 @@ bs_il1 (sc1, MAP_KEYS User s) IL1_ESkip s1 /\
 bs_il1 (sc2, MAP_KEYS User s') IL1_ESkip s2) ==> ?s2'.bs_il1 (sc2, s1) IL1_ESkip s2' /\ equiv s2 s2'`;
 
 
+val L1_TO_IL1_TOTAL_THM = store_thm("L1_TO_IL1_TOTAL_THM",
+``!e n.?sl e' lc.l1_to_il1_pair n e = (sl, e', lc)``,
+Induct_on `e` THEN rw [l1_to_il1_pair_def]
+THEN TRY (Cases_on `b` THEN EVAL_TAC THEN metis_tac []) THEN
+TRY (`?sl e' lc.l1_to_il1_pair n e = (sl, e', lc)` by METIS_TAC [] THEN
+`?sl e'' lc'.l1_to_il1_pair lc e' = (sl, e'', lc')` by METIS_TAC [] THEN
+rw [] THEN `?sl e''' lc''.l1_to_il1_pair lc' e'' = (sl, e''', lc'')` by METIS_TAC [] THEN rw [])
+THEN `?sl e' lc.l1_to_il1_pair n' e = (sl, e', lc)` by metis_tac [] THEN rw []);
 
 !p v s'.big_step p v s' ==> ?s1.(bs_il1 (l1_to_il1 (pair_first p), MAP_KEYS User (pair_second p)) (l1_il1_val v) s1)
 
