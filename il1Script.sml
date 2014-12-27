@@ -177,10 +177,11 @@ val minimal_store_def = Define `minimal_store e s = !k.k ∈ FDOM s ==> contains
 
 val MAX_LOC_MIN_STORE_THM = store_thm("MAX_LOC_MIN_STORE_THM",
 ``!e s.minimal_store e s ==> !k.k ∈ FDOM s ==> k <= max_loc_l1 e``,
-RW_TAC (srw_ss ()) [minimal_store_def] THEN
-`contains_l1 k e` by FULL_SIMP_TAC (srw_ss ()) [] THEN
+rw [minimal_store_def] THEN
+`contains_l1 k e` by fs [] THEN
 CCONTR_TAC THEN
-FULL_SIMP_TAC (srw_ss ()) [NOT_LESS_EQUAL, (fetch "l1" "UNUSED_UPPER_LOCS_THM")]);
+fs [NOT_LESS_EQUAL, (fetch "l1" "UNUSED_UPPER_LOCS_THM")]);
+
 
 
 
