@@ -74,6 +74,33 @@ val (bs_il1_expr_rules, bs_il1_expr_induction, bs_il1_expr_ecases) = Hol_reln `
 
 val bs_il1_expr_sinduction = derive_strong_induction(bs_il1_expr_rules, bs_il1_expr_induction);
 
+val BS_IL1_EXPR_PLUS_BACK_THM = store_thm("BS_IL1_EXPR_PLUS_BACK_THM",
+``!e1 e2 s v.bs_il1_expr (IL1_Plus e1 e2, s) v ==> ?n1 n2.bs_il1_expr (e1, s) (IL1_Integer n1) /\ bs_il1_expr (e2, s) (IL1_Integer n2) /\ (v = IL1_Integer (n1 + n2))``,
+rw [Once bs_il1_expr_ecases] THEN metis_tac []);
+
+val BS_IL1_EXPR_GEQ_BACK_THM = store_thm("BS_IL1_EXPR_GEQ_BACK_THM",
+``!e1 e2 s v.bs_il1_expr (IL1_Geq e1 e2, s) v ==> ?n1 n2.bs_il1_expr (e1, s) (IL1_Integer n1) /\ bs_il1_expr (e2, s) (IL1_Integer n2) /\ (v = IL1_Boolean (n1 >= n2))``,
+rw [Once bs_il1_expr_ecases] THEN metis_tac []);
+
+val BS_IL1_EXPR_DEREF_BACK_THM = store_thm("BS_IL1_EXPR_DEREF_BACK_THM",
+``!l s v.bs_il1_expr (IL1_Deref l, s) v ==> (l ∈ FDOM s /\ (v = IL1_Integer (s ' l))) \/ (l ∉ FDOM s /\ (v = IL1_Integer 0))``,
+rw [Once bs_il1_expr_ecases] THEN metis_tac []);
+
+val BS_IL1_EXPR_EIF_BACK_THM = store_thm("BS_IL1_EXPR_EIF_BACK_THM",
+``!e1 e2 e3 s v.bs_il1_expr (IL1_EIf e1 e2 e3, s) v ==> (bs_il1_expr (e1, s) (IL1_Boolean T) /\ bs_il1_expr (e2, s) v) \/ (bs_il1_expr (e1, s) (IL1_Boolean F) /\ bs_il1_expr (e3, s) v)``,
+rw [Once bs_il1_expr_ecases] THEN metis_tac []);
+
+val BS_IL1_EXPR_DETERMINACY = store_thm("BS_IL1_EXPR_DETERMINACY",
+``!p v1.bs_il1_expr p v1 ==> !v2.bs_il1_expr p v2 ==> (v1 = v2)``,
+ho_match_mp_tac bs_il1_expr_sinduction THEN rw []
+THEN1 (Cases_on `v1` THEN Cases_on `v2` THEN fs [Once bs_il1_expr_ecases])
+THEN1 (imp_res_tac BS_IL1_EXPR_PLUS_BACK_THM THEN res_tac THEN rw [])
+THEN1 (imp_res_tac BS_IL1_EXPR_GEQ_BACK_THM THEN res_tac THEN rw [])
+THEN1 (imp_res_tac BS_IL1_EXPR_DEREF_BACK_THM THEN rw [])
+THEN1 (imp_res_tac BS_IL1_EXPR_DEREF_BACK_THM THEN rw [])
+THEN1 (imp_res_tac BS_IL1_EXPR_EIF_BACK_THM THEN res_tac THEN rw [])
+THEN1 (imp_res_tac BS_IL1_EXPR_EIF_BACK_THM THEN res_tac THEN rw []));
+
 val (bs_il1_rules, bs_il1_induction, bs_il1_ecases) = Hol_reln `
     (*  Expressions *)
     (!e v s.
