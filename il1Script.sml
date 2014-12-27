@@ -230,6 +230,12 @@ val IL1_SEQ_BACK_THM = store_thm("IL1_SEQ_BACK_THM",
 ``!e1 e2 v s s''.bs_il1 (IL1_Seq e1 e2, s) v s'' ==> ?s'.bs_il1 (e1, s) IL1_ESkip s' /\ bs_il1 (e2, s') v s''``,
 rw [Once bs_il1_ecases] THEN metis_tac []);
 
+val IL1_SEQ_ASSOC_THM = store_thm("IL1_SEQ_ASSOC_THM",
+``!e1 e2 e3 s v s'.bs_il1 (IL1_Seq e1 (IL1_Seq e2 e3), s) v s' <=> bs_il1 (IL1_Seq (IL1_Seq e1 e2) e3, s) v s'``,
+rw [EQ_IMP_THM]
+THEN1 (fs [Once bs_il1_ecases] THEN rw [Once bs_il1_ecases] THEN metis_tac [IL1_SEQ_BACK_THM])
+THEN1 (rw [Once bs_il1_ecases] THEN imp_res_tac IL1_SEQ_BACK_THM THEN imp_res_tac IL1_SEQ_BACK_THM THEN metis_tac [bs_il1_ecases]));
+
 
 HO_MATCH_MP_TAC (fetch "l1" "big_step_strongind")
 THEN RW_TAC (srw_ss ()) [pair_first_def, pair_second_def, l1_il1_val_def]
