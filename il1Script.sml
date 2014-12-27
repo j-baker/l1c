@@ -158,7 +158,7 @@ val l1_to_il1_pair_def = Define `
             (IL1_Seq (IL1_Seq sl1 (IL1_Assign (Compiler lc3) e1')) sl2, IL1_Geq (IL1_Deref (Compiler lc3)) e2', lc3 + 1))
 `;
 
-val l1_to_il1_def = Define `l1_to_il1 e = let (s, te, lc) = l1_to_il1_pair 0 e in IL1_Seq s (IL1_Expr te)`;
+val l1_to_il1_def = Define `l1_to_il1 e n = let (s, te, lc) = l1_to_il1_pair n e in IL1_Seq s (IL1_Expr te)`;
 
 val l1_il1_val_def = Define `(l1_il1_val (B_N n) = IL1_Integer n) /\
 (l1_il1_val (B_B b) = IL1_Boolean b) /\
