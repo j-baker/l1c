@@ -262,6 +262,10 @@ TRY (`?sl e' lc.l1_to_il1_pair n e = (sl, e', lc)` by METIS_TAC [] THEN
 rw [] THEN `?sl e''' lc''.l1_to_il1_pair lc' e'' = (sl, e''', lc'')` by METIS_TAC [] THEN rw [])
 THEN `?sl e' lc.l1_to_il1_pair n' e = (sl, e', lc)` by metis_tac [] THEN rw []);
 
+val IL1_EXPR_BACK_THM = store_thm("IL1_EXPR_BACK_THM",
+``!e v s s'.bs_il1 (IL1_Expr e, s) v s' ==> bs_il1_expr (e, s) v /\ (s = s')``,
+rw [Once bs_il1_ecases] THEN metis_tac []);
+
 val IL1_SEQ_BACK_THM = store_thm("IL1_SEQ_BACK_THM",
 ``!e1 e2 v s s''.bs_il1 (IL1_Seq e1 e2, s) v s'' ==> ?s'.bs_il1 (e1, s) IL1_ESkip s' /\ bs_il1 (e2, s') v s''``,
 rw [Once bs_il1_ecases] THEN metis_tac []);
