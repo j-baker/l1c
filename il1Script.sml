@@ -202,6 +202,24 @@ val conv_ind_def = Define `conv_ind = !p v s1.bs_il1 p v s1 ==> !e s.((FST p = l
 
 val minimal_store_def = Define `minimal_store e s = !k.k ∈ FDOM s ==> contains_l1 k e`;
 
+val bad_name_for_tac = (`?sl1 e1' lc2.l1_to_il1_pair n e = (sl1, e1', lc2)` by metis_tac [L1_TO_IL1_TOTAL_THM] THEN
+`?sl2 e2' lc3.l1_to_il1_pair lc2 e' = (sl2, e2', lc3)` by metis_tac [L1_TO_IL1_TOTAL_THM] THEN
+`?sl3 e3' lc4.l1_to_il1_pair lc3 e'' = (sl3, e3', lc4)` by metis_tac [L1_TO_IL1_TOTAL_THM] THEN
+fs [LET_DEF, l1_to_il1_pair_def] THEN
+res_tac THEN
+decide_tac);
+
+val COMP_LOC_INCREASING_THM = store_thm("COMP_LOC_INCREASING_THM",
+``!e n n' sl1 e1'.(l1_to_il1_pair n e = (sl1, e1', n')) ==> (n' >= n)``,
+Induct_on `e` THEN rw []
+THEN1 (Cases_on `b` THEN fs [l1_to_il1_pair_def] THEN EVAL_TAC)
+THEN1 bad_name_for_tac
+THEN1 bad_name_for_tac
+THEN1 bad_name_for_tac
+THEN1 ((`?sl1 e1' n''.l1_to_il1_pair n' e = (sl1, e1', n'')` by metis_tac [L1_TO_IL1_TOTAL_THM]) THEN fs [l1_to_il1_pair_def, LET_DEF])
+THEN1 (fs [l1_to_il1_pair_def, LET_DEF])
+THEN1 bad_name_for_tac
+THEN1 bad_name_for_tac);
 val MAX_LOC_MIN_STORE_THM = store_thm("MAX_LOC_MIN_STORE_THM",
 ``!e s.minimal_store e s ==> !k.k ∈ FDOM s ==> k <= max_loc_l1 e``,
 rw [minimal_store_def] THEN
