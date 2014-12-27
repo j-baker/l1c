@@ -263,5 +263,10 @@ rw [FST, SND, l1_il1_val_def] THEN
 rw [l1_to_il1_def, l1_to_il1_pair_def, l1_il1_val_def]
 THEN fs []
 
+(* Value case *)
+THEN1 (Cases_on `v` THEN
+rw [l1_to_il1_pair_def, l1_il1_val_def] THEN
+METIS_TAC [l1_to_il1_pair_def, l1_il1_val_def, bs_il1_ecases, bs_il1_expr_ecases])
+(* End value case *)
 
 val _ = export_theory ();
