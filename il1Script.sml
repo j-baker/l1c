@@ -269,4 +269,21 @@ rw [l1_to_il1_pair_def, l1_il1_val_def] THEN
 METIS_TAC [l1_to_il1_pair_def, l1_il1_val_def, bs_il1_ecases, bs_il1_expr_ecases])
 (* End value case *)
 
+(* Seq case *)
+`?sl1 e1' lc2.l1_to_il1_pair 0 e1 = (sl1, e1', lc2)` by metis_tac [L1_TO_IL1_TOTAL_THM] THEN
+`?sl2 e2' lc3.l1_to_il1_pair lc2 e2 = (sl2, e2', lc3)` by metis_tac [L1_TO_IL1_TOTAL_THM] THEN
+rw []
+THEN `l1_to_il1 e1 0 = IL1_Seq sl1 (IL1_Expr e1')` by rw [l1_to_il1_def]
+THEN `?s2.bs_il1 (l1_to_il1 e2 lc2, MAP_KEYS User s') (l1_il1_val v) s2` by (fs [conv_ind_def] THEN metis_tac [FST, SND])
+THEN `l1_to_il1 e2 lc2 = IL1_Seq sl2 (IL1_Expr e2')` by rw [l1_to_il1_def]
+THEN fs []
+THEN `?s2'.bs_il1 (sl2, s1) IL1_ESkip s2' /\ equiv s2 s2'` by metis_tac [translate_store_equiv_def, EXPR_PURE_THM]
+THEN rw [Once bs_il1_ecases]
+THEN rw [Once bs_il1_ecases]
+THEN `?s2'.bs_il1 (IL1_Seq sl2 (IL1_Expr e2'), s1) (l1_il1_val v) s2'` by metis_tac [l1_il1_val_def, translate_store_val_equiv_def]
+THEN `?s'.bs_il1 (sl2, s1) IL1_ESkip s' /\ bs_il1 (IL1_Expr e2', s') (l1_il1_val v) s2''` by metis_tac [IL1_SEQ_BACK_THM]
+THEN `s''' = s2''` by metis_tac [EXPR_PURE_2_THM]
+THEN rw []
+THEN metis_tac [EXPR_PURE_THM]
+(* End seq case *)
 val _ = export_theory ();
