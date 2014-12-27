@@ -258,6 +258,10 @@ val EXPR_PURE_2_THM = store_thm("EXPR_PURE_2_THM",
 rw [Once bs_il1_ecases]);
 
 !p v s'.big_step p v s' ==> conv_ind ==> translate_store_equiv ==> translate_store_val_equiv ==> ?s1.(bs_il1 (l1_to_il1 (FST p) 0, MAP_KEYS User (SND p)) (l1_il1_val v) s1)
+HO_MATCH_MP_TAC (fetch "l1" "big_step_strongind") THEN
+rw [FST, SND, l1_il1_val_def] THEN
+rw [l1_to_il1_def, l1_to_il1_pair_def, l1_il1_val_def]
+THEN fs []
 
 
 val _ = export_theory ();
