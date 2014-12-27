@@ -236,6 +236,14 @@ rw [EQ_IMP_THM]
 THEN1 (fs [Once bs_il1_ecases] THEN rw [Once bs_il1_ecases] THEN metis_tac [IL1_SEQ_BACK_THM])
 THEN1 (rw [Once bs_il1_ecases] THEN imp_res_tac IL1_SEQ_BACK_THM THEN imp_res_tac IL1_SEQ_BACK_THM THEN metis_tac [bs_il1_ecases]));
 
+val EXPR_PURE_THM = store_thm("EXPR_DOES_NOTHING_THM",
+``!st es s s' v.bs_il1 (IL1_Seq st (IL1_Expr es), s) v s' ==> bs_il1 (st, s) IL1_ESkip s'``,
+rw [] THEN
+`bs_il1 (st, s) IL1_ESkip s' /\ bs_il1 (IL1_Expr es, s') v s'` by ALL_TAC THEN
+IMP_RES_TAC IL1_SEQ_BACK_THM THEN
+`s'' = s'` by fs [Once bs_il1_ecases] THEN
+metis_tac []);
+
 
 HO_MATCH_MP_TAC (fetch "l1" "big_step_strongind")
 THEN RW_TAC (srw_ss ()) [pair_first_def, pair_second_def, l1_il1_val_def]
