@@ -226,6 +226,10 @@ rw [] THEN `?sl e''' lc''.l1_to_il1_pair lc' e'' = (sl, e''', lc'')` by METIS_TA
 THEN `?sl e' lc.l1_to_il1_pair n' e = (sl, e', lc)` by metis_tac [] THEN rw []);
 
 !p v s'.big_step p v s' ==> ?s1.(bs_il1 (l1_to_il1 (pair_first p), MAP_KEYS User (pair_second p)) (l1_il1_val v) s1)
+val IL1_SEQ_BACK_THM = store_thm("IL1_SEQ_BACK_THM",
+``!e1 e2 v s s''.bs_il1 (IL1_Seq e1 e2, s) v s'' ==> ?s'.bs_il1 (e1, s) IL1_ESkip s' /\ bs_il1 (e2, s') v s''``,
+rw [Once bs_il1_ecases] THEN metis_tac []);
+
 
 HO_MATCH_MP_TAC (fetch "l1" "big_step_strongind")
 THEN RW_TAC (srw_ss ()) [pair_first_def, pair_second_def, l1_il1_val_def]
