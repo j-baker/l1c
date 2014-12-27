@@ -182,6 +182,30 @@ rw [minimal_store_def] THEN
 CCONTR_TAC THEN
 fs [NOT_LESS_EQUAL, (fetch "l1" "UNUSED_UPPER_LOCS_THM")]);
 
+val B_USELESS_LOC_EXPR_THM = store_thm("B_USELESS_LOC_EXPR_THM",
+``!p r.bs_il1_expr p r ==> !k.~contains_expr k (FST p) ==> !v.bs_il1_expr (FST p, SND p |+ (k, v)) r``,
+HO_MATCH_MP_TAC bs_il1_expr_sinduction THEN rw []
+THEN1 (Cases_on `r` THEN fs [Once bs_il1_expr_ecases]) THEN TRY (
+rw [Once bs_il1_expr_ecases]
+THEN fs [contains_expr_def] THEN metis_tac [])
+THEN fs [contains_expr_def]
+THEN rw [Once bs_il1_expr_ecases, NOT_EQ_FAPPLY]);
+
+val USELESS_LOC_EXPR_THM = store_thm("USELESS_LOC_EXPR_THM",
+``!e s r.bs_il1_expr (e, s) r ==> !k.~contains_expr k e ==> !v.bs_il1_expr (e, s |+ (k, v)) r``,
+METIS_TAC [B_USELESS_LOC_EXPR_THM, FST, SND]);
+
+
+val B_USELESS_LOC_THM = store_thm("B_USELESS_LOC_THM",
+``!p r s'.bs_il1 p r s' ==> !k.~contains k (FST p) ==> !v.bs_il1 (FST p, SND p |+ (k, v)) r (s' |+ (k, v))``,
+HO_MATCH_MP_TAC bs_il1_sinduction THEN rw []
+THEN1 (fs [Once bs_il1_ecases, contains_def] THEN METIS_TAC [USELESS_LOC_EXPR_THM])
+THEN rw [Once bs_il1_ecases] THEN fs [contains_def, FUPDATE_COMMUTES] THEN METIS_TAC [USELESS_LOC_EXPR_THM]);
+
+val USELESS_LOC_THM = store_thm("USELESS_LOC_THM",
+``!e s r s'.bs_il1 (e, s) r s' ==> !k.~contains k e ==> !v.bs_il1 (e, s |+ (k, v)) r (s' |+ (k, v))``,
+METIS_TAC [FST, SND, B_USELESS_LOC_THM]);
+
 
 
 
