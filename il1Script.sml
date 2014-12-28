@@ -251,6 +251,58 @@ THEN fs [LET_DEF, l1_to_il1_def, l1_to_il1_pair_def]
 THEN rw []
 THEN fs [contains_a_def]));
 
+val ALL_CO_LOCS_IN_RANGE = store_thm("ALL_CO_LOCS_IN_RANGE",
+``!e n st ex n'.(l1_to_il1_pair n e = (st, ex, n')) ==> !n''.(n'' >= n) /\ (n'' < n') ==> contains_a (Compiler n'') (l1_to_il1 e n)``,
+Induct_on `e` THEN rw []
+
+THEN1 (Cases_on `b` THEN fs [l1_to_il1_pair_def] THEN rw [] THEN decide_tac)
+
+THEN TRY (`?st ex rl.l1_to_il1_pair n e = (st, ex, rl)` by metis_tac [L1_TO_IL1_TOTAL_THM]
+THEN `?st' ex' rl'.l1_to_il1_pair rl e' = (st', ex', rl')` by metis_tac [L1_TO_IL1_TOTAL_THM]
+THEN fs [LET_DEF, l1_to_il1_def, l1_to_il1_pair_def] THEN rw []
+THEN rw [contains_a_def]
+THEN res_tac
+THEN Cases_on `n'' < rl` THEN fs [contains_a_def] THEN rw []
+THEN fs [NOT_LESS]
+THEN Cases_on `n'' = rl'` THEN rw []
+THEN `n'' < rl'` by decide_tac
+THEN res_tac
+THEN fs [GREATER_EQ]
+THEN FAIL_TAC "want to fail")
+
+THEN1 (`?st ex rl.l1_to_il1_pair n e = (st, ex, rl)` by metis_tac [L1_TO_IL1_TOTAL_THM]
+THEN `?st' ex' rl'.l1_to_il1_pair rl e' = (st', ex', rl')` by metis_tac [L1_TO_IL1_TOTAL_THM]
+THEN `?st'' ex'' rl''.l1_to_il1_pair rl' e'' = (st'', ex'', rl'')` by metis_tac [L1_TO_IL1_TOTAL_THM]
+THEN fs [LET_DEF, l1_to_il1_def, l1_to_il1_pair_def] THEN rw []
+THEN rw [contains_a_def]
+THEN res_tac
+THEN Cases_on `n'' < rl` THEN fs [contains_a_def] THEN rw []
+THEN fs [NOT_LESS]
+THEN Cases_on `n'' = rl''` THEN rw []
+THEN `n'' < rl''` by decide_tac
+THEN fs [GREATER_EQ]
+THEN res_tac
+THEN `rl'' >= rl'` by metis_tac [COMP_LOC_INCREASING_THM]
+THEN fs [GREATER_EQ]
+THEN rw []
+THEN Cases_on `rl' <= n''` THEN fs [NOT_LESS_EQUAL])
+
+THEN1 (`?st ex rl.l1_to_il1_pair n' e = (st, ex, rl)` by metis_tac [L1_TO_IL1_TOTAL_THM]
+THEN fs [LET_DEF, l1_to_il1_def, l1_to_il1_pair_def] THEN rw []
+THEN rw [contains_a_def]
+THEN res_tac
+THEN fs [contains_a_def])
+
+THEN1 (fs [l1_to_il1_pair_def] THEN rw [] THEN decide_tac)
+
+THEN (`?st ex rl.l1_to_il1_pair n e = (st, ex, rl)` by metis_tac [L1_TO_IL1_TOTAL_THM]
+THEN `?st' ex' rl'.l1_to_il1_pair rl e' = (st', ex', rl')` by metis_tac [L1_TO_IL1_TOTAL_THM]
+THEN fs [LET_DEF, l1_to_il1_def, l1_to_il1_pair_def] THEN rw []
+THEN rw [contains_a_def]
+THEN res_tac
+THEN Cases_on `n'' < rl` THEN fs [contains_a_def] THEN rw []
+THEN fs [NOT_LESS, GREATER_EQ]));
+
 val MAX_LOC_MIN_STORE_THM = store_thm("MAX_LOC_MIN_STORE_THM",
 ``!e s.minimal_store e s ==> !k.k ∈ FDOM s ==> k <= max_loc_l1 e``,
 rw [minimal_store_def] THEN
