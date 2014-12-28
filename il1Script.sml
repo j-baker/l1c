@@ -42,6 +42,9 @@ val contains_a_def = Define `
     (contains_a l (IL1_SIf _ e2 e3) = contains_a l e2 \/ contains_a l e3) /\
     (contains_a l (IL1_While _ e2) = contains_a l e2)`;
 
+val CONTAINS_A_SUB = store_thm("CONTAINS_A_SUB",
+``!l e.contains_a l e ==> contains l e``,
+Induct_on `e` THEN metis_tac [contains_a_def, contains_def]);
 
 val (bs_il1_expr_rules, bs_il1_expr_induction, bs_il1_expr_ecases) = Hol_reln `
     (* Values *)
