@@ -222,6 +222,32 @@ decide_tac)
 THEN ((`?sl1 e1' n''.l1_to_il1_pair n' e = (sl1, e1', n'')` by metis_tac [L1_TO_IL1_TOTAL_THM]) THEN fs [l1_to_il1_pair_def, LET_DEF]));
 
 Induct_on `e` THEN rw []
+val COMPILER_LOC_CHANGE_THM = store_thm("COMPILER_LOC_CHANGE_THM",
+``!st ex n n' e.(l1_to_il1_pair n e = (st, ex, n')) ==> (n <> n') ==> contains_a (Compiler n) (l1_to_il1 e n)``,
+Induct_on `e` THEN rw []
+
+THEN1 (Cases_on `b` THEN fs [l1_to_il1_def, l1_to_il1_pair_def, contains_a_def])
+
+THEN TRY (`?st ex rl.l1_to_il1_pair n e = (st, ex, rl)` by metis_tac [L1_TO_IL1_TOTAL_THM]
+THEN `?st' ex' rl'.l1_to_il1_pair rl e' = (st', ex', rl')` by metis_tac [L1_TO_IL1_TOTAL_THM]
+THEN `?st'' ex'' rl''.l1_to_il1_pair rl' e'' = (st'', ex'', rl'')` by metis_tac [L1_TO_IL1_TOTAL_THM]
+THEN fs [LET_DEF, l1_to_il1_def, l1_to_il1_pair_def]
+THEN rw []
+THEN imp_res_tac COMP_LOC_INCREASING_THM
+THEN rw [contains_a_def]
+THEN res_tac
+
+THEN Cases_on `n = rl`
+THEN Cases_on `rl = rl'`
+THEN Cases_on `rl' = rl''`
+THEN fs [contains_a_def]
+THEN FAIL_TAC "expect to fail")
+
+THEN1 (`?st ex rl.l1_to_il1_pair n' e = (st, ex, rl)` by metis_tac [L1_TO_IL1_TOTAL_THM]
+THEN fs [LET_DEF, l1_to_il1_def, l1_to_il1_pair_def]
+THEN rw []
+THEN fs [contains_a_def]));
+
 val MAX_LOC_MIN_STORE_THM = store_thm("MAX_LOC_MIN_STORE_THM",
 ``!e s.minimal_store e s ==> !k.k ∈ FDOM s ==> k <= max_loc_l1 e``,
 rw [minimal_store_def] THEN
