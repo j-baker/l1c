@@ -505,7 +505,7 @@ THEN Cases_on `rl' <= tn` THEN fs [] THEN rw []
 THEN1 (`count_assign st''' (Compiler tn) = 1` by metis_tac []
 THEN rw []
 
-THEN `count_assign st'' (Compiler tn) = 0` by (`~(tn < rl')` by metis_tac [NOT_LESS] THEN metis_tac [])
+THEN `count_assign st'' (Compiler tn) = 0` by metis_tac [NOT_LESS]
 THEN rw []
 THEN metis_tac [NOT_LESS, LESS_EQ_TRANS])
 
@@ -519,7 +519,6 @@ THEN1(
 `count_assign st' (Compiler tn) = 1` by metis_tac [NOT_LESS_EQUAL]
 THEN rw []
 THEN metis_tac [])))
-
 
 THEN1 (`?st ex rl.l1_to_il1_pair n e = (st, ex, rl)` by metis_tac [L1_TO_IL1_TOTAL_THM]
 THEN `?st' ex' rl'.l1_to_il1_pair rl e' = (st', ex', rl')` by metis_tac [L1_TO_IL1_TOTAL_THM]
