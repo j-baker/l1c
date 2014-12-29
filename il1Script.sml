@@ -212,6 +212,13 @@ val conv_ind_def = Define `conv_ind = !p v s1.bs_il1 p v s1 ==> !e s.((FST p = l
 
 val minimal_store_def = Define `minimal_store e s = !k.k ∈ FDOM s ==> contains_l1 k e`;
 
+val count_assign_def = Define `
+(count_assign (IL1_Expr _) _ = 0) /\
+(count_assign (IL1_SIf _ e2 e3) l = count_assign e2 l + count_assign e3 l) /\
+(count_assign (IL1_While _ e2) l = count_assign e2 l) /\
+(count_assign (IL1_Assign l1 e) l2 = if l1 = l2 then 1 else 0) /\
+(count_assign (IL1_Seq e1 e2) l = count_assign e1 l + count_assign e2 l)`;
+
 val COMP_LOC_INCREASING_THM = store_thm("COMP_LOC_INCREASING_THM",
 ``!e n n' sl1 e1'.(l1_to_il1_pair n e = (sl1, e1', n')) ==> (n' >= n)``,
 Induct_on `e` THEN rw []
