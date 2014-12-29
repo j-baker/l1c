@@ -251,7 +251,23 @@ THEN fs [LET_DEF, l1_to_il1_def, l1_to_il1_pair_def]
 THEN rw []
 THEN fs [contains_a_def]));
 
-val ALL_CO_LOCS_IN_RANGE = store_thm("ALL_CO_LOCS_IN_RANGE",
+val ALL_CO_LOCS_IN_RANGE_BA = store_thm("ALL_CO_LOCS_IN_RANGE_BA",
+``!e n st ex n' tn.(l1_to_il1_pair n e = (st, ex, n')) ==> contains (Compiler tn) (l1_to_il1 e n) ==> (tn >= n) /\ (tn < n')``,
+Induct_on `e` THEN rw []
+
+(* Base cases *)
+THEN1 (Cases_on `b` THEN fs [l1_to_il1_def, l1_to_il1_pair_def, LET_DEF, contains_def, contains_expr_def] THEN rw [])
+THEN1 (Cases_on `b` THEN fs [l1_to_il1_def, l1_to_il1_pair_def, LET_DEF, contains_def, contains_expr_def] THEN rw [])
+(* end base cases *)
+
+(* Most cases *)
+THEN TRY (`?st ex rl.l1_to_il1_pair n e = (st, ex, rl)` by metis_tac [L1_TO_IL1_TOTAL_THM]
+THEN `?st' ex' rl'.l1_to_il1_pair rl e' = (st', ex', rl')` by metis_tac [L1_TO_IL1_TOTAL_THM]
+THEN `?st'' ex'' rl''.l1_to_il1_pair rl' e'' = (st'', ex'', rl'')` by metis_tac [L1_TO_IL1_TOTAL_THM]
+THEN fs [l1_to_il1_def, l1_to_il1_pair_def, LET_DEF, contains_def, contains_expr_def] THEN rw [] THEN imp_res_tac COMP_LOC_INCREASING_THM THEN res_tac THEN decide_tac)
+THEN `?st ex rl.l1_to_il1_pair n' e = (st, ex, rl)` by metis_tac [L1_TO_IL1_TOTAL_THM] THEN fs [l1_to_il1_def, l1_to_il1_pair_def, LET_DEF, contains_def, contains_expr_def] THEN rw [] THEN imp_res_tac COMP_LOC_INCREASING_THM THEN res_tac THEN decide_tac);
+
+val ALL_CO_LOCS_IN_RANGE_FOR = store_thm("ALL_CO_LOCS_IN_RANGE_FOR",
 ``!e n st ex n'.(l1_to_il1_pair n e = (st, ex, n')) ==> !n''.(n'' >= n) /\ (n'' < n') ==> contains_a (Compiler n'') (l1_to_il1 e n)``,
 Induct_on `e` THEN rw []
 
