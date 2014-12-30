@@ -251,9 +251,63 @@ val CONTAINS_IMPLIES_COUNT_NZERO = store_thm("CONTAINS_IMPLIES_COUNT_NZERO",
 ``!e l.contains_a l e <=> (count_assign e l <> 0)``,
 rw [EQ_IMP_THM] THEN Induct_on `e` THEN rw [contains_a_def, count_assign_def] THEN metis_tac []);
 
+(* Couldn't find the appropriate thm in the lib *)
+val SILLY_ARITH_THM = store_thm("SILLY_ARITH_THM",
+``!a b.(a + 1 <= b) <=> (a < b)``, DECIDE_TAC);
+
+val SILLY_ARITH_2_THM = store_thm("SILLY_ARITH_2_THM",
+``!a b.(a + 1 <= b) ==> (a <= b)``, DECIDE_TAC);
+
+
 val ALL_CO_LOCS_IN_RANGE = store_thm("ALL_CO_LOCS_IN_RANGE",
 ``!e n st ex n' tn.(l1_to_il1_pair n e = (st, ex, n')) ==> (contains (Compiler tn) (l1_to_il1 e n) <=> (tn >= n) /\ (tn < n'))``,
 metis_tac [EQ_IMP_THM, ALL_CO_LOCS_IN_RANGE_BA, ALL_CO_LOCS_IN_RANGE_FOR, CONTAINS_A_SUB]);
+
+
+!e n st ex n' tn.(l1_to_il1_pair n e = (st, ex, n')) ==> if (tn >= n) /\ (tn < n') then (count_deref (l1_to_il1 e n) (Compiler tn) = 1) else (count_deref (l1_to_il1 e n) (Compiler tn) = 0)
+Induct_on `e` THEN rw []
+
+(* Base case *)
+THEN TRY (Cases_on `b` THEN fs [count_assign_def, l1_to_il1_def, l1_to_il1_pair_def, LET_DEF, ALL_CO_LOCS_IN_RANGE, NOT_LESS, NOT_LESS_EQUAL, GREATER_EQ] THEN rw [] THEN EVAL_TAC THEN decide_tac)
+
+(* Operations *)
+THEN1 (`?st ex rl.l1_to_il1_pair n e = (st, ex, rl)` by metis_tac [L1_TO_IL1_TOTAL_THM]
+THEN `?st' ex' rl'.l1_to_il1_pair rl e' = (st', ex', rl')` by metis_tac [L1_TO_IL1_TOTAL_THM]
+THEN fs [l1_to_il1_def, l1_to_il1_pair_def, LET_DEF, contains_def, contains_expr_def, count_deref_def, count_deref_expr_def] THEN imp_res_tac COMP_LOC_INCREASING_THM THEN fs [GREATER_EQ] THEN rw [count_deref_def, count_deref_expr_def]
+THEN1 (`(count_deref st'' (Compiler rl') = 0) /\ (count_deref_expr ex' (Compiler rl') = 0) /\ (count_deref st' (Compiler rl') = 0) /\ (count_deref_expr ex'' (Compiler rl') = 0)` by metis_tac [NOT_LESS_EQUAL, LESS_EQ_REFL] THEN rw [])
+THEN Cases_on `rl <= tn`
+THEN1
+    (`count_deref st'' (Compiler tn) + count_deref_expr ex'' (Compiler tn) = 1` by (`tn < rl'` by decide_tac THEN metis_tac [])
+    THEN rw [] THEN `~(tn < rl)` by metis_tac [NOT_LESS] THEN rw [] THEN `(count_deref st' (Compiler tn) = 0) /\ (count_deref_expr ex' (Compiler tn) = 0)` by metis_tac [] THEN decide_tac)
+THEN1
+    (`(count_deref st'' (Compiler tn) = 0) /\ (count_deref_expr ex'' (Compiler tn) = 0)` by metis_tac []
+    THEN rw [] THEN `tn < rl` by metis_tac [NOT_LESS] THEN rw [] THEN `count_deref st' (Compiler tn) + count_deref_expr ex' (Compiler tn) = 1` by metis_tac [] THEN decide_tac))
+
+THEN1 (`?st ex rl.l1_to_il1_pair n e = (st, ex, rl)` by metis_tac [L1_TO_IL1_TOTAL_THM]
+THEN `?st' ex' rl'.l1_to_il1_pair rl e' = (st', ex', rl')` by metis_tac [L1_TO_IL1_TOTAL_THM]
+THEN fs [l1_to_il1_def, l1_to_il1_pair_def, LET_DEF, contains_def, contains_expr_def, count_deref_def, count_deref_expr_def] THEN imp_res_tac COMP_LOC_INCREASING_THM THEN fs [GREATER_EQ] THEN rw [count_deref_def, count_deref_expr_def] THEN (metis_tac [NOT_LESS, NOT_LESS_EQ, SILLY_ARITH_2_THM, SILLY_ARITH_THM, LESS_LESS_EQ_TRANS, NOT_LESS_EQUAL, NOT_LESS, SILLY_ARITH_2_THM, LESS_TRANS]))
+
+THEN1 (`?st ex rl.l1_to_il1_pair n e = (st, ex, rl)` by metis_tac [L1_TO_IL1_TOTAL_THM]
+THEN `?st' ex' rl'.l1_to_il1_pair rl e' = (st', ex', rl')` by metis_tac [L1_TO_IL1_TOTAL_THM]
+THEN fs [l1_to_il1_def, l1_to_il1_pair_def, LET_DEF, contains_def, contains_expr_def, count_deref_def, count_deref_expr_def] THEN imp_res_tac COMP_LOC_INCREASING_THM THEN fs [GREATER_EQ] THEN rw [count_deref_def, count_deref_expr_def]
+THEN1 (`(count_deref st'' (Compiler rl') = 0) /\ (count_deref_expr ex' (Compiler rl') = 0) /\ (count_deref st' (Compiler rl') = 0) /\ (count_deref_expr ex'' (Compiler rl') = 0)` by metis_tac [NOT_LESS_EQUAL, LESS_EQ_REFL] THEN rw [])
+THEN Cases_on `rl <= tn`
+THEN1
+    (`count_deref st'' (Compiler tn) + count_deref_expr ex'' (Compiler tn) = 1` by (`tn < rl'` by decide_tac THEN metis_tac [])
+    THEN rw [] THEN `~(tn < rl)` by metis_tac [NOT_LESS] THEN rw [] THEN `(count_deref st' (Compiler tn) = 0) /\ (count_deref_expr ex' (Compiler tn) = 0)` by metis_tac [] THEN decide_tac)
+THEN1
+    (`(count_deref st'' (Compiler tn) = 0) /\ (count_deref_expr ex'' (Compiler tn) = 0)` by metis_tac []
+    THEN rw [] THEN `tn < rl` by metis_tac [NOT_LESS] THEN rw [] THEN `count_deref st' (Compiler tn) + count_deref_expr ex' (Compiler tn) = 1` by metis_tac [] THEN decide_tac))
+
+THEN1 (`?st ex rl.l1_to_il1_pair n e = (st, ex, rl)` by metis_tac [L1_TO_IL1_TOTAL_THM]
+THEN `?st' ex' rl'.l1_to_il1_pair rl e' = (st', ex', rl')` by metis_tac [L1_TO_IL1_TOTAL_THM]
+THEN fs [l1_to_il1_def, l1_to_il1_pair_def, LET_DEF, contains_def, contains_expr_def, count_deref_def, count_deref_expr_def] THEN imp_res_tac COMP_LOC_INCREASING_THM THEN fs [GREATER_EQ] THEN rw [count_deref_def, count_deref_expr_def] THEN (metis_tac [NOT_LESS, NOT_LESS_EQ, SILLY_ARITH_2_THM, SILLY_ARITH_THM, LESS_LESS_EQ_TRANS, NOT_LESS_EQUAL, NOT_LESS, SILLY_ARITH_2_THM, LESS_TRANS]))
+
+(* IF *)
+`?st ex rl.l1_to_il1_pair n e = (st, ex, rl)` by metis_tac [L1_TO_IL1_TOTAL_THM]
+THEN `?st' ex' rl'.l1_to_il1_pair rl e' = (st', ex', rl')` by metis_tac [L1_TO_IL1_TOTAL_THM]
+THEN `?st'' ex'' rl''.l1_to_il1_pair rl' e'' = (st'', ex'', rl'')` by metis_tac [L1_TO_IL1_TOTAL_THM]
+
 
 val assign_deref_case = (`?st ex rl.l1_to_il1_pair n' e = (st, ex, rl)` by metis_tac [L1_TO_IL1_TOTAL_THM]
 THEN fs [l1_to_il1_def, l1_to_il1_pair_def, LET_DEF, contains_def, contains_expr_def, count_assign_def] THEN imp_res_tac COMP_LOC_INCREASING_THM THEN fs [GREATER_EQ] THEN rw [count_assign_def] THEN (TRY decide_tac) THEN metis_tac []);
