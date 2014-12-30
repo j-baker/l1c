@@ -69,6 +69,20 @@ val count_assign_def = Define `
 (count_assign (IL1_Assign l1 e) l2 = if l1 = l2 then 1 else 0) /\
 (count_assign (IL1_Seq e1 e2) l = count_assign e1 l + count_assign e2 l)`;
 
+val count_deref_expr_def = Define `
+(count_deref_expr (IL1_Deref l) l' = if l = l' then 1 else 0) /\
+(count_deref_expr (IL1_Value _) _ = 0) /\
+(count_deref_expr (IL1_Plus e1 e2) l = count_deref_expr e1 l + count_deref_expr e2 l) /\
+(count_deref_expr (IL1_Geq e1 e2) l = count_deref_expr e1 l + count_deref_expr e2 l) /\
+(count_deref_expr (IL1_EIf e1 e2 e3) l = count_deref_expr e1 l + count_deref_expr e2 l + count_deref_expr e3 l)`;
+
+val count_deref_def = Define `
+(count_deref (IL1_Expr e) l = count_deref_expr e l) /\
+(count_deref (IL1_SIf e1 e2 e3) l = count_deref_expr e1 l + count_deref e2 l + count_deref e3 l) /\
+(count_deref (IL1_While e1 e2) l = count_deref_expr e1 l + count_deref e2 l) /\
+(count_deref (IL1_Assign l1 e) l2 = count_deref_expr e l2) /\
+(count_deref (IL1_Seq e1 e2) l = count_deref e1 l + count_deref e2 l)`;
+
 val L1_TO_IL1_TOTAL_THM = store_thm("L1_TO_IL1_TOTAL_THM",
 ``!e n.?sl e' lc.l1_to_il1_pair n e = (sl, e', lc)``,
 Induct_on `e` THEN rw [l1_to_il1_pair_def]
