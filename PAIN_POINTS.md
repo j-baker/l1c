@@ -7,3 +7,7 @@ to solve all but the eight goals, and not be forced to do
 This has really saved me a lot of time since I've done that - my proofs go about 90% faster because it gives a much greater intuition as to whether a proof is going to work, almost immediately. Before, I had no idea whether I'd immediately hit a brick wall.
 
 2. When you open HOL, it creates a .HOLMK directory. This is usually fine, and you never notice it, but if you're on (say) the Emacs scratch page, or are in some directory where you have no permission to create a directory, you get an error which is somewhat unclear and initially nondeterministic.
+
+3. The HOL manual and HOL-interaction indicate that it's acceptable to use mosml with HOL. It's not. It's really slow.
+
+4. When building HOL on OS X with Poly and Homebrew, there's a quirk since poly requires a custom compiler flag. This could be put in the build instructions explicitly?
