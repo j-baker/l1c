@@ -23,7 +23,9 @@ val l1_to_il1_pair_def = Define `
         let (sl2, e2', lc3) = l1_to_il1_pair lc2 e2 in
         let (sl3, e3', lc4) = l1_to_il1_pair lc3 e1
         in
-            (IL1_Seq sl1 (IL1_While e1' (IL1_Seq sl2 sl3)), IL1_Value IL1_ESkip, lc4)) /\
+            (IL1_Seq sl1 (IL1_SIf e1' (IL1_DoWhile (IL1_Seq sl2 sl3) e3') (IL1_Expr (IL1_Value IL1_ESkip))),
+             IL1_Value IL1_ESkip,
+             lc4)) /\
 
     (l1_to_il1_pair lc (B_If e1 e2 e3) =
         let (sl1, e1', lc2) = l1_to_il1_pair lc e1 in 
@@ -65,7 +67,7 @@ val minimal_store_def = Define `minimal_store e s = !k.k ∈ FDOM s ==> contains
 val count_assign_def = Define `
 (count_assign (IL1_Expr _) _ = 0) /\
 (count_assign (IL1_SIf _ e2 e3) l = count_assign e2 l + count_assign e3 l) /\
-(count_assign (IL1_While _ e2) l = count_assign e2 l) /\
+(count_assign (IL1_DoWhile e1 _) l = count_assign e1 l) /\
 (count_assign (IL1_Assign l1 e) l2 = if l1 = l2 then 1 else 0) /\
 (count_assign (IL1_Seq e1 e2) l = count_assign e1 l + count_assign e2 l)`;
 
@@ -79,7 +81,7 @@ val count_deref_expr_def = Define `
 val count_deref_def = Define `
 (count_deref (IL1_Expr e) l = count_deref_expr e l) /\
 (count_deref (IL1_SIf e1 e2 e3) l = count_deref_expr e1 l + count_deref e2 l + count_deref e3 l) /\
-(count_deref (IL1_While e1 e2) l = count_deref_expr e1 l + count_deref e2 l) /\
+(count_deref (IL1_DoWhile e1 e2) l = count_deref e1 l + count_deref_expr e2 l) /\
 (count_deref (IL1_Assign l1 e) l2 = count_deref_expr e l2) /\
 (count_deref (IL1_Seq e1 e2) l = count_deref e1 l + count_deref e2 l)`;
 
