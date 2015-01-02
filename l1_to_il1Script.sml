@@ -92,6 +92,16 @@ ho_match_mp_tac (fetch "il1" "bs_il1_strongind") THEN rw [FST, SND, SUBSET_DEF])
 val DOMS_SUBSET_THM = store_thm("DOMS_SUBSET_THM",
 ``!e s v s'.bs_il1 (e, s) v s' ==> FDOM s ⊆ FDOM s'``,
 metis_tac [FST, SND, DOMS_SUBSET_THM_1]);
+
+val bs_il1_cases = (fetch "il1" "bs_il1_cases");
+val bs_il1_expr_cases = (fetch "il1" "bs_il1_expr_cases");
+
+val NO_INTERMEDIATE_WRITES_SAME_VALUE = store_thm("NO_INTERMEDIATE_WRITES_SAME_VALUE",
+``!p v.bs_il1_expr p v ==> !s' s'' l.l ∈ FDOM s'' ==> bs_il1 (IL1_Assign l (FST p), (SND p)) IL1_ESkip s' ==> ((s' ' l) = (s'' ' l)) ==> bs_il1_expr (IL1_Deref l, s'') v``,
+Cases_on `p` THEN rw [FST, SND]
+THEN fs [Once bs_il1_cases]
+THEN rw [Once bs_il1_expr_cases]
+THEN metis_tac [(fetch "il1" "BS_IL1_EXPR_DETERMINACY"), FAPPLY_FUPDATE]);
 val L1_TO_IL1_TOTAL_THM = store_thm("L1_TO_IL1_TOTAL_THM",
 ``!e n.?sl e' lc.l1_to_il1_pair n e = (sl, e', lc)``,
 Induct_on `e` THEN rw [l1_to_il1_pair_def]
