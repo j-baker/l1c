@@ -85,6 +85,13 @@ val count_deref_def = Define `
 (count_deref (IL1_Assign l1 e) l2 = count_deref_expr e l2) /\
 (count_deref (IL1_Seq e1 e2) l = count_deref e1 l + count_deref e2 l)`;
 
+val DOMS_SUBSET_THM_1 = store_thm("DOMS_SUBSET_THM",
+``!p v s'.bs_il1 p v s' ==> FDOM (SND p) ⊆ FDOM s'``,
+ho_match_mp_tac (fetch "il1" "bs_il1_strongind") THEN rw [FST, SND, SUBSET_DEF]);
+
+val DOMS_SUBSET_THM = store_thm("DOMS_SUBSET_THM",
+``!e s v s'.bs_il1 (e, s) v s' ==> FDOM s ⊆ FDOM s'``,
+metis_tac [FST, SND, DOMS_SUBSET_THM_1]);
 val L1_TO_IL1_TOTAL_THM = store_thm("L1_TO_IL1_TOTAL_THM",
 ``!e n.?sl e' lc.l1_to_il1_pair n e = (sl, e', lc)``,
 Induct_on `e` THEN rw [l1_to_il1_pair_def]
