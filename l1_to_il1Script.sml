@@ -435,7 +435,7 @@ THEN rw [Once bs_il1_expr_cases]
 THEN metis_tac []);
 (* End plus case *)
 
-val L1_TO_IL1_CORRECTNESS_THM = store_thm("L1_TO_IL1_CORRECTNESS_THM",
+val L1_TO_IL1_CORRECTNESS_LEMMA = store_thm("L1_TO_IL1_CORRECTNESS_LEMMA",
 ``!p v s'.big_step p v s' ==> !lc1 st ex lc1'.((st, ex, lc1') = l1_to_il1_pair lc1 (FST p)) ==> !fs.equiv (con_store (SND p)) fs ==> ?fs'.bs_il1 (st, fs) IL1_ESkip fs' /\ bs_il1_expr (ex, fs') (l1_il1_val v) /\ equiv (con_store s') fs'``,
 ho_match_mp_tac (fetch "l1" "big_step_strongind") THEN rw [FST, SND]
 
@@ -670,5 +670,24 @@ THEN fs [l1_il1_val_def]
 THEN `bs_il1 (IL1_While ex1 (IL1_Seq st2 st1), fs') IL1_ESkip fs'` by (rw [Once bs_il1_cases] THEN metis_tac [])
 THEN rw [Once bs_il1_expr_cases] THEN metis_tac [])
 (* End while false case *));
+
+val L1_TO_IL1_EXISTS_CORRECTNESS_THM = store_thm("L1_TO_IL1_EXISTS_CORRECTNESS_THM",
+``!e s v s' s''.big_step (e, s) v s' ==> ?s''.bs_il1 (l1_to_il1 e 0, con_store s) (l1_il1_val v) s'' /\ equiv (con_store s') s''``,
+rw [l1_to_il1_def]
+THEN `?s''' te lc.l1_to_il1_pair 0 e = (s''', te, lc)` by metis_tac [L1_TO_IL1_TOTAL_THM]
+THEN rw []
+THEN `equiv (con_store s) (con_store s)` by metis_tac [EQUIV_REFL_THM]
+THEN rw [Once bs_il1_cases]
+THEN imp_res_tac EQ_SYM
+THEN imp_res_tac L1_TO_IL1_CORRECTNESS_LEMMA
+THEN fs [FST, SND]
+THEN res_tac
+THEN `bs_il1 (IL1_Expr te, fs') (l1_il1_val v) fs'` by (rw [Once bs_il1_cases] THEN metis_tac [])
+THEN metis_tac []);
+
+val L1_TO_IL1_FORALL_CORRECTNESS_THM = store_thm("L1_TO_IL1_FORALL_CORRECTNESS_THM",
+``!e s v s' s''.big_step (e, s) v s' ==> !s'' v'.bs_il1 (l1_to_il1 e 0, con_store s) v' s'' ==> equiv (con_store s') s'' /\ (l1_il1_val v = v')``,
+rw [l1_to_il1_def] THEN `?s te lc.l1_to_il1_pair 0 e = (s,te, lc)` by metis_tac [L1_TO_IL1_TOTAL_THM] THEN fs [LET_DEF] THEN fs [Once bs_il1_cases] THEN imp_res_tac IL1_EXPR_BACK_THM
+THEN rw [] THEN imp_res_tac L1_TO_IL1_CORRECTNESS_LEMMA THEN fs [FST, SND] THEN `equiv (con_store s) (con_store s)` by metis_tac [EQUIV_REFL_THM] THEN imp_res_tac EQ_SYM THEN res_tac THEN imp_res_tac IL1_DETERMINACY_THM THEN rw [] THEN metis_tac [BS_IL1_EXPR_DETERMINACY]);
 
 val _ = export_theory ();
