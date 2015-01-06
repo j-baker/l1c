@@ -120,6 +120,14 @@ Cases_on `v` THEN REPEAT (rw [Once bs_il1_expr_cases]));
 
 
 val con_store_def = Define `con_store s = MAP_KEYS User s`;
+
+val NOT_CONTAINS_MEANS_UNCHANGED_LEMMA = store_thm("NOT_CONTAINS_MEANS_UNCHANGED_LEMMA",
+``!p v s'.bs_il1 p v s' ==> !l.~contains_a l (FST p) ==> (((SND p) ' l) = (s' ' l))``,
+ho_match_mp_tac (fetch "il1" "bs_il1_strongind") THEN rw [FST, SND] THEN fs [contains_a_def] THEN metis_tac [FAPPLY_FUPDATE_THM]);
+
+val NOT_CONTAINS_MEANS_UNCHANGED_THM = store_thm("NOT_CONTAINS_MEANS_UNCHANGED_THM",
+``!e s v s'.bs_il1 (e, s) v s' ==> !l.~contains_a l e ==> (s ' l = s' ' l)``,
+metis_tac [NOT_CONTAINS_MEANS_UNCHANGED_LEMMA, FST, SND]);
 val minimal_store_def = Define `minimal_store e s = !k.k ∈ FDOM s ==> contains_l1 k e`;
 
 val count_assign_def = Define `
