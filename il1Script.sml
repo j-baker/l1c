@@ -172,4 +172,28 @@ val IL1_WHILE_BACK_THM = store_thm("IL1_WHILE_BACK_THM",
 ``!e1 e2 s s'' v.bs_il1 (IL1_While e1 e2, s) v s'' ==> (v = IL1_ESkip) /\ ((bs_il1_expr (e1, s) (IL1_Boolean F) /\ (s = s'')) \/ (bs_il1_expr (e1, s) (IL1_Boolean T) /\ ?s'.bs_il1 (e2, s) IL1_ESkip s' /\ bs_il1 (IL1_While e1 e2, s') IL1_ESkip s''))``,
 rw [Once bs_il1_ecases] THEN metis_tac []);
 
+val IL1_DETERMINACY_THM = store_thm("IL1_DETERMINACY_THM",
+``!p v1 s1.bs_il1 p v1 s1 ==> !v2 s2.bs_il1 p v2 s2 ==> (v1 = v2) /\ (s1 = s2)``,
+ho_match_mp_tac (fetch "il1" "bs_il1_strongind") THEN rw []
+
+THEN1 (fs [Once bs_il1_ecases] THEN metis_tac [BS_IL1_EXPR_DETERMINACY])
+THEN1 (fs [Once bs_il1_ecases] THEN metis_tac [BS_IL1_EXPR_DETERMINACY])
+THEN1 (fs [Once bs_il1_ecases] THEN metis_tac [BS_IL1_EXPR_DETERMINACY])
+
+THEN1 (imp_res_tac IL1_ASSIGN_BACK_THM THEN rw [] THEN `IL1_Integer n = IL1_Integer n'` by metis_tac [BS_IL1_EXPR_DETERMINACY] THEN rw [] THEN metis_tac [])
+
+THEN1 (imp_res_tac IL1_SEQ_BACK_THM THEN rw [] THEN metis_tac [])
+THEN1 (imp_res_tac IL1_SEQ_BACK_THM THEN rw [] THEN metis_tac [])
+
+THEN1 (imp_res_tac IL1_SIF_BACK_THM THEN rw [] THEN imp_res_tac BS_IL1_EXPR_DETERMINACY THEN rw [] THEN metis_tac [])
+THEN1 (imp_res_tac IL1_SIF_BACK_THM THEN rw [] THEN imp_res_tac BS_IL1_EXPR_DETERMINACY THEN rw [] THEN metis_tac [])
+THEN1 (imp_res_tac IL1_SIF_BACK_THM THEN rw [] THEN imp_res_tac BS_IL1_EXPR_DETERMINACY THEN rw [] THEN metis_tac [])
+THEN1 (imp_res_tac IL1_SIF_BACK_THM THEN rw [] THEN imp_res_tac BS_IL1_EXPR_DETERMINACY THEN rw [] THEN metis_tac [])
+
+
+THEN1 (imp_res_tac IL1_WHILE_BACK_THM THEN rw [] THEN imp_res_tac BS_IL1_EXPR_DETERMINACY THEN rw [] THEN metis_tac [])
+THEN1 (imp_res_tac IL1_WHILE_BACK_THM THEN rw [] THEN imp_res_tac BS_IL1_EXPR_DETERMINACY THEN rw [] THEN metis_tac [])
+THEN1 (imp_res_tac IL1_WHILE_BACK_THM THEN rw [] THEN imp_res_tac BS_IL1_EXPR_DETERMINACY THEN rw [] THEN metis_tac [])
+THEN1 (imp_res_tac IL1_WHILE_BACK_THM THEN rw [] THEN imp_res_tac BS_IL1_EXPR_DETERMINACY THEN rw [] THEN metis_tac []));
+
 val _ = export_theory ();
