@@ -152,4 +152,24 @@ val (bs_il1_rules, bs_il1_induction, bs_il1_ecases) = Hol_reln `
 
 val bs_il1_sinduction = derive_strong_induction(bs_il1_rules, bs_il1_induction);
 
+val IL1_EXPR_BACK_THM = store_thm("IL1_EXPR_BACK_THM",
+``!e v s s'.bs_il1 (IL1_Expr e, s) v s' ==> bs_il1_expr (e, s) v /\ (s = s')``,
+rw [Once bs_il1_ecases] THEN metis_tac []);
+
+val IL1_SEQ_BACK_THM = store_thm("IL1_SEQ_BACK_THM",
+``!e1 e2 v s s''.bs_il1 (IL1_Seq e1 e2, s) v s'' ==> ?s'.bs_il1 (e1, s) IL1_ESkip s' /\ bs_il1 (e2, s') v s''``,
+rw [Once bs_il1_ecases] THEN metis_tac []);
+
+val IL1_ASSIGN_BACK_THM = store_thm("IL1_ASSIGN_BACK_THM",
+``!l e s s' v.bs_il1 (IL1_Assign l e, s) v s' ==> (v = IL1_ESkip) /\ ?n.bs_il1_expr (e, s) (IL1_Integer n) /\ (s' = (s |+ (l, n)))``,
+rw [Once bs_il1_ecases] THEN metis_tac []);
+
+val IL1_SIF_BACK_THM = store_thm("IL1_SIF_BACK_THM",
+``!e1 e2 e3 s v s'.bs_il1 (IL1_SIf e1 e2 e3, s) v s' ==> (bs_il1_expr (e1, s) (IL1_Boolean T) /\ bs_il1 (e2, s) v s') \/ (bs_il1_expr (e1, s) (IL1_Boolean F) /\ bs_il1 (e3, s) v s')``,
+rw [Once bs_il1_ecases] THEN metis_tac []);
+
+val IL1_WHILE_BACK_THM = store_thm("IL1_WHILE_BACK_THM",
+``!e1 e2 s s'' v.bs_il1 (IL1_While e1 e2, s) v s'' ==> (v = IL1_ESkip) /\ ((bs_il1_expr (e1, s) (IL1_Boolean F) /\ (s = s'')) \/ (bs_il1_expr (e1, s) (IL1_Boolean T) /\ ?s'.bs_il1 (e2, s) IL1_ESkip s' /\ bs_il1 (IL1_While e1 e2, s') IL1_ESkip s''))``,
+rw [Once bs_il1_ecases] THEN metis_tac []);
+
 val _ = export_theory ();
