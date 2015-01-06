@@ -29,7 +29,12 @@ val l1_to_il1_pair_def = Define `
         let (sl2, e2', lc3) = l1_to_il1_pair lc2 e2 in
         let (sl3, e3', lc4) = l1_to_il1_pair lc3 e3
         in
-            (IL1_Seq (IL1_Seq sl1 (IL1_Assign (Compiler lc4) e1')) (IL1_SIf (IL1_Deref (Compiler lc4)) sl2 sl3), IL1_EIf (IL1_Deref (Compiler lc4)) e2' e3', lc4 + 1)) /\
+            (IL1_Seq
+                (IL1_Seq sl1
+                    (IL1_Assign (Compiler lc4) (IL1_EIf e1' (IL1_Value (IL1_Integer 1)) (IL1_Value (IL1_Integer 0)))))
+                (IL1_SIf e1' sl2 sl3),
+             IL1_EIf (IL1_Geq (IL1_Deref (Compiler lc4)) (IL1_Value (IL1_Integer 1))) e2' e3',
+             lc4 + 1)) /\
 
     (l1_to_il1_pair lc (B_Plus e1 e2) =
         let (sl1, e1', lc2) = l1_to_il1_pair lc e1 in
