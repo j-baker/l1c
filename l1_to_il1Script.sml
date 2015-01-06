@@ -53,7 +53,7 @@ val l1_il1_val_def = Define `(l1_il1_val (B_N n) = IL1_Integer n) /\
 (l1_il1_val (B_B b) = IL1_Boolean b) /\
 (l1_il1_val (B_Skip) = IL1_ESkip)`;
 
-val equiv_def = Define `equiv s1 s2 = !k.User k ∈ FDOM s1 ==> (User k ∈ FDOM s2 /\ (s1 ' (User k) = s2 ' (User k)))`;
+val equiv_def = Define `equiv s1 s2 = !k.(User k ∈ FDOM s1 <=> User k ∈ FDOM s2) /\ (s1 ' (User k) = s2 ' (User k))`;
 
 val EQUIV_REFL_THM = store_thm("EQUIV_REFL_THM",
 ``!x.equiv x x``,
