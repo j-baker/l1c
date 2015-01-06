@@ -89,6 +89,7 @@ THEN `INJ User (FDOM s) UNIV` by rw [INJ_DEF] THEN metis_tac [MAP_KEYS_def]);
 val BS_VALUE_THM = store_thm("BS_VALUE_THM",
 ``!v v' s.bs_il1_expr (IL1_Value v, s) v' ==> (v = v') /\ !s'.bs_il1_expr (IL1_Value v, s') v'``,
 Cases_on `v` THEN REPEAT (rw [Once bs_il1_expr_cases]));
+val con_store_def = Define `con_store s = MAP_KEYS User s`;
 val minimal_store_def = Define `minimal_store e s = !k.k ∈ FDOM s ==> contains_l1 k e`;
 
 val count_assign_def = Define `
