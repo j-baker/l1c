@@ -334,6 +334,18 @@ val type_fun_def = Define `
     (type_fun (Seq e1 e2) g = if (type_fun e1 g = SOME unitL1) then type_fun e2 g else NONE) /\
     (type_fun (While e1 e2) g = if ((type_fun e1 g = SOME boolL1) /\ (type_fun e2 g = SOME unitL1)) then SOME unitL1 else NONE)`;
 
+val bs_bs_type_fun_def = Define `
+    (bs_type_fun (B_Value (B_N n)) g = SOME intL1) /\
+    (bs_type_fun (B_Value (B_B b)) g = SOME boolL1) /\
+    (bs_type_fun (B_Plus e1 e2) g = if (bs_type_fun e1 g = SOME intL1) /\ (bs_type_fun e2 g = SOME intL1) then SOME intL1 else NONE) /\
+    (bs_type_fun (B_Geq e1 e2) g = if (bs_type_fun e1 g = SOME intL1) /\ (bs_type_fun e2 g = SOME intL1) then SOME boolL1 else NONE) /\
+    (bs_type_fun (B_If e1 e2 e3) g = if (bs_type_fun e1 g = SOME boolL1) /\ (bs_type_fun e2 g = bs_type_fun e3 g) then bs_type_fun e2 g else NONE) /\
+    (bs_type_fun (B_Assign l e) g = if (l ∈ (FDOM g) /\ (bs_type_fun e g = SOME intL1)) then SOME unitL1 else NONE) /\
+    (bs_type_fun (B_Deref l) g = if (l ∈ (FDOM g)) then SOME intL1 else NONE) /\
+    (bs_type_fun (B_Value B_Skip) g = SOME unitL1) /\
+    (bs_type_fun (B_Seq e1 e2) g = if (bs_type_fun e1 g = SOME unitL1) then bs_type_fun e2 g else NONE) /\
+    (bs_type_fun (B_While e1 e2) g = if ((bs_type_fun e1 g = SOME boolL1) /\ (bs_type_fun e2 g = SOME unitL1)) then SOME unitL1 else NONE)`;
+
 val type_sinduction = derive_strong_induction(type_rules, type_induction);
 
 val TYPE_IMP_TYPE_FUN_THM = store_thm("TYPE_IMP_TYPE_FUN_THM",
