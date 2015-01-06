@@ -149,7 +149,7 @@ val (bs_il1_rules, bs_il1_induction, bs_il1_ecases) = Hol_reln `
     (!e1 e2 s s'.
        (bs_il1 (e1, s) IL1_ESkip s' /\
         bs_il1_expr (e2, s') (IL1_Boolean F))
-    ==> bs_il1 (IL1_DoWhile e1 e2, s) IL1_ESkip s)`;
+    ==> bs_il1 (IL1_DoWhile e1 e2, s) IL1_ESkip s')`;
 
 val bs_il1_sinduction = derive_strong_induction(bs_il1_rules, bs_il1_induction);
 
