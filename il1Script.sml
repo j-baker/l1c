@@ -46,7 +46,7 @@ val CONTAINS_A_SUB = store_thm("CONTAINS_A_SUB",
 ``!l e.contains_a l e ==> contains l e``,
 Induct_on `e` THEN metis_tac [contains_a_def, contains_def]);
 
-val (bs_il1_expr_rules, bs_il1_expr_induction, bs_il1_expr_ecases) = Hol_reln `
+val (bs_il1_expr_rules, bs_il1_expr_induction, bs_il1_expr_cases) = Hol_reln `
     (* Values *)
     (!v s.bs_il1_expr (IL1_Value v, s) v) /\
 
@@ -86,24 +86,24 @@ val bs_il1_expr_sinduction = derive_strong_induction(bs_il1_expr_rules, bs_il1_e
 
 val BS_IL1_EXPR_PLUS_BACK_THM = store_thm("BS_IL1_EXPR_PLUS_BACK_THM",
 ``!e1 e2 s v.bs_il1_expr (IL1_Plus e1 e2, s) v ==> ?n1 n2.bs_il1_expr (e1, s) (IL1_Integer n1) /\ bs_il1_expr (e2, s) (IL1_Integer n2) /\ (v = IL1_Integer (n1 + n2))``,
-rw [Once bs_il1_expr_ecases] THEN metis_tac []);
+rw [Once bs_il1_expr_cases] THEN metis_tac []);
 
 val BS_IL1_EXPR_GEQ_BACK_THM = store_thm("BS_IL1_EXPR_GEQ_BACK_THM",
 ``!e1 e2 s v.bs_il1_expr (IL1_Geq e1 e2, s) v ==> ?n1 n2.bs_il1_expr (e1, s) (IL1_Integer n1) /\ bs_il1_expr (e2, s) (IL1_Integer n2) /\ (v = IL1_Boolean (n1 >= n2))``,
-rw [Once bs_il1_expr_ecases] THEN metis_tac []);
+rw [Once bs_il1_expr_cases] THEN metis_tac []);
 
 val BS_IL1_EXPR_DEREF_BACK_THM = store_thm("BS_IL1_EXPR_DEREF_BACK_THM",
 ``!l s v.bs_il1_expr (IL1_Deref l, s) v ==> (l ∈ FDOM s /\ (v = IL1_Integer (s ' l))) \/ (l ∉ FDOM s /\ (v = IL1_Integer 0))``,
-rw [Once bs_il1_expr_ecases] THEN metis_tac []);
+rw [Once bs_il1_expr_cases] THEN metis_tac []);
 
 val BS_IL1_EXPR_EIF_BACK_THM = store_thm("BS_IL1_EXPR_EIF_BACK_THM",
 ``!e1 e2 e3 s v.bs_il1_expr (IL1_EIf e1 e2 e3, s) v ==> (bs_il1_expr (e1, s) (IL1_Boolean T) /\ bs_il1_expr (e2, s) v) \/ (bs_il1_expr (e1, s) (IL1_Boolean F) /\ bs_il1_expr (e3, s) v)``,
-rw [Once bs_il1_expr_ecases] THEN metis_tac []);
+rw [Once bs_il1_expr_cases] THEN metis_tac []);
 
 val BS_IL1_EXPR_DETERMINACY = store_thm("BS_IL1_EXPR_DETERMINACY",
 ``!p v1.bs_il1_expr p v1 ==> !v2.bs_il1_expr p v2 ==> (v1 = v2)``,
 ho_match_mp_tac bs_il1_expr_sinduction THEN rw []
-THEN1 (Cases_on `v1` THEN Cases_on `v2` THEN fs [Once bs_il1_expr_ecases])
+THEN1 (Cases_on `v1` THEN Cases_on `v2` THEN fs [Once bs_il1_expr_cases])
 THEN1 (imp_res_tac BS_IL1_EXPR_PLUS_BACK_THM THEN res_tac THEN rw [])
 THEN1 (imp_res_tac BS_IL1_EXPR_GEQ_BACK_THM THEN res_tac THEN rw [])
 THEN1 (imp_res_tac BS_IL1_EXPR_DEREF_BACK_THM THEN rw [])
@@ -111,7 +111,7 @@ THEN1 (imp_res_tac BS_IL1_EXPR_DEREF_BACK_THM THEN rw [])
 THEN1 (imp_res_tac BS_IL1_EXPR_EIF_BACK_THM THEN res_tac THEN rw [])
 THEN1 (imp_res_tac BS_IL1_EXPR_EIF_BACK_THM THEN res_tac THEN rw []));
 
-val (bs_il1_rules, bs_il1_induction, bs_il1_ecases) = Hol_reln `
+val (bs_il1_rules, bs_il1_induction, bs_il1_cases) = Hol_reln `
     (*  Expressions *)
     (!e v s.
         bs_il1_expr (e, s) v
@@ -154,31 +154,31 @@ val bs_il1_sinduction = derive_strong_induction(bs_il1_rules, bs_il1_induction);
 
 val IL1_EXPR_BACK_THM = store_thm("IL1_EXPR_BACK_THM",
 ``!e v s s'.bs_il1 (IL1_Expr e, s) v s' ==> bs_il1_expr (e, s) v /\ (s = s')``,
-rw [Once bs_il1_ecases] THEN metis_tac []);
+rw [Once bs_il1_cases] THEN metis_tac []);
 
 val IL1_SEQ_BACK_THM = store_thm("IL1_SEQ_BACK_THM",
 ``!e1 e2 v s s''.bs_il1 (IL1_Seq e1 e2, s) v s'' ==> ?s'.bs_il1 (e1, s) IL1_ESkip s' /\ bs_il1 (e2, s') v s''``,
-rw [Once bs_il1_ecases] THEN metis_tac []);
+rw [Once bs_il1_cases] THEN metis_tac []);
 
 val IL1_ASSIGN_BACK_THM = store_thm("IL1_ASSIGN_BACK_THM",
 ``!l e s s' v.bs_il1 (IL1_Assign l e, s) v s' ==> (v = IL1_ESkip) /\ ?n.bs_il1_expr (e, s) (IL1_Integer n) /\ (s' = (s |+ (l, n)))``,
-rw [Once bs_il1_ecases] THEN metis_tac []);
+rw [Once bs_il1_cases] THEN metis_tac []);
 
 val IL1_SIF_BACK_THM = store_thm("IL1_SIF_BACK_THM",
 ``!e1 e2 e3 s v s'.bs_il1 (IL1_SIf e1 e2 e3, s) v s' ==> (bs_il1_expr (e1, s) (IL1_Boolean T) /\ bs_il1 (e2, s) v s') \/ (bs_il1_expr (e1, s) (IL1_Boolean F) /\ bs_il1 (e3, s) v s')``,
-rw [Once bs_il1_ecases] THEN metis_tac []);
+rw [Once bs_il1_cases] THEN metis_tac []);
 
 val IL1_WHILE_BACK_THM = store_thm("IL1_WHILE_BACK_THM",
 ``!e1 e2 s s'' v.bs_il1 (IL1_While e1 e2, s) v s'' ==> (v = IL1_ESkip) /\ ((bs_il1_expr (e1, s) (IL1_Boolean F) /\ (s = s'')) \/ (bs_il1_expr (e1, s) (IL1_Boolean T) /\ ?s'.bs_il1 (e2, s) IL1_ESkip s' /\ bs_il1 (IL1_While e1 e2, s') IL1_ESkip s''))``,
-rw [Once bs_il1_ecases] THEN metis_tac []);
+rw [Once bs_il1_cases] THEN metis_tac []);
 
 val IL1_DETERMINACY_THM = store_thm("IL1_DETERMINACY_THM",
 ``!p v1 s1.bs_il1 p v1 s1 ==> !v2 s2.bs_il1 p v2 s2 ==> (v1 = v2) /\ (s1 = s2)``,
 ho_match_mp_tac (fetch "il1" "bs_il1_strongind") THEN rw []
 
-THEN1 (fs [Once bs_il1_ecases] THEN metis_tac [BS_IL1_EXPR_DETERMINACY])
-THEN1 (fs [Once bs_il1_ecases] THEN metis_tac [BS_IL1_EXPR_DETERMINACY])
-THEN1 (fs [Once bs_il1_ecases] THEN metis_tac [BS_IL1_EXPR_DETERMINACY])
+THEN1 (fs [Once bs_il1_cases] THEN metis_tac [BS_IL1_EXPR_DETERMINACY])
+THEN1 (fs [Once bs_il1_cases] THEN metis_tac [BS_IL1_EXPR_DETERMINACY])
+THEN1 (fs [Once bs_il1_cases] THEN metis_tac [BS_IL1_EXPR_DETERMINACY])
 
 THEN1 (imp_res_tac IL1_ASSIGN_BACK_THM THEN rw [] THEN `IL1_Integer n = IL1_Integer n'` by metis_tac [BS_IL1_EXPR_DETERMINACY] THEN rw [] THEN metis_tac [])
 
