@@ -105,7 +105,7 @@ val minimal_store_def = Define `minimal_store e s = !k.k ∈ FDOM s ==> contains
 val count_assign_def = Define `
 (count_assign (IL1_Expr _) _ = 0) /\
 (count_assign (IL1_SIf _ e2 e3) l = count_assign e2 l + count_assign e3 l) /\
-(count_assign (IL1_DoWhile e1 _) l = count_assign e1 l) /\
+(count_assign (IL1_While _ e2) l = count_assign e2 l) /\
 (count_assign (IL1_Assign l1 e) l2 = if l1 = l2 then 1 else 0) /\
 (count_assign (IL1_Seq e1 e2) l = count_assign e1 l + count_assign e2 l)`;
 
@@ -119,7 +119,7 @@ val count_deref_expr_def = Define `
 val count_deref_def = Define `
 (count_deref (IL1_Expr e) l = count_deref_expr e l) /\
 (count_deref (IL1_SIf e1 e2 e3) l = count_deref_expr e1 l + count_deref e2 l + count_deref e3 l) /\
-(count_deref (IL1_DoWhile e1 e2) l = count_deref e1 l + count_deref_expr e2 l) /\
+(count_deref (IL1_While e1 e2) l = count_deref_expr e1 l + count_deref e2 l) /\
 (count_deref (IL1_Assign l1 e) l2 = count_deref_expr e l2) /\
 (count_deref (IL1_Seq e1 e2) l = count_deref e1 l + count_deref e2 l)`;
 
@@ -180,12 +180,7 @@ fs [LET_DEF, l1_to_il1_pair_def] THEN
 res_tac THEN
 decide_tac)
 THEN1 ((`?sl1 e1' n''.l1_to_il1_pair n' e = (sl1, e1', n'')` by metis_tac [L1_TO_IL1_TOTAL_THM]) THEN fs [l1_to_il1_pair_def, LET_DEF])
-THEN1 (`?sl1 e1' lc2.l1_to_il1_pair n e = (sl1, e1', lc2)` by metis_tac [L1_TO_IL1_TOTAL_THM] THEN
-`?sl2 e2' lc3.l1_to_il1_pair lc2 e' = (sl2, e2', lc3)` by metis_tac [L1_TO_IL1_TOTAL_THM] THEN
-`?sl3 e3' lc4.l1_to_il1_pair lc3 e = (sl3, e3', lc4)` by metis_tac [L1_TO_IL1_TOTAL_THM] THEN
-fs [LET_DEF, l1_to_il1_pair_def] THEN
-res_tac THEN
-decide_tac));
+);
 
 val CONTAINS_CONVERT_THM = store_thm("CONTAINS_CONVERT_THM",
 ``!e n l.contains l (l1_to_il1 e n) <=> ?st ex n'.(l1_to_il1_pair n e = (st, ex, n')) /\ (contains l st \/ contains_expr l ex)``,
@@ -215,22 +210,7 @@ THEN FAIL_TAC "expect to fail")
 THEN1 (`?st ex rl.l1_to_il1_pair n' e = (st, ex, rl)` by metis_tac [L1_TO_IL1_TOTAL_THM]
 THEN fs [LET_DEF, l1_to_il1_def, l1_to_il1_pair_def]
 THEN rw []
-THEN fs [contains_a_def])
-
-THEN1 (`?st ex rl.l1_to_il1_pair n e = (st, ex, rl)` by metis_tac [L1_TO_IL1_TOTAL_THM]
-THEN `?st' ex' rl'.l1_to_il1_pair rl e' = (st', ex', rl')` by metis_tac [L1_TO_IL1_TOTAL_THM]
-THEN `?st'' ex'' rl''.l1_to_il1_pair rl' e = (st'', ex'', rl'')` by metis_tac [L1_TO_IL1_TOTAL_THM]
-THEN fs [LET_DEF, l1_to_il1_def, l1_to_il1_pair_def]
-THEN rw []
-THEN imp_res_tac COMP_LOC_INCREASING_THM
-THEN rw [contains_a_def]
-THEN res_tac
-
-THEN Cases_on `n = rl`
-THEN Cases_on `rl = rl'`
-THEN Cases_on `rl' = rl''`
-THEN fs [contains_a_def]
-THEN FAIL_TAC "expect to fail"));
+THEN fs [contains_a_def]));
 
 val ALL_CO_LOCS_IN_RANGE_BA = store_thm("ALL_CO_LOCS_IN_RANGE_BA",
 ``!e n st ex n' tn.(l1_to_il1_pair n e = (st, ex, n')) ==> contains (Compiler tn) (l1_to_il1 e n) ==> (tn >= n) /\ (tn < n')``,
@@ -532,8 +512,8 @@ val IL1_SIF_BACK_THM = store_thm("IL1_SIF_BACK_THM",
 ``!e1 e2 e3 s v s'.bs_il1 (IL1_SIf e1 e2 e3, s) v s' ==> (bs_il1_expr (e1, s) (IL1_Boolean T) /\ bs_il1 (e2, s) v s') \/ (bs_il1_expr (e1, s) (IL1_Boolean F) /\ bs_il1 (e3, s) v s')``,
 rw [Once bs_il1_cases] THEN metis_tac []);
 
-val IL1_DOWHILE_BACK_THM = store_thm("IL1_DOWHILE_BACK_THM",
-``!e1 e2 s s''.bs_il1 (IL1_DoWhile e1 e2, s) IL1_ESkip s'' ==> ?s'.bs_il1 (e1, s) IL1_ESkip s' /\ ((bs_il1_expr (e2, s') (IL1_Boolean T) /\ bs_il1 (IL1_DoWhile e1 e2, s') IL1_ESkip s'') \/ (bs_il1_expr (e2, s') (IL1_Boolean F) /\ (s' = s'')))``,
+val IL1_WHILE_BACK_THM = store_thm("IL1_WHILE_BACK_THM",
+``!e1 e2 s s''.bs_il1 (IL1_While e1 e2, s) IL1_ESkip s'' ==> (bs_il1_expr (e1, s) (IL1_Boolean F) /\ (s = s'')) \/ (bs_il1_expr (e1, s) (IL1_Boolean T) /\ ?s'.bs_il1 (e2, s) IL1_ESkip s' /\ bs_il1 (IL1_While e1 e2, s') IL1_ESkip s'')``,
 rw [Once bs_il1_cases] THEN metis_tac []);
 
 
