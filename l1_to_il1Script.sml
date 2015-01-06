@@ -307,6 +307,11 @@ val ALL_CO_LOCS_IN_RANGE = store_thm("ALL_CO_LOCS_IN_RANGE",
 ``!e n st ex n' tn.(l1_to_il1_pair n e = (st, ex, n')) ==> (contains (Compiler tn) (l1_to_il1 e n) <=> (tn >= n) /\ (tn < n'))``,
 metis_tac [EQ_IMP_THM, ALL_CO_LOCS_IN_RANGE_BA, ALL_CO_LOCS_IN_RANGE_FOR, CONTAINS_A_SUB]);
 
+val UNCHANGED_LOC_SIMP_THM = store_thm("UNCHANGED_LOC_SIMP_THM",
+``!n e st ex n' tn.(l1_to_il1_pair n e = (st,ex,n')) ⇒
+     (contains_a (Compiler tn) st ⇔ tn ≥ n ∧ tn < n')``,
+rw [EQ_IMP_THM] THEN metis_tac [CONTAINS_SIMPED_THM, ALL_CO_LOCS_IN_RANGE_BA, (fetch "il1" "CONTAINS_A_SUB"), ALL_CO_LOCS_IN_RANGE_FOR]);
+
 val assign_deref_case = (`?st ex rl.l1_to_il1_pair n' e = (st, ex, rl)` by metis_tac [L1_TO_IL1_TOTAL_THM]
 THEN fs [l1_to_il1_def, l1_to_il1_pair_def, LET_DEF, contains_def, contains_expr_def, count_assign_def] THEN imp_res_tac COMP_LOC_INCREASING_THM THEN fs [GREATER_EQ] THEN rw [count_assign_def] THEN (TRY decide_tac) THEN metis_tac []);
 
