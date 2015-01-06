@@ -134,6 +134,20 @@ THEN
 `?sl e''' lc''.l1_to_il1_pair lc' e = (sl, e''', lc'')` by METIS_TAC []
 THEN rw []);
 
+val SKIP_TO_SKIP_THM = store_thm("SKIP_TO_SKIP",
+``!s.bs_il1_expr (IL1_Value IL1_ESkip, s) IL1_ESkip``,
+rw [Once bs_il1_expr_cases] THEN metis_tac []);
+
+val SKIP_TO_SKIP_2_THM = store_thm("SKIP_TO_SKIP_2_THM",
+``!s.bs_il1 (IL1_Expr (IL1_Value IL1_ESkip), s) IL1_ESkip s``,
+rw [Once bs_il1_cases, Once bs_il1_expr_cases] THEN metis_tac []);
+
+val ASSIGN_IMPLIES_SKIP_THM = store_thm("ASSIGN_IMPLIES_SKIP_THM",
+``!e lc s st ex l lc'.(l1_to_il1_pair lc (B_Assign l e) = (st, ex, lc')) ==> (ex = IL1_Value (IL1_ESkip))``,
+rw [l1_to_il1_pair_def]
+THEN `?sl1 e1' lc2'.l1_to_il1_pair lc e = (sl1, e1', lc2')` by metis_tac [L1_TO_IL1_TOTAL_THM] 
+THEN fs [LET_DEF]);
+
 val COMP_LOC_INCREASING_THM = store_thm("COMP_LOC_INCREASING_THM",
 ``!e n n' sl1 e1'.(l1_to_il1_pair n e = (sl1, e1', n')) ==> (n' >= n)``,
 Induct_on `e` THEN rw []
