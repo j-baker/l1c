@@ -128,6 +128,15 @@ ho_match_mp_tac (fetch "il1" "bs_il1_strongind") THEN rw [FST, SND] THEN fs [con
 val NOT_CONTAINS_MEANS_UNCHANGED_THM = store_thm("NOT_CONTAINS_MEANS_UNCHANGED_THM",
 ``!e s v s'.bs_il1 (e, s) v s' ==> !l.~contains_a l e ==> (s ' l = s' ' l)``,
 metis_tac [NOT_CONTAINS_MEANS_UNCHANGED_LEMMA, FST, SND]);
+
+val CONTAINS_SIMPED_THM = store_thm("CONTAINS_SIMPED_THM",
+``!n e st ex n' l.(l1_to_il1_pair n e = (st, ex, n')) ==> (contains_a l (l1_to_il1 e n) <=> contains_a l st)``,
+rw [EQ_IMP_THM]
+THEN1 (fs [l1_to_il1_def]
+THEN `contains_a l (let (s, te, lc) = (st, ex, n') in IL1_Seq s (IL1_Expr te))` by metis_tac []
+THEN fs [LET_DEF, contains_a_def])
+THEN rw [l1_to_il1_def] THEN rw [contains_a_def]
+);
 val minimal_store_def = Define `minimal_store e s = !k.k ∈ FDOM s ==> contains_l1 k e`;
 
 val count_assign_def = Define `
