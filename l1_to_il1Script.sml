@@ -59,7 +59,6 @@ val EQUIV_REFL_THM = store_thm("EQUIV_REFL_THM",
 ``!x.equiv x x``,
 fs [equiv_def]);
 
-val conv_ind_def = Define `conv_ind = !p v s1.bs_il1 p v s1 ==> !e s.((FST p = l1_to_il1 e 0) /\ (SND p = MAP_KEYS User s)) ==> !n.?s2.bs_il1 (l1_to_il1 e n, MAP_KEYS User s) v s2 /\ equiv s1 s2`;
 val EQUIV_TRANS_THM = store_thm("EQUIV_TRANS_THM",
 ``!x y z.equiv x y /\ equiv y z ==> equiv x z``,
 rw [equiv_def]);
