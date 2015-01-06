@@ -137,6 +137,15 @@ THEN `contains_a l (let (s, te, lc) = (st, ex, n') in IL1_Seq s (IL1_Expr te))` 
 THEN fs [LET_DEF, contains_a_def])
 THEN rw [l1_to_il1_def] THEN rw [contains_a_def]
 );
+
+val MAP_FDOM_AFTER_INSERT = store_thm("MAP_FDOM_AFTER_INSERT",
+``!f a b.a ∈ FDOM (f |+ (a, b))``,
+rw [FDOM_DEF]);
+
+val ASSIGN_ENSURES_IN_DOM_THM = store_thm("ASSIGN_ENSURES_IN_DOM_THM",
+``!l e s s'.bs_il1 (IL1_Assign l e, s) IL1_ESkip s' ==> l ∈ FDOM s'``,
+rw [Once bs_il1_cases] THEN rw [FDOM_DEF]);
+
 val minimal_store_def = Define `minimal_store e s = !k.k ∈ FDOM s ==> contains_l1 k e`;
 
 val count_assign_def = Define `
