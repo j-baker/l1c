@@ -77,6 +77,9 @@ val STORE_L1_IL1_INJ = store_thm("STORE_L1_IL1_INJ",
 ``!l s. l ∈ FDOM s ==> ((s ' l) = (MAP_KEYS User s) ' (User l))``,
 rw [] THEN `FDOM (MAP_KEYS User s) = IMAGE User (FDOM s)` by rw [FDOM_DEF, MAP_KEYS_def, IMAGE_DEF]
 THEN `INJ User (FDOM s) UNIV` by rw [INJ_DEF] THEN metis_tac [MAP_KEYS_def]);
+val BS_VALUE_THM = store_thm("BS_VALUE_THM",
+``!v v' s.bs_il1_expr (IL1_Value v, s) v' ==> (v = v') /\ !s'.bs_il1_expr (IL1_Value v, s') v'``,
+Cases_on `v` THEN REPEAT (rw [Once bs_il1_expr_cases]));
 val minimal_store_def = Define `minimal_store e s = !k.k ∈ FDOM s ==> contains_l1 k e`;
 
 val count_assign_def = Define `
