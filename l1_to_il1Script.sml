@@ -504,6 +504,20 @@ val IL1_SEQ_BACK_THM = store_thm("IL1_SEQ_BACK_THM",
 ``!e1 e2 v s s''.bs_il1 (IL1_Seq e1 e2, s) v s'' ==> ?s'.bs_il1 (e1, s) IL1_ESkip s' /\ bs_il1 (e2, s') v s''``,
 rw [Once (fetch "il1" "bs_il1_cases")] THEN metis_tac []);
 
+val IL1_ASSIGN_BACK_THM = store_thm("IL1_ASSIGN_BACK_THM",
+``!l e s s'.bs_il1 (IL1_Assign l e, s) IL1_ESkip s' ==> ?n.bs_il1_expr (e, s) (IL1_Integer n) /\ (s' = (s |+ (l, n)))``,
+rw [Once (fetch "il1" "bs_il1_cases")] THEN metis_tac []);
+
+val IL1_SIF_BACK_THM = store_thm("IL1_SIF_BACK_THM",
+``!e1 e2 e3 s v s'.bs_il1 (IL1_SIf e1 e2 e3, s) v s' ==> (bs_il1_expr (e1, s) (IL1_Boolean T) /\ bs_il1 (e2, s) v s') \/ (bs_il1_expr (e1, s) (IL1_Boolean F) /\ bs_il1 (e3, s) v s')``,
+rw [Once bs_il1_cases] THEN metis_tac []);
+
+val IL1_DOWHILE_BACK_THM = store_thm("IL1_DOWHILE_BACK_THM",
+``!e1 e2 s s''.bs_il1 (IL1_DoWhile e1 e2, s) IL1_ESkip s'' ==> ?s'.bs_il1 (e1, s) IL1_ESkip s' /\ ((bs_il1_expr (e2, s') (IL1_Boolean T) /\ bs_il1 (IL1_DoWhile e1 e2, s') IL1_ESkip s'') \/ (bs_il1_expr (e2, s') (IL1_Boolean F) /\ (s' = s'')))``,
+rw [Once bs_il1_cases] THEN metis_tac []);
+
+
+
 val IL1_SEQ_ASSOC_THM = store_thm("IL1_SEQ_ASSOC_THM",
 ``!e1 e2 e3 s v s'.bs_il1 (IL1_Seq e1 (IL1_Seq e2 e3), s) v s' <=> bs_il1 (IL1_Seq (IL1_Seq e1 e2) e3, s) v s'``,
 rw [EQ_IMP_THM]
