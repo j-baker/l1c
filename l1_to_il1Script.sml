@@ -61,7 +61,22 @@ fs [equiv_def]);
 
 val conv_ind_def = Define `conv_ind = !p v s1.bs_il1 p v s1 ==> !e s.((FST p = l1_to_il1 e 0) /\ (SND p = MAP_KEYS User s)) ==> !n.?s2.bs_il1 (l1_to_il1 e n, MAP_KEYS User s) v s2 /\ equiv s1 s2`;
 
+val EQUIV_APPEND_THM = store_thm("EQUIV_APPEND_THM",
+``!e1 e2 k v.equiv e1 e2 ==> equiv (e1 |+ (k, v)) (e2 |+ (k, v))``,
+rw [equiv_def] THEN metis_tac [FST, FUPDATE_SAME_APPLY]);
 
+val MAP_APPEND_EQUIV_THM = store_thm("MAP_APPEND_EQUIV_THM",
+``!s k v.(MAP_KEYS User s) |+ (User k, v) = (MAP_KEYS User (s |+ (k, v)))``,
+rw [] THEN `INJ User (k INSERT FDOM s) UNIV` by rw [INJ_DEF]
+THEN metis_tac [MAP_KEYS_FUPDATE])
+
+val EQUIV_SYM_THM = store_thm("EQUIV_SYM_THM",
+``!s s'.equiv s s' <=> equiv s' s``,
+metis_tac [equiv_def]);
+val STORE_L1_IL1_INJ = store_thm("STORE_L1_IL1_INJ",
+``!l s. l ∈ FDOM s ==> ((s ' l) = (MAP_KEYS User s) ' (User l))``,
+rw [] THEN `FDOM (MAP_KEYS User s) = IMAGE User (FDOM s)` by rw [FDOM_DEF, MAP_KEYS_def, IMAGE_DEF]
+THEN `INJ User (FDOM s) UNIV` by rw [INJ_DEF] THEN metis_tac [MAP_KEYS_def]);
 val minimal_store_def = Define `minimal_store e s = !k.k ∈ FDOM s ==> contains_l1 k e`;
 
 val count_assign_def = Define `
