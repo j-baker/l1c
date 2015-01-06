@@ -65,7 +65,6 @@ val EQUIV_TRANS_THM = store_thm("EQUIV_TRANS_THM",
 ``!x y z.equiv x y /\ equiv y z ==> equiv x z``,
 rw [equiv_def]);
 
-
 val EQUIV_APPEND_THM = store_thm("EQUIV_APPEND_THM",
 ``!e1 e2 k v.equiv e1 e2 ==> equiv (e1 |+ (k, v)) (e2 |+ (k, v))``,
 rw [equiv_def] THEN metis_tac [FST, FUPDATE_SAME_APPLY]);
@@ -78,6 +77,7 @@ THEN metis_tac [MAP_KEYS_FUPDATE])
 val EQUIV_SYM_THM = store_thm("EQUIV_SYM_THM",
 ``!s s'.equiv s s' <=> equiv s' s``,
 metis_tac [equiv_def]);
+
 val WHILE_UNWIND_ONCE_THM = store_thm("WHILE_UNWIND_ONCE_THM",
 ``!e1 s e2 v s'.bs_il1_expr (e1, s) (IL1_Boolean T) ==> (bs_il1 (IL1_While e1 e2, s) IL1_ESkip s' <=> bs_il1 (IL1_Seq e2 (IL1_While e1 e2), s) IL1_ESkip s')``,
 rw [EQ_IMP_THM] THEN1
@@ -87,13 +87,18 @@ THEN1 (rw [Once bs_il1_cases] THEN metis_tac []))
 THEN1 (rw [Once bs_il1_cases] THEN imp_res_tac IL1_SEQ_BACK_THM THEN metis_tac [IL1_SEQ_BACK_THM])
 );
 
+
+
 val STORE_L1_IL1_INJ = store_thm("STORE_L1_IL1_INJ",
 ``!l s. l ∈ FDOM s ==> ((s ' l) = (MAP_KEYS User s) ' (User l))``,
 rw [] THEN `FDOM (MAP_KEYS User s) = IMAGE User (FDOM s)` by rw [FDOM_DEF, MAP_KEYS_def, IMAGE_DEF]
 THEN `INJ User (FDOM s) UNIV` by rw [INJ_DEF] THEN metis_tac [MAP_KEYS_def]);
+
 val BS_VALUE_THM = store_thm("BS_VALUE_THM",
 ``!v v' s.bs_il1_expr (IL1_Value v, s) v' ==> (v = v') /\ !s'.bs_il1_expr (IL1_Value v, s') v'``,
 Cases_on `v` THEN REPEAT (rw [Once bs_il1_expr_cases]));
+
+
 val con_store_def = Define `con_store s = MAP_KEYS User s`;
 val minimal_store_def = Define `minimal_store e s = !k.k ∈ FDOM s ==> contains_l1 k e`;
 
@@ -135,6 +140,7 @@ Cases_on `p` THEN rw [FST, SND]
 THEN fs [Once bs_il1_cases]
 THEN rw [Once bs_il1_expr_cases]
 THEN metis_tac [(fetch "il1" "BS_IL1_EXPR_DETERMINACY"), FAPPLY_FUPDATE]);
+
 val L1_TO_IL1_TOTAL_THM = store_thm("L1_TO_IL1_TOTAL_THM",
 ``!e n.?sl e' lc.l1_to_il1_pair n e = (sl, e', lc)``,
 Induct_on `e` THEN rw [l1_to_il1_pair_def]
@@ -492,7 +498,6 @@ val USELESS_LOC_THM = store_thm("USELESS_LOC_THM",
 ``!e s r s'.bs_il1 (e, s) r s' ==> !k.~contains k e ==> !v.bs_il1 (e, s |+ (k, v)) r (s' |+ (k, v))``,
 METIS_TAC [FST, SND, B_USELESS_LOC_THM]);
 
-
 val translate_store_equiv_def = Define `translate_store_equiv = !e1 e2 v1 v2 s s' s'' s1 s2 sc1 pe1 lc1 sc2 pe2 lc2.
 (l1_to_il1_pair 0 e1 = (sc1, pe1, lc1)) ==>
 (l1_to_il1_pair lc1 e2 = (sc2, pe2, lc2)) ==>
@@ -532,12 +537,12 @@ val IL1_DOWHILE_BACK_THM = store_thm("IL1_DOWHILE_BACK_THM",
 rw [Once bs_il1_cases] THEN metis_tac []);
 
 
-
 val IL1_SEQ_ASSOC_THM = store_thm("IL1_SEQ_ASSOC_THM",
 ``!e1 e2 e3 s v s'.bs_il1 (IL1_Seq e1 (IL1_Seq e2 e3), s) v s' <=> bs_il1 (IL1_Seq (IL1_Seq e1 e2) e3, s) v s'``,
 rw [EQ_IMP_THM]
 THEN1 (fs [Once (fetch "il1" "bs_il1_cases")] THEN rw [Once (fetch "il1" "bs_il1_cases")] THEN metis_tac [IL1_SEQ_BACK_THM])
 THEN1 (rw [Once (fetch "il1" "bs_il1_cases")] THEN imp_res_tac IL1_SEQ_BACK_THM THEN imp_res_tac IL1_SEQ_BACK_THM THEN metis_tac [(fetch "il1" "bs_il1_cases")]));
+
 
 val EXPR_PURE_THM = store_thm("EXPR_DOES_NOTHING_THM",
 ``!st es s s' v.bs_il1 (IL1_Seq st (IL1_Expr es), s) v s' ==> bs_il1 (st, s) IL1_ESkip s'``,
