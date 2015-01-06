@@ -2,6 +2,26 @@ open HolKernel boolLib bossLib listTheory Parse IndDefLib finite_mapTheory relat
 
 val _ = new_theory "l1_to_il1";
 
+val IL1_EXPR_BACK_THM = store_thm("IL1_EXPR_BACK_THM",
+``!e v s s'.bs_il1 (IL1_Expr e, s) v s' ==> bs_il1_expr (e, s) v /\ (s = s')``,
+rw [Once (fetch "il1" "bs_il1_cases")] THEN metis_tac []);
+
+val IL1_SEQ_BACK_THM = store_thm("IL1_SEQ_BACK_THM",
+``!e1 e2 v s s''.bs_il1 (IL1_Seq e1 e2, s) v s'' ==> ?s'.bs_il1 (e1, s) IL1_ESkip s' /\ bs_il1 (e2, s') v s''``,
+rw [Once (fetch "il1" "bs_il1_cases")] THEN metis_tac []);
+
+val IL1_ASSIGN_BACK_THM = store_thm("IL1_ASSIGN_BACK_THM",
+``!l e s s'.bs_il1 (IL1_Assign l e, s) IL1_ESkip s' ==> ?n.bs_il1_expr (e, s) (IL1_Integer n) /\ (s' = (s |+ (l, n)))``,
+rw [Once (fetch "il1" "bs_il1_cases")] THEN metis_tac []);
+
+val IL1_SIF_BACK_THM = store_thm("IL1_SIF_BACK_THM",
+``!e1 e2 e3 s v s'.bs_il1 (IL1_SIf e1 e2 e3, s) v s' ==> (bs_il1_expr (e1, s) (IL1_Boolean T) /\ bs_il1 (e2, s) v s') \/ (bs_il1_expr (e1, s) (IL1_Boolean F) /\ bs_il1 (e3, s) v s')``,
+rw [Once bs_il1_cases] THEN metis_tac []);
+
+val IL1_WHILE_BACK_THM = store_thm("IL1_WHILE_BACK_THM",
+``!e1 e2 s s''.bs_il1 (IL1_While e1 e2, s) IL1_ESkip s'' ==> (bs_il1_expr (e1, s) (IL1_Boolean F) /\ (s = s'')) \/ (bs_il1_expr (e1, s) (IL1_Boolean T) /\ ?s'.bs_il1 (e2, s) IL1_ESkip s' /\ bs_il1 (IL1_While e1 e2, s') IL1_ESkip s'')``,
+rw [Once bs_il1_cases] THEN metis_tac []);
+
 val l1_to_il1_pair_def = Define `
     (l1_to_il1_pair lc (B_Value (B_N n)) = (IL1_Expr (IL1_Value IL1_ESkip), IL1_Value (IL1_Integer n), lc)) /\
     (l1_to_il1_pair lc (B_Value (B_B b)) = (IL1_Expr (IL1_Value IL1_ESkip), IL1_Value (IL1_Boolean b), lc)) /\
@@ -500,26 +520,6 @@ big_step (e2, s') v2 s'' /\
 bs_il1 (IL1_Seq sc1 (IL1_Expr pe1), MAP_KEYS User s) (l1_il1_val v1) s1 /\
 bs_il1 (IL1_Seq sc2 (IL1_Expr pe2), MAP_KEYS User s') (l1_il1_val v2) s2) ==>
     ?s2'.bs_il1 (IL1_Seq sc2 (IL1_Expr pe2), s1) (l1_il1_val v2) s2'`;
-
-val IL1_EXPR_BACK_THM = store_thm("IL1_EXPR_BACK_THM",
-``!e v s s'.bs_il1 (IL1_Expr e, s) v s' ==> bs_il1_expr (e, s) v /\ (s = s')``,
-rw [Once (fetch "il1" "bs_il1_cases")] THEN metis_tac []);
-
-val IL1_SEQ_BACK_THM = store_thm("IL1_SEQ_BACK_THM",
-``!e1 e2 v s s''.bs_il1 (IL1_Seq e1 e2, s) v s'' ==> ?s'.bs_il1 (e1, s) IL1_ESkip s' /\ bs_il1 (e2, s') v s''``,
-rw [Once (fetch "il1" "bs_il1_cases")] THEN metis_tac []);
-
-val IL1_ASSIGN_BACK_THM = store_thm("IL1_ASSIGN_BACK_THM",
-``!l e s s'.bs_il1 (IL1_Assign l e, s) IL1_ESkip s' ==> ?n.bs_il1_expr (e, s) (IL1_Integer n) /\ (s' = (s |+ (l, n)))``,
-rw [Once (fetch "il1" "bs_il1_cases")] THEN metis_tac []);
-
-val IL1_SIF_BACK_THM = store_thm("IL1_SIF_BACK_THM",
-``!e1 e2 e3 s v s'.bs_il1 (IL1_SIf e1 e2 e3, s) v s' ==> (bs_il1_expr (e1, s) (IL1_Boolean T) /\ bs_il1 (e2, s) v s') \/ (bs_il1_expr (e1, s) (IL1_Boolean F) /\ bs_il1 (e3, s) v s')``,
-rw [Once bs_il1_cases] THEN metis_tac []);
-
-val IL1_WHILE_BACK_THM = store_thm("IL1_WHILE_BACK_THM",
-``!e1 e2 s s''.bs_il1 (IL1_While e1 e2, s) IL1_ESkip s'' ==> (bs_il1_expr (e1, s) (IL1_Boolean F) /\ (s = s'')) \/ (bs_il1_expr (e1, s) (IL1_Boolean T) /\ ?s'.bs_il1 (e2, s) IL1_ESkip s' /\ bs_il1 (IL1_While e1 e2, s') IL1_ESkip s'')``,
-rw [Once bs_il1_cases] THEN metis_tac []);
 
 
 val IL1_SEQ_ASSOC_THM = store_thm("IL1_SEQ_ASSOC_THM",
