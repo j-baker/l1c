@@ -161,7 +161,7 @@ val IL1_SEQ_BACK_THM = store_thm("IL1_SEQ_BACK_THM",
 rw [Once bs_il1_cases] THEN metis_tac []);
 
 val IL1_ASSIGN_BACK_THM = store_thm("IL1_ASSIGN_BACK_THM",
-``!l e s s' v.bs_il1 (IL1_Assign l e, s) v s' ==> (v = IL1_ESkip) /\ ?n.bs_il1_expr (e, s) (IL1_Integer n) /\ (s' = (s |+ (l, n)))``,
+``!l e s s' v.bs_il1 (IL1_Assign l e, s) v s' ==> (v = IL1_ESkip) /\ ?n.bs_il1_expr (e, s) (IL1_Integer n) /\ (s' = (s |+ (l, n))) /\ (!l'.(l = User l') ==> l ∈ FDOM s)``,
 rw [Once bs_il1_cases] THEN metis_tac []);
 
 val IL1_SIF_BACK_THM = store_thm("IL1_SIF_BACK_THM",
