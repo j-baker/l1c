@@ -67,10 +67,6 @@ val (bs_il1_expr_rules, bs_il1_expr_induction, bs_il1_expr_cases) = Hol_reln `
         l ∈ FDOM s
     ==> bs_il1_expr (IL1_Deref l, s) (IL1_Integer (s ' l))) /\
 
-    (!l s.
-        l ∉ FDOM s
-    ==> bs_il1_expr (IL1_Deref l, s) (IL1_Integer 0)) /\
-
     (* EIf *)
     (!e1 e2 e3 s v.
         (bs_il1_expr (e1, s) (IL1_Boolean T) /\
@@ -107,7 +103,6 @@ THEN1 (Cases_on `v1` THEN Cases_on `v2` THEN fs [Once bs_il1_expr_cases])
 THEN1 (imp_res_tac BS_IL1_EXPR_PLUS_BACK_THM THEN res_tac THEN rw [])
 THEN1 (imp_res_tac BS_IL1_EXPR_GEQ_BACK_THM THEN res_tac THEN rw [])
 THEN1 (imp_res_tac BS_IL1_EXPR_DEREF_BACK_THM THEN rw [])
-THEN1 (imp_res_tac BS_IL1_EXPR_DEREF_BACK_THM THEN rw [])
 THEN1 (imp_res_tac BS_IL1_EXPR_EIF_BACK_THM THEN res_tac THEN rw [])
 THEN1 (imp_res_tac BS_IL1_EXPR_EIF_BACK_THM THEN res_tac THEN rw []));
 
@@ -119,8 +114,13 @@ val (bs_il1_rules, bs_il1_induction, bs_il1_cases) = Hol_reln `
 
     (* Assign *)
     (!l e s n.
+       (User l ∈ FDOM s /\
+        bs_il1_expr (e, s) (IL1_Integer n))
+    ==> bs_il1 (IL1_Assign (User l) e, s) IL1_ESkip (s |+ (User l, n))) /\
+
+    (!l e s n.
         bs_il1_expr (e, s) (IL1_Integer n)
-    ==> bs_il1 (IL1_Assign l e, s) IL1_ESkip (s |+ (l, n))) /\
+    ==> bs_il1 (IL1_Assign (Compiler l) e, s) IL1_ESkip (s |+ (Compiler l, n))) /\
 
     (* Seq *)
     (!e1 e2 v s s' s''.
@@ -180,6 +180,8 @@ THEN1 (fs [Once bs_il1_cases] THEN metis_tac [BS_IL1_EXPR_DETERMINACY])
 THEN1 (fs [Once bs_il1_cases] THEN metis_tac [BS_IL1_EXPR_DETERMINACY])
 THEN1 (fs [Once bs_il1_cases] THEN metis_tac [BS_IL1_EXPR_DETERMINACY])
 
+THEN1 (imp_res_tac IL1_ASSIGN_BACK_THM THEN rw [] THEN `IL1_Integer n = IL1_Integer n'` by metis_tac [BS_IL1_EXPR_DETERMINACY] THEN rw [] THEN metis_tac [])
+THEN1 (imp_res_tac IL1_ASSIGN_BACK_THM THEN rw [] THEN `IL1_Integer n = IL1_Integer n'` by metis_tac [BS_IL1_EXPR_DETERMINACY] THEN rw [] THEN metis_tac [])
 THEN1 (imp_res_tac IL1_ASSIGN_BACK_THM THEN rw [] THEN `IL1_Integer n = IL1_Integer n'` by metis_tac [BS_IL1_EXPR_DETERMINACY] THEN rw [] THEN metis_tac [])
 
 THEN1 (imp_res_tac IL1_SEQ_BACK_THM THEN rw [] THEN metis_tac [])
