@@ -174,7 +174,7 @@ rw [Once bs_il1_cases] THEN metis_tac []);
 
 val IL1_DETERMINACY_THM = store_thm("IL1_DETERMINACY_THM",
 ``!p v1 s1.bs_il1 p v1 s1 ==> !v2 s2.bs_il1 p v2 s2 ==> (v1 = v2) /\ (s1 = s2)``,
-ho_match_mp_tac (fetch "il1" "bs_il1_strongind") THEN rw []
+ho_match_mp_tac (fetch "-" "bs_il1_strongind") THEN rw []
 
 THEN1 (fs [Once bs_il1_cases] THEN metis_tac [BS_IL1_EXPR_DETERMINACY])
 THEN1 (fs [Once bs_il1_cases] THEN metis_tac [BS_IL1_EXPR_DETERMINACY])
