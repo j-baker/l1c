@@ -89,7 +89,7 @@ val BS_IL1_EXPR_GEQ_BACK_THM = store_thm("BS_IL1_EXPR_GEQ_BACK_THM",
 rw [Once bs_il1_expr_cases] THEN metis_tac []);
 
 val BS_IL1_EXPR_DEREF_BACK_THM = store_thm("BS_IL1_EXPR_DEREF_BACK_THM",
-``!l s v.bs_il1_expr (IL1_Deref l, s) v ==> (l ∈ FDOM s /\ (v = IL1_Integer (s ' l))) \/ (l ∉ FDOM s /\ (v = IL1_Integer 0))``,
+``!l s v.bs_il1_expr (IL1_Deref l, s) v ==> l ∈ FDOM s /\ (v = IL1_Integer (s ' l))``,
 rw [Once bs_il1_expr_cases] THEN metis_tac []);
 
 val BS_IL1_EXPR_EIF_BACK_THM = store_thm("BS_IL1_EXPR_EIF_BACK_THM",
