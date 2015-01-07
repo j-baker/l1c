@@ -467,7 +467,10 @@ THEN fs [LET_DEF] THEN rw []
 THEN rw [Once bs_il1_expr_cases]
 THEN `?fs'.bs_il1 (st1,fs) IL1_ESkip fs' /\ bs_il1_expr (ex1, fs') (IL1_Integer n) /\ equiv (con_store s') fs'` by metis_tac []
 
-THEN `bs_il1 (IL1_Assign (User l) ex1, fs') IL1_ESkip (fs' |+ (User l, n))` by (rw [Once bs_il1_cases] THEN metis_tac [])
+THEN `bs_il1 (IL1_Assign (User l) ex1, fs') IL1_ESkip (fs' |+ (User l, n))` by (rw [Once bs_il1_cases] THEN
+`User l ∈ FDOM (con_store s)` by rw [FDOM_DEF, con_store_def, MAP_KEYS_def] THEN
+`User l ∈ FDOM fs` by metis_tac [equiv_def] THEN
+metis_tac [SUBSET_DEF, DOMS_SUBSET_THM])
 
 THEN rw [con_store_def]
 
