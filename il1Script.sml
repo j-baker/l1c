@@ -61,6 +61,11 @@ val il1_type_pair_def = Define `
 			   | _ => NONE)
 	       | _ => NONE)`;
 
+val il1_type_def = Define `
+il1_type e g = let pair = il1_type_pair e g in
+                   case pair of SOME (t, _) => SOME t 
+	                      | _ => NONE`;
+
 val contains_expr_def = Define `
     (contains_expr l (IL1_Value v) = F) /\
     (contains_expr l (IL1_Plus e1 e2) = contains_expr l e1 \/ contains_expr l e2) /\
