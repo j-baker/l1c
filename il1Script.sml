@@ -147,7 +147,7 @@ THEN1 (imp_res_tac BS_IL1_EXPR_EIF_BACK_THM THEN res_tac THEN rw [])
 THEN1 (imp_res_tac BS_IL1_EXPR_EIF_BACK_THM THEN res_tac THEN rw []));
 
 val BS_IL1_EXPR_TYPE_INT = store_thm("BS_IL1_EXPR_TYPE_INT",
-``!e s.((il1_expr_type e s = SOME intL1) ==> ?n.bs_il1_expr (e, s) (IL1_Integer n)) /\ ((il1_expr_type e s = SOME boolL1) ==> ?bo.bs_il1_expr (e, s) (IL1_Boolean bo)) /\ ((il1_expr_type e s = SOME unitL1) ==> bs_il1_expr (e, s) IL1_ESkip)``,
+``!e s.((il1_expr_type e (FDOM s) = SOME intL1) ==> ?n.bs_il1_expr (e, s) (IL1_Integer n)) /\ ((il1_expr_type e (FDOM s) = SOME boolL1) ==> ?bo.bs_il1_expr (e, s) (IL1_Boolean bo)) /\ ((il1_expr_type e (FDOM s) = SOME unitL1) ==> bs_il1_expr (e, s) IL1_ESkip)``,
 Induct_on `e` THEN1 (Cases_on `i` THEN fs [il1_expr_type_def, Once bs_il1_expr_cases, FDOM_DEF] THEN fs [il1_expr_type_def] THEN EVAL_TAC THEN rw [Once bs_il1_expr_cases])
 
 THEN EVAL_TAC
