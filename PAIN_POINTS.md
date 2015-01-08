@@ -11,3 +11,5 @@ This has really saved me a lot of time since I've done that - my proofs go about
 3. The HOL manual and HOL-interaction indicate that it's acceptable to use mosml with HOL. It's not. It's really slow.
 
 4. When building HOL on OS X with Poly and Homebrew, there's a quirk since poly requires a custom compiler flag. This could be put in the build instructions explicitly?
+
+5. A link to Tactic in HOL-interaction would be really useful. I've only just found it.

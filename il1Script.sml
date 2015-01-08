@@ -21,6 +21,22 @@ val _ = Hol_datatype `il1_stm = IL1_Expr of il1_expr
                               | IL1_SIf of il1_expr => il1_stm => il1_stm
                               | IL1_While of il1_expr => il1_stm`;
 
+val il1_expr_type_def = Define `
+(il1_expr_type (IL1_Value IL1_ESkip) g = SOME unitL1) /\
+(il1_expr_type (IL1_Value (IL1_Integer _)) g = SOME intL1) /\
+(il1_expr_type (IL1_Value (IL1_Boolean _)) g = SOME boolL1) /\
+(il1_expr_type (IL1_Plus e1 e2) g = if (il1_expr_type e1 g = SOME intL1) /\ (il1_expr_type e2 g = SOME intL1) then SOME intL1 else NONE) /\
+(il1_expr_type (IL1_Geq e1 e2) g = if (il1_expr_type e1 g = SOME intL1) /\ (il1_expr_type e2 g = SOME intL1) then SOME boolL1 else NONE) /\
+(il1_expr_type (IL1_Deref l) g = if l ∈ FDOM g \/ (?l'.l = Compiler l') then SOME intL1 else NONE) /\
+(il1_expr_type (IL1_EIf e1 e2 e3) g = if (il1_expr_type e1 g = SOME boolL1) /\ (il1_expr_type e2 g = il1_expr_type e3 g) then (il1_expr_type e2 g) else NONE)`;
+
+val il1_type_def = Define `
+(il1_type (IL1_Expr e) g = il1_expr_type e g) /\
+(il1_type (IL1_Assign l e) g = if (l ∈ FDOM g \/ (?l'.l = Compiler l')) /\ (il1_expr_type e g = SOME intL1) then SOME unitL1 else NONE) /\
+(il1_type (IL1_Seq e1 e2) g = if (il1_type e1 g = SOME unitL1) then il1_type e2 g else NONE) /\
+(il1_type (IL1_SIf e1 e2 e3) g = if (il1_expr_type e1 g = SOME boolL1) /\ (il1_type e2 g = il1_type e3 g) then il1_type e2 g else NONE) /\
+(il1_type (IL1_While e1 e2) g = if (il1_expr_type e1 g = SOME boolL1) /\ (il1_type e2 g = SOME unitL1) then SOME unitL1 else NONE)`;
+
 val contains_expr_def = Define `
     (contains_expr l (IL1_Value v) = F) /\
     (contains_expr l (IL1_Plus e1 e2) = contains_expr l e1 \/ contains_expr l e2) /\
