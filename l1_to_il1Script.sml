@@ -693,4 +693,19 @@ val L1_TO_IL1_FORALL_CORRECTNESS_THM = store_thm("L1_TO_IL1_FORALL_CORRECTNESS_T
 rw [l1_to_il1_def] THEN `?s te lc.l1_to_il1_pair 0 e = (s,te, lc)` by metis_tac [L1_TO_IL1_TOTAL_THM] THEN fs [LET_DEF] THEN fs [Once bs_il1_cases] THEN imp_res_tac IL1_EXPR_BACK_THM
 THEN rw [] THEN imp_res_tac L1_TO_IL1_CORRECTNESS_LEMMA THEN fs [FST, SND] THEN `equiv (con_store s) (con_store s)` by metis_tac [EQUIV_REFL_THM] THEN imp_res_tac EQ_SYM THEN res_tac THEN imp_res_tac IL1_DETERMINACY_THM THEN rw [] THEN metis_tac [BS_IL1_EXPR_DETERMINACY]);
 
+val L1_TO_IL1_TYPES_PRESERVED_THM = store_thm("L1_TO_IL1_TYPES_PRESERVED_THM",
+``!ct e st ex ct'.(l1_to_il1_pair ct e = (st, ex, ct')) ==> !s t.((bs_type_fun e s = SOME t) ==> (il1_type (IL1_Seq st (IL1_Expr ex)) (con_store s) = SOME t))``,
+
+recInduct (fetch "-" "l1_to_il1_pair_ind") THEN rw [] THEN fs [l1_to_il1_pair_def]
+ THEN rw []
+THEN
+(`?stjj exjj ctjj.l1_to_il1_pair lc e = (stjj, exjj, ctjj)` by metis_tac [L1_TO_IL1_TOTAL_THM]
+THEN `?st ex ct.l1_to_il1_pair lc e1 = (st, ex, ct)` by metis_tac [L1_TO_IL1_TOTAL_THM]
+THEN `?st ex ct1.l1_to_il1_pair ct e2 = (st, ex, ct1)` by metis_tac [L1_TO_IL1_TOTAL_THM]
+THEN `?st ex ct''.l1_to_il1_pair ct1 e3 = (st, ex, ct'')` by metis_tac [L1_TO_IL1_TOTAL_THM]
+THEN fs [LET_DEF] THEN rw []
+THEN fs [(fetch "l1" "bs_type_fun_def"), il1_type_def, il1_expr_type_def]
+THEN fs [con_store_def, FDOM_DEF, MAP_KEYS_def]
+THEN metis_tac []));
+
 val _ = export_theory ();
