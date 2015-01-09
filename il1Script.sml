@@ -279,4 +279,8 @@ THEN1 metis_tac [IL1_TYPE_SUBSETS_THM, SUBSET_UNION, SUBSET_UNION_ABSORPTION, UN
 
 THEN `g' ∪ g'' ∪ h = (g' ∪ h) ∪ (g'' ∪ h)` by metis_tac [UNION_COMM, UNION_ASSOC, UNION_IDEMPOT] THEN metis_tac [IL1_EXPR_TYPE_SUBSET_THM, IL1_TYPE_SUBSETS_THM, SUBSET_UNION, SUBSET_UNION_ABSORPTION]);
 
+val IL1_TYPE_SUBSET_2_THM = store_thm("IL1_TYPE_SUBSET_2_THM",
+``!e g t g'.il1_type e g t g' ==> !h. g ⊆ h ==> ?h'.il1_type e h t h'``,
+metis_tac [IL1_TYPE_SUBSET_THM]);
+
 val _ = export_theory ();
