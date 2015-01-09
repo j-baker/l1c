@@ -257,26 +257,4 @@ THEN1 (imp_res_tac IL1_WHILE_BACK_THM THEN rw [] THEN imp_res_tac BS_IL1_EXPR_DE
 THEN1 (imp_res_tac IL1_WHILE_BACK_THM THEN rw [] THEN imp_res_tac BS_IL1_EXPR_DETERMINACY THEN rw [] THEN metis_tac [])
 THEN1 (imp_res_tac IL1_WHILE_BACK_THM THEN rw [] THEN imp_res_tac BS_IL1_EXPR_DETERMINACY THEN rw [] THEN metis_tac []));
 
-val TYPING_DOMAIN_INCREASING = store_thm("TYPING_DOMAIN_INCREASING",
-``!e d t d'.(il1_type_pair e d = SOME (t, d')) ==> (d ⊆ d')``,
-Induct_on `e` THEN rw [] THEN1
-(Cases_on `i` THEN fs [il1_type_pair_def, il1_expr_type_def, LET_DEF] THEN1 (Cases_on `i'` THEN fs [il1_type_pair_def, il1_expr_type_def, LET_DEF])
-THEN1 (Cases_on `il1_expr_type i' d` THEN Cases_on `il1_expr_type i0 d` THEN fs [] THEN Cases_on `x` THEN Cases_on `x'` THEN fs [])
-THEN1 (Cases_on `il1_expr_type i' d` THEN Cases_on `il1_expr_type i0 d` THEN fs [] THEN Cases_on `x` THEN Cases_on `x'` THEN fs [])
-THEN1 (Cases_on `i' ∈ d` THEN fs [])
-THEN1 (Cases_on `il1_expr_type i' d` THEN fs [] THEN Cases_on `x` THEN fs [] THEN Cases_on `il1_expr_type i0 d = il1_expr_type i1 d` THEN fs [] THEN Cases_on `il1_expr_type i1 d` THEN fs []))
-
-THEN1 (fs [il1_type_pair_def, il1_expr_type_def, LET_DEF] THEN Cases_on `il1_expr_type i0 d` THEN fs [] THEN rw [SUBSET_DEF])
-
-THEN1 (fs [il1_type_pair_def, il1_expr_type_def, LET_DEF]
-THEN Cases_on `il1_type_pair e d` THEN fs []
-THEN Cases_on `x` THEN fs []
-THEN Cases_on `q` THEN fs []
-THEN metis_tac [SUBSET_DEF, SUBSET_TRANS])
-
-THEN1 (fs [il1_type_pair_def, il1_expr_type_def, LET_DEF]
-THEN Cases_on `il1_expr_type i1 d` THEN fs [] THEN Cases_on `x` THEN fs [] THEN Cases_on `il1_type_pair e d` THEN fs [] THEN Cases_on `x` THEN fs [] THEN Cases_on `il1_type_pair e' r` THEN fs [] THEN Cases_on `x` THEN fs [] THEN rw [] THEN res_tac THEN `r' = r ∪ r'` by metis_tac [SUBSET_UNION_ABSORPTION] THEN metis_tac [SUBSET_TRANS])
-
-THEN1 (fs [il1_type_pair_def, il1_expr_type_def, LET_DEF]
-THEN Cases_on `il1_expr_type i0 d` THEN fs [] THEN Cases_on `il1_type_pair e d` THEN fs [] THEN Cases_on `x` THEN fs [] THEN Cases_on `x'` THEN fs [] THEN Cases_on `q` THEN fs []));
 val _ = export_theory ();
