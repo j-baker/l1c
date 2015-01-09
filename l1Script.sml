@@ -165,6 +165,10 @@ val bs_rulel = CONJUNCTS bs_rules;
 
 val bs_sinduction = derive_strong_induction(bs_rules, bs_induction);
 
+val L1_DOM_CONSTANT_THM = store_thm("L1_DOM_CONSTANT_THM",
+``!p v s'.big_step p v s' ==> !l. l ∈ FDOM s' ==> l ∈ FDOM (SND p)``,
+ho_match_mp_tac bs_sinduction THEN rw [SND] THEN metis_tac []);
+
 val (ss_rules, ss_induction, ss_ecases) = Hol_reln `
     (* Plus *)
     (!n1 n2 s.small_step (Plus (N n1) (N n2), s) (N (n1 + n2), s)) /\
