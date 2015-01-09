@@ -373,25 +373,6 @@ val USELESS_LOC_THM = store_thm("USELESS_LOC_THM",
 ``!e s r s'.bs_il1 (e, s) r s' ==> !k.~contains k e ==> !v.bs_il1 (e, s |+ (k, v)) r (s' |+ (k, v))``,
 METIS_TAC [FST, SND, B_USELESS_LOC_THM]);
 
-val translate_store_equiv_def = Define `translate_store_equiv = !e1 e2 v1 v2 s s' s'' s1 s2 sc1 pe1 lc1 sc2 pe2 lc2.
-(l1_to_il1_pair 0 e1 = (sc1, pe1, lc1)) ==>
-(l1_to_il1_pair lc1 e2 = (sc2, pe2, lc2)) ==>
-(big_step (e1, s) v1 s' /\
-big_step (e2, s') v2 s'' /\
-bs_il1 (sc1, MAP_KEYS User s) IL1_ESkip s1 /\
-bs_il1 (sc2, MAP_KEYS User s') IL1_ESkip s2) ==> ?s2'.bs_il1 (sc2, s1) IL1_ESkip s2' /\ equiv s2 s2'`;
-
-val translate_store_val_equiv_def = Define `translate_store_val_equiv =
-!s1 s2 s'' v2 s' v1 s lc2 pe2 sc2 e2 lc1 pe1 sc1 e1.
-(l1_to_il1_pair 0 e1 = (sc1, pe1, lc1)) ==>
-(l1_to_il1_pair lc1 e2 = (sc2, pe2, lc2)) ==>
-(big_step (e1, s) v1 s' /\
-big_step (e2, s') v2 s'' /\
-bs_il1 (IL1_Seq sc1 (IL1_Expr pe1), MAP_KEYS User s) (l1_il1_val v1) s1 /\
-bs_il1 (IL1_Seq sc2 (IL1_Expr pe2), MAP_KEYS User s') (l1_il1_val v2) s2) ==>
-    ?s2'.bs_il1 (IL1_Seq sc2 (IL1_Expr pe2), s1) (l1_il1_val v2) s2'`;
-
-
 val IL1_SEQ_ASSOC_THM = store_thm("IL1_SEQ_ASSOC_THM",
 ``!e1 e2 e3 s v s'.bs_il1 (IL1_Seq e1 (IL1_Seq e2 e3), s) v s' <=> bs_il1 (IL1_Seq (IL1_Seq e1 e2) e3, s) v s'``,
 rw [EQ_IMP_THM]
