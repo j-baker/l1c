@@ -68,6 +68,8 @@ val (il1_type_rules, il1_type_ind, il1_type_cases) = Hol_reln `
         il1_type e2 g unitL1 g')
     ==> il1_type (IL1_While e1 e2) g unitL1 g')`;
 
+val il1_type_strongind = derive_strong_induction(il1_type_rules, il1_type_ind);
+
 val contains_expr_def = Define `
     (contains_expr l (IL1_Value v) = F) /\
     (contains_expr l (IL1_Plus e1 e2) = contains_expr l e1 \/ contains_expr l e2) /\
