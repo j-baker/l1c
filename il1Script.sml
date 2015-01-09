@@ -21,50 +21,52 @@ val _ = Hol_datatype `il1_stm = IL1_Expr of il1_expr
                               | IL1_SIf of il1_expr => il1_stm => il1_stm
                               | IL1_While of il1_expr => il1_stm`;
 
-val il1_expr_type_def = Define `
-(il1_expr_type (IL1_Value IL1_ESkip) g = SOME unitL1) /\
-(il1_expr_type (IL1_Value (IL1_Integer _)) g = SOME intL1) /\
-(il1_expr_type (IL1_Value (IL1_Boolean _)) g = SOME boolL1) /\
-(il1_expr_type (IL1_Plus e1 e2) g = if (il1_expr_type e1 g = SOME intL1) /\ (il1_expr_type e2 g = SOME intL1) then SOME intL1 else NONE) /\
-(il1_expr_type (IL1_Geq e1 e2) g = if (il1_expr_type e1 g = SOME intL1) /\ (il1_expr_type e2 g = SOME intL1) then SOME boolL1 else NONE) /\
-(il1_expr_type (IL1_Deref l) g = if l ∈ g then SOME intL1 else NONE) /\
-(il1_expr_type (IL1_EIf e1 e2 e3) g = if (il1_expr_type e1 g = SOME boolL1) /\ (il1_expr_type e2 g = il1_expr_type e3 g) then (il1_expr_type e2 g) else NONE)`;
 
-val il1_type_pair_def = Define `
-(il1_type_pair (IL1_Expr e) g =
-    let t = il1_expr_type e g in
-    case t of SOME r => SOME (r, g) 
-           | NONE => NONE) /\
-(il1_type_pair (IL1_Assign l e) g =
-    let te = il1_expr_type e g in
-    case te of SOME intl1 => SOME (unitL1, l INSERT g) 
-	   | _ => NONE) /\
-(il1_type_pair (IL1_Seq e1 e2) g =
-    let pair = il1_type_pair e1 g in
-    case pair of SOME (unitL1, g') => il1_type_pair e2 g' 
-	   | _ => NONE) /\
-(il1_type_pair (IL1_SIf e1 e2 e3) g =
-    let t = il1_expr_type e1 g in
-        case t of SOME boolL1 =>
-                  (let pair1 = il1_type_pair e2 g in
-                       case pair1 of SOME (t, g') =>
-                           (let pair2 = il1_type_pair e3 g' in
-                               case pair2 of SOME (t, g'') => SOME (t, g' ∪ g'') 
-					  | _ => NONE)
-				  | _ => NONE)
-	       | _ => NONE) /\
-(il1_type_pair (IL1_While e1 e2) g =
-    let t = il1_expr_type e1 g in
-        case t of SOME boolL1 =>
-            (let pair = il1_type_pair e2 g in
-                 case pair of SOME (unitL1, g') => SOME (unitL1, g') 
-			   | _ => NONE)
-	       | _ => NONE)`;
+val (il1_expr_type_rules, il1_expr_type_ind, il1_expr_type_cases) = Hol_reln `
+        (!g.il1_expr_type (IL1_Value IL1_ESkip) g unitL1) /\
+        (!g n.il1_expr_type (IL1_Value (IL1_Integer n)) g intL1) /\
+        (!g b.il1_expr_type (IL1_Value (IL1_Boolean b)) g boolL1) /\
 
-val il1_type_def = Define `
-il1_type e g = let pair = il1_type_pair e g in
-                   case pair of SOME (t, _) => SOME t 
-	                      | _ => NONE`;
+        (!e1 e2 g.
+           (il1_expr_type e1 g intL1 /\
+            il1_expr_type e2 g intL1)
+        ==> il1_expr_type (IL1_Plus e1 e2) g intL1) /\
+
+        (!e1 e2 g.
+           (il1_expr_type e1 g intL1 /\
+            il1_expr_type e2 g intL1)
+        ==> il1_expr_type (IL1_Geq e1 e2) g boolL1) /\
+
+        (!g l.l ∈ g ==>
+            il1_expr_type (IL1_Deref l) g intL1) /\
+
+        (!e1 e2 e3 g t.
+           (il1_expr_type e1 g boolL1 /\
+            il1_expr_type e2 g t /\
+            il1_expr_type e3 g t)
+        ==> il1_expr_type (IL1_EIf e1 e2 e3) g t)`;
+
+val il1_expr_type_strongind = derive_strong_induction(il1_expr_type_rules, il1_expr_type_ind);
+
+val (il1_type_rules, il1_type_ind, il1_type_cases) = Hol_reln `
+(!e g t.il1_expr_type e g t ==> il1_type (IL1_Expr e) g t g) /\
+(!e l g.il1_expr_type e g intL1 ==> il1_type (IL1_Assign l e) g unitL1 (l INSERT g)) /\
+
+(!e1 e2 g g' g'' t.
+       (il1_type e1 g unitL1 g' /\
+        il1_type e2 g' t g'')
+    ==> il1_type (IL1_Seq e1 e2) g t g'') /\
+
+(!e1 e2 e3 g g' g'' t.
+       (il1_expr_type e1 g boolL1 /\
+        il1_type e2 g t g' /\
+        il1_type e3 g t g'')
+    ==> il1_type (IL1_SIf e1 e2 e3) g t (g' ∪ g'')) /\
+
+(!e1 e2 g g'.
+       (il1_expr_type e1 g boolL1 /\
+        il1_type e2 g unitL1 g')
+    ==> il1_type (IL1_While e1 e2) g unitL1 g')`;
 
 val contains_expr_def = Define `
     (contains_expr l (IL1_Value v) = F) /\
@@ -125,6 +127,10 @@ val (bs_il1_expr_rules, bs_il1_expr_induction, bs_il1_expr_cases) = Hol_reln `
 
 val bs_il1_expr_sinduction = derive_strong_induction(bs_il1_expr_rules, bs_il1_expr_induction);
 
+val BS_IL1_EXPR_VALUE_BACK_THM = store_thm("BS_IL1_EXPR_VALUE_BACK_THM",
+``!v s v'.bs_il1_expr (IL1_Value v, s) v' ==> (v = v')``,
+rw [Once bs_il1_expr_cases] THEN metis_tac []);
+
 val BS_IL1_EXPR_PLUS_BACK_THM = store_thm("BS_IL1_EXPR_PLUS_BACK_THM",
 ``!e1 e2 s v.bs_il1_expr (IL1_Plus e1 e2, s) v ==> ?n1 n2.bs_il1_expr (e1, s) (IL1_Integer n1) /\ bs_il1_expr (e2, s) (IL1_Integer n2) /\ (v = IL1_Integer (n1 + n2))``,
 rw [Once bs_il1_expr_cases] THEN metis_tac []);
@@ -151,19 +157,10 @@ THEN1 (imp_res_tac BS_IL1_EXPR_DEREF_BACK_THM THEN rw [])
 THEN1 (imp_res_tac BS_IL1_EXPR_EIF_BACK_THM THEN res_tac THEN rw [])
 THEN1 (imp_res_tac BS_IL1_EXPR_EIF_BACK_THM THEN res_tac THEN rw []));
 
-val BS_IL1_EXPR_TYPE_INT = store_thm("BS_IL1_EXPR_TYPE_INT",
-``!e s.((il1_expr_type e (FDOM s) = SOME intL1) ==> ?n.bs_il1_expr (e, s) (IL1_Integer n)) /\ ((il1_expr_type e (FDOM s) = SOME boolL1) ==> ?bo.bs_il1_expr (e, s) (IL1_Boolean bo)) /\ ((il1_expr_type e (FDOM s) = SOME unitL1) ==> bs_il1_expr (e, s) IL1_ESkip)``,
-Induct_on `e` THEN1 (Cases_on `i` THEN fs [il1_expr_type_def, Once bs_il1_expr_cases, FDOM_DEF] THEN fs [il1_expr_type_def] THEN EVAL_TAC THEN rw [Once bs_il1_expr_cases])
-
-THEN EVAL_TAC
-THEN fs [il1_expr_type_def]
-THEN rw []
-THEN imp_res_tac EQ_SYM
-THEN imp_res_tac EQ_TRANS
-THEN res_tac
-THEN rw [Once bs_il1_expr_cases]
-THEN (TRY (metis_tac []))
-THENL [Cases_on `bo`, Cases_on `bo''`, Cases_on `bo`] THEN metis_tac []);
+val BS_IL1_EXPR_TYPE_TOTAL = store_thm("BS_IL1_EXPR_TYPE_TOTAL",
+``!e d t.il1_expr_type e d t ==> !s.(d = FDOM s) ==> ((t = intL1) /\ ?n.bs_il1_expr (e, s) (IL1_Integer n)) \/ ((t = boolL1) /\ ?b.bs_il1_expr (e, s) (IL1_Boolean b)) \/ ((t = unitL1) /\ bs_il1_expr (e, s) IL1_ESkip)``,
+ho_match_mp_tac il1_expr_type_strongind THEN rw [] THEN rw [Once bs_il1_expr_cases]
+THEN (TRY (metis_tac [])) THEN Cases_on `t` THEN rw [] THENL [all_tac, rw [Once bs_il1_expr_cases], rw [Once bs_il1_expr_cases]] THEN `?b.bs_il1_expr (e, s) (IL1_Boolean b)` by metis_tac [] THEN Cases_on `b` THEN metis_tac []);
 
 val (bs_il1_rules, bs_il1_induction, bs_il1_cases) = Hol_reln `
     (*  Expressions *)
