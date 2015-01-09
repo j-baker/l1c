@@ -1,4 +1,4 @@
-open HolKernel boolLib bossLib wordsTheory wordsLib listTheory Parse IndDefLib finite_mapTheory relationTheory arithmeticTheory lcsymtacs;
+open HolKernel boolLib bossLib wordsTheory wordsLib listTheory Parse IndDefLib finite_mapTheory relationTheory arithmeticTheory lcsymtacs pairTheory;
 
 val _ = new_theory "l1";
 
