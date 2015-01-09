@@ -256,4 +256,27 @@ THEN1 (imp_res_tac IL1_WHILE_BACK_THM THEN rw [] THEN imp_res_tac BS_IL1_EXPR_DE
 THEN1 (imp_res_tac IL1_WHILE_BACK_THM THEN rw [] THEN imp_res_tac BS_IL1_EXPR_DETERMINACY THEN rw [] THEN metis_tac [])
 THEN1 (imp_res_tac IL1_WHILE_BACK_THM THEN rw [] THEN imp_res_tac BS_IL1_EXPR_DETERMINACY THEN rw [] THEN metis_tac []));
 
+val IL1_EXPR_TYPE_SUBSET_THM = store_thm("IL1_EXPR_TYPE_SUBSET_THM",
+``!e g t.il1_expr_type e g t ==> !h. g ⊆ h ==> il1_expr_type e h t``,
+ho_match_mp_tac il1_expr_type_strongind THEN rw [] THEN rw [Once il1_expr_type_cases] THEN metis_tac [SUBSET_DEF]);
+
+val IL1_TYPE_SUBSETS_THM = store_thm("IL1_TYPE_SUBSETS_THM",
+``!e g t g'.il1_type e g t g' ==> g ⊆ g'``,
+ho_match_mp_tac il1_type_strongind THEN rw [] THEN rw [Once il1_type_cases] THEN metis_tac [SUBSET_INSERT_RIGHT, SUBSET_TRANS, SUBSET_REFL, SUBSET_UNION]);
+
+val IL1_TYPE_SUBSET_THM = store_thm("IL1_TYPE_SUBSET_THM",
+``!e g t g'.il1_type e g t g' ==> !h. g ⊆ h ==> il1_type e h t (g' ∪ h)``,
+ho_match_mp_tac il1_type_strongind THEN rw [] THEN rw [Once il1_type_cases]
+
+THEN1 metis_tac [IL1_EXPR_TYPE_SUBSET_THM, SUBSET_UNION_ABSORPTION]
+THEN1 metis_tac [IL1_EXPR_TYPE_SUBSET_THM, SUBSET_UNION_ABSORPTION]
+
+THEN1 metis_tac [INSERT_UNION_EQ, SUBSET_UNION_ABSORPTION, IL1_EXPR_TYPE_SUBSET_THM]
+THEN1 metis_tac [INSERT_UNION_EQ, SUBSET_UNION_ABSORPTION, IL1_EXPR_TYPE_SUBSET_THM]
+
+
+THEN1 metis_tac [IL1_TYPE_SUBSETS_THM, SUBSET_UNION, SUBSET_UNION_ABSORPTION, UNION_COMM, UNION_ASSOC]
+
+THEN `g' ∪ g'' ∪ h = (g' ∪ h) ∪ (g'' ∪ h)` by metis_tac [UNION_COMM, UNION_ASSOC, UNION_IDEMPOT] THEN metis_tac [IL1_EXPR_TYPE_SUBSET_THM, IL1_TYPE_SUBSETS_THM, SUBSET_UNION, SUBSET_UNION_ABSORPTION]);
+
 val _ = export_theory ();
