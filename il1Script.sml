@@ -292,4 +292,51 @@ THEN1 (imp_res_tac BS_IL1_EXPR_DETERMINACY THEN rw [])
 THEN1 (rw [Once bs_il1_cases] THEN metis_tac []))
 THEN1 (rw [Once bs_il1_cases] THEN imp_res_tac IL1_SEQ_BACK_THM THEN metis_tac [IL1_SEQ_BACK_THM])
 );
+
+val div_example_def = Define `div_example = IL1_Expr (IL1_Plus (IL1_Value (IL1_Boolean T)) (IL1_Value (IL1_Integer 3)))`;
+
+val DIV_EXAMPLE_DIVERGES = store_thm("DIV_EXAMPLE_DIVERGES",
+``!s v s'.~bs_il1 (div_example, s) v s'``,
+rw [] THEN CCONTR_TAC THEN fs [div_example_def] THEN imp_res_tac IL1_EXPR_BACK_THM THEN rw [] THEN imp_res_tac BS_IL1_EXPR_PLUS_BACK_THM THEN imp_res_tac BS_IL1_EXPR_VALUE_BACK_THM THEN rw []);
+
+val loop_unwind_def = Define `
+(loop_unwind 0 e1 e2 = IL1_SIf e1 div_example (IL1_Expr (IL1_Value IL1_ESkip))) /\
+(loop_unwind (SUC n) e1 e2 = IL1_SIf e1 (IL1_Seq e2 (loop_unwind n e1 e2)) (IL1_Expr (IL1_Value IL1_ESkip)))`;
+
+val UNWOUND_WHILE_LEMMA = store_thm("UNWOUND_WHILE_LEMMA",
+``!n e1 e2 s s'. bs_il1 (loop_unwind n e1 e2, s) IL1_ESkip s' ==> bs_il1 (IL1_While e1 e2, s) IL1_ESkip s'``,
+Induct_on `n` THEN rw []
+
+THEN1 (fs [loop_unwind_def]
+THEN fs [Once bs_il1_cases]
+
+THEN1 fs [DIV_EXAMPLE_DIVERGES]
+THEN1 metis_tac [IL1_EXPR_BACK_THM])
+
+THEN fs [loop_unwind_def]
+THEN imp_res_tac IL1_SIF_BACK_THM
+THEN1 (rw [WHILE_UNWIND_ONCE_THM]
+THEN imp_res_tac IL1_SEQ_BACK_THM
+THEN res_tac
+THEN rw [Once bs_il1_cases]
+THEN metis_tac [])
+THEN1 (imp_res_tac IL1_EXPR_BACK_THM
+THEN rw []
+THEN metis_tac [bs_il1_cases]));
+
+!p v s'.bs_il1 p v s' ==> !e1 e2.(FST p = IL1_While e1 e2) ==> ?n.bs_il1 (loop_unwind n e1 e2, SND p) IL1_ESkip s'
+ho_match_mp_tac bs_il1_sinduction THEN rw [FST, SND]
+
+`bs_il1 (IL1_Seq 
+
+fs [WHILE_UNWIND_ONCE_THM]
+res_tac
+
+
+HINT_EXISTS_TAC
+
+
+?n.bs_il1 (loop_unwind n e1 e2, s) IL1_ESkip s'
+
+
 val _ = export_theory ();

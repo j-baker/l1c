@@ -389,6 +389,14 @@ THEN rw [Once bs_il1_expr_cases]
 THEN metis_tac []);
 (* End plus case *)
 
+val IL1_SEQ_FOR_THM = store_thm("IL1_SEQ_FOR_THM",
+``!e1 e2 s s' s'' v.bs_il1 (e1, s) IL1_ESkip s' /\ bs_il1 (e2, s') v s'' ==> bs_il1 (IL1_Seq e1 e2, s) v s''``,
+metis_tac [bs_il1_cases]);
+
+val IL1_EXPR_FOR_THM = store_thm("IL1_EXPR_FOR_THM",
+``!e s v.bs_il1_expr (e, s) v ==> bs_il1 (IL1_Expr e, s) v s``,
+metis_tac [bs_il1_cases]);
+
 val L1_TO_IL1_CORRECTNESS_LEMMA = store_thm("L1_TO_IL1_CORRECTNESS_LEMMA",
 ``!p v s'.big_step p v s' ==> !lc1 st ex lc1'.((st, ex, lc1') = l1_to_il1_pair lc1 (FST p)) ==> !fs.equiv (con_store (SND p)) fs ==> ?fs'.bs_il1 (st, fs) IL1_ESkip fs' /\ bs_il1_expr (ex, fs') (l1_il1_val v) /\ equiv (con_store s') fs'``,
 ho_match_mp_tac (fetch "l1" "big_step_strongind") THEN rw [FST, SND]
