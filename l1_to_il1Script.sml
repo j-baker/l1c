@@ -16,7 +16,7 @@ val l1_to_il1_pair_def = Define `
     (l1_to_il1_pair lc (B_Seq e1 e2) =
         let (sl1, e1', lc2) = l1_to_il1_pair lc e1 in
         let (sl2, e2', lc3) = l1_to_il1_pair lc2 e2
-        in (IL1_Seq sl1 sl2, e2', lc3)) /\
+        in (IL1_Seq (IL1_Seq sl1 (IL1_Expr e1')) sl2, e2', lc3)) /\
 
     (l1_to_il1_pair lc (B_While e1 e2) =
         let (sl1, e1', lc2) = l1_to_il1_pair lc e1 in
