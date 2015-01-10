@@ -82,17 +82,6 @@ val EQUIV_SYM_THM = store_thm("EQUIV_SYM_THM",
 ``!s s'.equiv s s' <=> equiv s' s``,
 metis_tac [equiv_def]);
 
-val WHILE_UNWIND_ONCE_THM = store_thm("WHILE_UNWIND_ONCE_THM",
-``!e1 s e2 v s'.bs_il1_expr (e1, s) (IL1_Boolean T) ==> (bs_il1 (IL1_While e1 e2, s) IL1_ESkip s' <=> bs_il1 (IL1_Seq e2 (IL1_While e1 e2), s) IL1_ESkip s')``,
-rw [EQ_IMP_THM] THEN1
-(imp_res_tac IL1_WHILE_BACK_THM
-THEN1 (imp_res_tac BS_IL1_EXPR_DETERMINACY THEN rw [])
-THEN1 (rw [Once bs_il1_cases] THEN metis_tac []))
-THEN1 (rw [Once bs_il1_cases] THEN imp_res_tac IL1_SEQ_BACK_THM THEN metis_tac [IL1_SEQ_BACK_THM])
-);
-
-
-
 val STORE_L1_IL1_INJ = store_thm("STORE_L1_IL1_INJ",
 ``!l s. l ∈ FDOM s ==> ((s ' l) = (MAP_KEYS User s) ' (User l))``,
 rw [] THEN `FDOM (MAP_KEYS User s) = IMAGE User (FDOM s)` by rw [FDOM_DEF, MAP_KEYS_def, IMAGE_DEF]
