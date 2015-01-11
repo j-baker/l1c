@@ -1,4 +1,4 @@
-open HolKernel boolLib bossLib wordsTheory wordsLib listTheory Parse IndDefLib finite_mapTheory relationTheory arithmeticTheory lcsymtacs pairTheory;
+open HolKernel boolLib bossLib wordsTheory wordsLib listTheory Parse IndDefLib finite_mapTheory relationTheory arithmeticTheory lcsymtacs pairTheory integerTheory;
 
 val _ = new_theory "l1";
 
@@ -6,8 +6,6 @@ val _ = numLib.prefer_num();
 val _ = wordsLib.prefer_word();
 
 val _ = type_abbrev("loc", ``:num``);
-
-val _ = type_abbrev("int", ``:num``);
 
 val _ = type_abbrev("state", ``:loc |-> int``);
 

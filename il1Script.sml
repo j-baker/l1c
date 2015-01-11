@@ -1,4 +1,4 @@
-open HolKernel boolLib bossLib listTheory Parse IndDefLib finite_mapTheory relationTheory arithmeticTheory l1Theory pred_setTheory pairTheory lcsymtacs;
+open HolKernel boolLib bossLib listTheory Parse IndDefLib finite_mapTheory relationTheory arithmeticTheory l1Theory pred_setTheory pairTheory lcsymtacs integerTheory;
 
 val _ = new_theory "il1";
 
@@ -323,20 +323,6 @@ THEN metis_tac [])
 THEN1 (imp_res_tac IL1_EXPR_BACK_THM
 THEN rw []
 THEN metis_tac [bs_il1_cases]));
-
-!p v s'.bs_il1 p v s' ==> !e1 e2.(FST p = IL1_While e1 e2) ==> ?n.bs_il1 (loop_unwind n e1 e2, SND p) IL1_ESkip s'
-ho_match_mp_tac bs_il1_sinduction THEN rw [FST, SND]
-
-`bs_il1 (IL1_Seq 
-
-fs [WHILE_UNWIND_ONCE_THM]
-res_tac
-
-
-HINT_EXISTS_TAC
-
-
-?n.bs_il1 (loop_unwind n e1 e2, s) IL1_ESkip s'
 
 
 val _ = export_theory ();
