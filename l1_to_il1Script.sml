@@ -1,4 +1,4 @@
-open HolKernel boolLib bossLib listTheory Parse IndDefLib finite_mapTheory relationTheory arithmeticTheory l1Theory il1Theory pred_setTheory pairTheory lcsymtacs prim_recTheory;
+open HolKernel boolLib bossLib listTheory Parse IndDefLib finite_mapTheory relationTheory arithmeticTheory l1Theory il1Theory pred_setTheory pairTheory lcsymtacs prim_recTheory integerTheory;
 
 val _ = new_theory "l1_to_il1";
 
@@ -122,15 +122,15 @@ rw [Once bs_il1_cases] THEN rw [FDOM_DEF]);
 val minimal_store_def = Define `minimal_store e s = !k.k ∈ FDOM s ==> contains_l1 k e`;
 
 val count_assign_def = Define `
-(count_assign (IL1_Expr _) _ = 0) /\
+(count_assign (IL1_Expr _) _ = Num 0) /\
 (count_assign (IL1_SIf _ e2 e3) l = count_assign e2 l + count_assign e3 l) /\
 (count_assign (IL1_While _ e2) l = count_assign e2 l) /\
-(count_assign (IL1_Assign l1 e) l2 = if l1 = l2 then 1 else 0) /\
+(count_assign (IL1_Assign l1 e) l2 = if l1 = l2 then Num 1 else Num 0) /\
 (count_assign (IL1_Seq e1 e2) l = count_assign e1 l + count_assign e2 l)`;
 
 val count_deref_expr_def = Define `
-(count_deref_expr (IL1_Deref l) l' = if l = l' then 1 else 0) /\
-(count_deref_expr (IL1_Value _) _ = 0) /\
+(count_deref_expr (IL1_Deref l) l' = if l = l' then Num 1 else Num 0) /\
+(count_deref_expr (IL1_Value _) _ = Num 0) /\
 (count_deref_expr (IL1_Plus e1 e2) l = count_deref_expr e1 l + count_deref_expr e2 l) /\
 (count_deref_expr (IL1_Geq e1 e2) l = count_deref_expr e1 l + count_deref_expr e2 l) /\
 (count_deref_expr (IL1_EIf e1 e2 e3) l = count_deref_expr e1 l + count_deref_expr e2 l + count_deref_expr e3 l)`;
@@ -514,7 +514,8 @@ THEN rw [Once bs_il1_expr_cases] THEN metis_tac [SUBSET_DEF, FAPPLY_FUPDATE, MAP
 
 THEN metis_tac [])
 THEN `bs_il1_expr (IL1_Value (IL1_Integer 1), fs'') (IL1_Integer 1)` by (rw [Once bs_il1_expr_cases] THEN metis_tac [])
-THEN `1 >= 1` by decide_tac
+THEN `1 >= 1` by metis_tac [int_ge, INT_LE_REFL]
+
 THEN metis_tac [])
 
 THEN metis_tac [])
@@ -575,7 +576,7 @@ THEN `bs_il1_expr
    fs'') (IL1_Boolean F)` by (
 rw [Once bs_il1_expr_cases]
 THEN `bs_il1_expr (IL1_Value (IL1_Integer 1), fs'') (IL1_Integer 1)` by (rw [Once bs_il1_expr_cases] THEN metis_tac [])
-THEN `~(0 >= 1)` by decide_tac
+THEN `~(0 >= 1)` by metis_tac [int_ge, INT_NOT_LE, INT_LT_REFL, INT_LT_01, INT_LT_ANTISYM]
 
 
 THEN metis_tac [])
