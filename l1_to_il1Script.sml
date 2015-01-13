@@ -1075,6 +1075,111 @@ rw [] THEN imp_res_tac bs_il1_strongind);
 ho_match_mp_tac bs_il1_strongind THEN rw [FST, SND]
 
 
+val no_red_l1_def = Define `no_red_l1 = B_Plus (B_Value (B_N 0)) (B_Value (B_B T))`;
+
+val no_red_l1_thm = store_thm("no_red_l1_thm", ``!s v s'.~big_step(no_red_l1, s) v s'``, rw [no_red_l1_def, Once big_step_cases] THEN CCONTR_TAC THEN fs[] THEN rw [] THEN `~big_step (B_Value (B_B T), s''') (B_N n2) s'` by fs [Once big_step_cases]);
+
+val unwind_l1_def = Define `
+(unwind_l1 0 e1 _ = B_If e1 no_red_l1 (B_Value B_Skip)) /\
+(unwind_l1 (SUC n) e1 e2 = B_If e1 (B_Seq e2 (unwind_l1 n e1 e2)) (B_Value B_Skip))`;
+
+val no_red_il1_def = Define `no_red_il1 = IL1_Expr (IL1_Plus (IL1_Value (IL1_Integer 0)) (IL1_Value (IL1_Boolean T)))`;
+
+val no_red_il1_thm = store_thm("no_red_il1_thm", ``!s v s'.~bs_il1(no_red_il1, s) v s'``, rw [no_red_il1_def, Once bs_il1_cases, Once bs_il1_expr_cases] THEN CCONTR_TAC THEN fs[] THEN rw [] THEN `~bs_il1_expr (IL1_Value (IL1_Boolean T), s) (IL1_Integer n2)` by fs [Once bs_il1_expr_cases]);
+
+val unwind_il1_def = Define `
+(unwind_il1 0 e1 _ = IL1_SIf e1 no_red_il1 (IL1_Expr (IL1_Value IL1_ESkip))) /\
+(unwind_il1 (SUC n) e1 e2 = IL1_SIf e1 (IL1_Seq e2 (unwind_il1 n e1 e2)) (IL1_Expr (IL1_Value (IL1_ESkip))))
+`;
+
+val unwind_l1_lemma = store_thm("unwind_l1_lemma",
+``!p v s'.big_step p v s' ==> (v = B_Skip) ==> !e1 e2.(FST p = B_While e1 e2) ==> ?n'.!n.(n >= n') ==> big_step (unwind_l1 n e1 e2, SND p) v s'``,
+ho_match_mp_tac big_step_strongind THEN rw [FST, SND]
+THEN1 (`!n. (n >= SUC n') ==> big_step (unwind_l1 n e1 e2, s) B_Skip s'''` by (
+rw [] THEN
+Cases_on `n` THEN1 decide_tac
+THEN
+rw [unwind_l1_def] THEN
+rw [Once big_step_cases] THEN
+rw [Once (Q.SPECL [`(B_Seq e1 e2, s)`] big_step_cases)] THEN
+`n'' >= n'` by decide_tac THEN
+metis_tac [])
+THEN metis_tac [])
+THEN1 (
+`!n. (n >= 0) ==> big_step (unwind_l1 n e1 e2, s) B_Skip s'` by (
+
+Induct_on `n`
+
+THEN1 (rw [Once big_step_cases, unwind_l1_def] THEN rw [Once (Q.SPECL [`(B_Value B_Skip, s)`] big_step_cases)])
+
+THEN rw [unwind_l1_def]
+THEN rw [Once big_step_cases]
+THEN metis_tac [big_step_cases])
+THEN metis_tac []));
+
+val unwind_l1_2_lemma = store_thm("unwind_l1_2_lemma", 
+``!n e1 e2 s s'.big_step (unwind_l1 n e1 e2, s) B_Skip s' ==> big_step (B_While e1 e2, s) B_Skip s'``,
+Induct_on `n`
+THEN1 (
+rw [unwind_l1_def]
+THEN fs [Once big_step_cases] THEN1 metis_tac [no_red_l1_thm]
+THEN imp_res_tac BS_VALUE_BACK_THM THEN rw [])
+
+THEN rw [unwind_l1_def]
+THEN fs [Once (Q.SPECL [`(B_If e1 e2 e3, s')`] big_step_cases)]
+THEN1 (
+fs [Once (Q.SPECL [`(B_Seq e1 e2, s')`] big_step_cases)] THEN metis_tac [big_step_cases])
+
+THEN imp_res_tac BS_VALUE_BACK_THM THEN rw [] THEN metis_tac [big_step_cases]);
+
+val unwind_l1_thm = store_thm("unwind_l1_thm",
+``!e1 e2 s s'.big_step (B_While e1 e2, s) B_Skip s' <=> ?n'.!n.(n >= n') ==> big_step (unwind_l1 n e1 e2, s) B_Skip s'``,
+rw [EQ_IMP_THM] THEN ((TRY (`n' >= n'` by decide_tac)) THEN metis_tac [unwind_l1_lemma, unwind_l1_2_lemma, FST, SND]));
+
+val unwind_il1_lemma = store_thm("unwind_il1_lemma",
+``!p v s'.bs_il1 p v s' ==> (v = IL1_ESkip) ==> !e1 e2.(FST p = IL1_While e1 e2) ==> ?n'.!n.(n >= n') ==> bs_il1 (unwind_il1 n e1 e2, SND p) v s'``,
+ho_match_mp_tac bs_il1_strongind THEN rw [FST, SND]
+THEN1 (`!n. (n >= SUC n') ==> bs_il1 (unwind_il1 n e1 e2, s) IL1_ESkip s''` by (
+rw [] THEN
+Cases_on `n` THEN1 decide_tac
+THEN
+rw [unwind_il1_def] THEN
+rw [Once bs_il1_cases] THEN
+rw [Once bs_il1_cases] THEN
+`n'' >= n'` by decide_tac THEN
+metis_tac [])
+THEN metis_tac [])
+THEN1 (
+`!n. (n >= 0) ==> bs_il1 (unwind_il1 n e1 e2, s') IL1_ESkip s'` by (
+
+Induct_on `n`
+
+THEN1 (rw [Once bs_il1_cases, unwind_il1_def] THEN rw [Once (Q.SPECL [`(IL1_Expr X, s)`] bs_il1_cases), Once (Q.SPECL [`(IL1_Value IL1_ESkip, s')`] bs_il1_expr_cases)])
+
+THEN rw [unwind_il1_def]
+THEN rw [Once bs_il1_cases]
+THEN rw [Once (Q.SPECL [`(IL1_Expr X, s)`] bs_il1_cases), Once (Q.SPECL [`(IL1_Value IL1_ESkip, s')`] bs_il1_expr_cases)])
+THEN metis_tac []));
+
+val unwind_il1_2_lemma = store_thm("unwind_il1_2_lemma", 
+``!n e1 e2 s s'.bs_il1 (unwind_il1 n e1 e2, s) IL1_ESkip s' ==> bs_il1 (IL1_While e1 e2, s) IL1_ESkip s'``,
+Induct_on `n`
+THEN1 (
+rw [unwind_il1_def]
+THEN fs [Once bs_il1_cases] THEN1 metis_tac [no_red_il1_thm]
+THEN imp_res_tac IL1_EXPR_BACK_THM THEN rw [])
+
+THEN rw [unwind_il1_def]
+THEN fs [Once (Q.SPECL [`(IL1_SIf e1 e2 e3, s')`] bs_il1_cases)]
+THEN1 (
+fs [Once (Q.SPECL [`(IL1_Seq e1 e2, s')`] bs_il1_cases)] THEN metis_tac [bs_il1_cases])
+
+THEN imp_res_tac IL1_EXPR_BACK_THM THEN rw [] THEN metis_tac [bs_il1_cases]);
+
+val unwind_il1_thm = store_thm("unwind_il1_thm",
+``!e1 e2 s s'.bs_il1 (IL1_While e1 e2, s) IL1_ESkip s' <=> ?n'.!n.(n >= n') ==> bs_il1 (unwind_il1 n e1 e2, s) IL1_ESkip s'``,
+rw [EQ_IMP_THM] THEN ((TRY (`n' >= n'` by decide_tac)) THEN metis_tac [unwind_il1_lemma, unwind_il1_2_lemma, FST, SND]));
+
 
 
 
