@@ -1,4 +1,4 @@
-open HolKernel boolLib bossLib listTheory Parse IndDefLib finite_mapTheory relationTheory arithmeticTheory l1Theory il1Theory pred_setTheory pairTheory lcsymtacs prim_recTheory;
+open HolKernel boolLib bossLib listTheory Parse IndDefLib finite_mapTheory relationTheory arithmeticTheory l1Theory il1Theory pred_setTheory pairTheory lcsymtacs prim_recTheory integerTheory;
 
 val _ = new_theory "l1_to_il1";
 
@@ -122,15 +122,15 @@ rw [Once bs_il1_cases] THEN rw [FDOM_DEF]);
 val minimal_store_def = Define `minimal_store e s = !k.k ∈ FDOM s ==> contains_l1 k e`;
 
 val count_assign_def = Define `
-(count_assign (IL1_Expr _) _ = 0) /\
+(count_assign (IL1_Expr _) _ = Num 0) /\
 (count_assign (IL1_SIf _ e2 e3) l = count_assign e2 l + count_assign e3 l) /\
 (count_assign (IL1_While _ e2) l = count_assign e2 l) /\
-(count_assign (IL1_Assign l1 e) l2 = if l1 = l2 then 1 else 0) /\
+(count_assign (IL1_Assign l1 e) l2 = if l1 = l2 then Num 1 else Num 0) /\
 (count_assign (IL1_Seq e1 e2) l = count_assign e1 l + count_assign e2 l)`;
 
 val count_deref_expr_def = Define `
-(count_deref_expr (IL1_Deref l) l' = if l = l' then 1 else 0) /\
-(count_deref_expr (IL1_Value _) _ = 0) /\
+(count_deref_expr (IL1_Deref l) l' = if l = l' then Num 1 else Num 0) /\
+(count_deref_expr (IL1_Value _) _ = Num 0) /\
 (count_deref_expr (IL1_Plus e1 e2) l = count_deref_expr e1 l + count_deref_expr e2 l) /\
 (count_deref_expr (IL1_Geq e1 e2) l = count_deref_expr e1 l + count_deref_expr e2 l) /\
 (count_deref_expr (IL1_EIf e1 e2 e3) l = count_deref_expr e1 l + count_deref_expr e2 l + count_deref_expr e3 l)`;
@@ -514,7 +514,8 @@ THEN rw [Once bs_il1_expr_cases] THEN metis_tac [SUBSET_DEF, FAPPLY_FUPDATE, MAP
 
 THEN metis_tac [])
 THEN `bs_il1_expr (IL1_Value (IL1_Integer 1), fs'') (IL1_Integer 1)` by (rw [Once bs_il1_expr_cases] THEN metis_tac [])
-THEN `1 >= 1` by decide_tac
+THEN `1 >= 1` by metis_tac [int_ge, INT_LE_REFL]
+
 THEN metis_tac [])
 
 THEN metis_tac [])
@@ -575,7 +576,7 @@ THEN `bs_il1_expr
    fs'') (IL1_Boolean F)` by (
 rw [Once bs_il1_expr_cases]
 THEN `bs_il1_expr (IL1_Value (IL1_Integer 1), fs'') (IL1_Integer 1)` by (rw [Once bs_il1_expr_cases] THEN metis_tac [])
-THEN `~(0 >= 1)` by decide_tac
+THEN `~(0 >= 1)` by metis_tac [int_ge, INT_NOT_LE, INT_LT_REFL, INT_LT_01, INT_LT_ANTISYM]
 
 
 THEN metis_tac [])
@@ -632,455 +633,114 @@ val L1_TO_IL1_FORALL_CORRECTNESS_THM = store_thm("L1_TO_IL1_FORALL_CORRECTNESS_T
 rw [l1_to_il1_def] THEN `?s te lc.l1_to_il1_pair 0 e = (s,te, lc)` by total THEN fs [LET_DEF] THEN fs [Once bs_il1_cases] THEN imp_res_tac IL1_EXPR_BACK_THM
 THEN rw [] THEN imp_res_tac L1_TO_IL1_CORRECTNESS_LEMMA THEN fs [FST, SND] THEN `equiv (con_store s) (con_store s)` by metis_tac [EQUIV_REFL_THM] THEN imp_res_tac EQ_SYM THEN res_tac THEN imp_res_tac IL1_DETERMINACY_THM THEN rw [] THEN metis_tac [BS_IL1_EXPR_DETERMINACY]);
 
-val L1_TO_IL1_TYPES_PRESERVED_THM = store_thm("L1_TO_IL1_TYPES_PRESERVED_THM",
-``!ct e st ex ct'.(l1_to_il1_pair ct e = (st, ex, ct')) ==> !s t.((bs_type_fun e s = SOME t) ==> (il1_type (IL1_Seq st (IL1_Expr ex)) (FDOM (con_store s))) = SOME t))``,
-
-
-!ct e st ex ct'.(l1_to_il1_pair ct e = (st, ex, ct')) ==> !s t.(bs_type e s t ==> ?s'.il1_type (IL1_Seq st (IL1_Expr ex)) {User l | l ∈ s} t s')
-
-
-recInduct (fetch "-" "l1_to_il1_pair_ind") THEN rw [] THEN fs [l1_to_il1_pair_def] THEN rw [Once il1_type_cases]
-
-
-
-rw [Once il1_type_cases, Once il1_expr_type_cases] THEN rw [Once il1_type_cases, Once il1_expr_type_cases]
- THEN rw [Once il1_type_cases, Once il1_expr_type_cases]
-THEN fs [Once bs_type_cases]
-
-(* Begin assign case *)
-`?sl e' lc2.l1_to_il1_pair lc e = (sl, e', lc2)` by total THEN fs [LET_DEF] THEN rw []
-
-THEN fs [Once il1_type_cases]
-
-THEN `bs_type e s intL1` by fs [Once bs_type_cases]
-THEN `t = unitL1` by (Cases_on `t` THEN fs [Once bs_type_cases])
-THEN rw []
-
-THEN res_tac
-THEN `il1_type (IL1_Assign (User l) e') g' unitL1 (User l INSERT g')` by (rw [Once il1_type_cases] THEN fs [Once il1_type_cases])
-
-THEN `il1_type (IL1_Expr (IL1_Value IL1_ESkip)) (User l INSERT g') unitL1 (User l INSERT g')` by rw [Once il1_type_cases, Once il1_expr_type_cases]
-
-THEN metis_tac []
-(* End assign case *)
-
-(* Seq case *)
-`?st ex ct1.l1_to_il1_pair lc e1 = (st, ex, ct1)` by total
-THEN `?st ex ct''.l1_to_il1_pair ct1 e2 = (st, ex, ct'')` by total
-THEN fs [LET_DEF] THEN rw []
-
-THEN `(bs_type e1 s unitL1) /\ (bs_type e2 s t)` by fs [Once bs_type_cases]
-
-THEN fs [Once il1_type_cases]
-THEN metis_tac [IL1_TYPE_SUBSETS_THM, IL1_TYPE_SUBSET_THM, SUBSET_UNION]
-
-
-`il1_expr_type ex' g' boolL1` by (fs [Once il1_type_cases] THEN metis_tac []) THEN rw []
-`?g.il1_type st'' g' unitL1
-
-(* While *)
-`?st ex ct1.l1_to_il1_pair lc e1 = (st, ex, ct1)` by total
-THEN `?st ex ct''.l1_to_il1_pair ct1 e2 = (st, ex, ct'')` by total
-THEN fs [LET_DEF] THEN rw []
-
-
-`(bs_type e1 s boolL1) /\ (bs_type e2 s unitL1) /\ (t = unitL1)` by fs [Once bs_type_cases] THEN rw []
-
-
-fs [Once il1_type_cases]
-
-`!g.il1_type (IL1_Expr (IL1_Value IL1_ESkip)) g unitL1 g` by rw [Once il1_type_cases, Once il1_expr_type_cases]
-
-
-res_tac
-`∃s' g''.
-  (
-     il1_type st' {User l | l ∈ s} unitL1 g' ∧
-     il1_type (IL1_While ex' (IL1_Seq st'' st')) g' unitL1 g'') ∧
-  il1_type (IL1_Expr (IL1_Value IL1_ESkip)) g'' unitL1 s'` by all_tac
-
-rw []
-rw [Once il1_type_cases]
-rw [Once il1_type_cases]
-
-`il1_expr_type ex' g' boolL1` by fs [Once il1_type_cases]
-
-metis_tac [IL1_TYPE_SUBSETS_THM, IL1_TYPE_SUBSET_2_THM, SUBSET_UNION]
-metis_tac [IL1_TYPE_SUBSETS_THM, IL1_TYPE_SUBSET_2_THM, SUBSET_UNION]
-
-
-(* ENd while *)
-
-fs [Once il1_type_cases]
-
-rw []
-rw [Once il1_type_cases]
-rw [Once il1_type_cases]
-
-
-(* End seq case *)
-
-`?st ex ct1.l1_to_il1_pair lc e1 = (st, ex, ct1)` by total
-THEN `?st ex ct2.l1_to_il1_pair ct1 e2 = (st, ex, ct2)` by total
-THEN `?st ex ct''.l1_to_il1_pair ct2 e3 = (st, ex, ct'')` by total
-THEN fs [LET_DEF] THEN rw []
-
-THEN `(bs_type e1 s boolL1) /\ (bs_type e2 s t) /\ (bs_type e3 s t)` by fs [Once bs_type_cases]
-
-THEN fs [Once il1_type_cases]
-
-THEN rw [Once il1_type_cases]
-
-res_tac
-
-`∃s' g'''.
-  (∃g''.
-     (
-        il1_type st' {User l | l ∈ s} unitL1 g' ∧
-        il1_type
-          (IL1_Assign (Compiler ct'')
-             (IL1_EIf ex' (IL1_Value (IL1_Integer 1))
-                (IL1_Value (IL1_Integer 0)))) g' unitL1 g'') ∧
-     il1_type (IL1_SIf ex' st'' st''') g'' unitL1 g''') ∧
-  il1_type
-    (IL1_Expr
-       (IL1_EIf
-          (IL1_Geq (IL1_Deref (Compiler ct''))
-             (IL1_Value (IL1_Integer 1))) ex'' ex''')) g''' t s'` by all_tac
-
-rw []
-rw [Once il1_type_cases]
-rw [Once il1_type_cases]
-rw [Once il1_type_cases]
-
-rw [Once il1_expr_type_cases]
-`il1_expr_type ex' g' boolL1` by fs [Once il1_type_cases]
-rw []
-rw [Once il1_expr_type_cases]
-
-
-metis_tac [IL1_TYPE_SUBSETS_THM, IL1_TYPE_SUBSET_2_THM, SUBSET_UNION, IL1_EXPR_TYPE_SUBSET_THM]
-
-
-
-DISJUNCTS il1_type_cases
-
-
-
-
-
-
-THEN metis_tac [IL1_TYPE_SUBSETS_THM, IL1_TYPE_SUBSET_THM, SUBSET_UNION]
-
-
-`il1_expr_type ex' g' boolL1` by (fs [Once il1_type_cases] THEN metis_tac []) THEN rw []
-`?g.il1_type st'' g' unitL1
-
-
-
-
-
-
-
-
-
-
-fs [Once il1_type_cases]
-metis_tac [IL1_TYPE_SUBSETS_THM, IL1_TYPE_SUBSET_THM, SUBSET_UNION]
-
-
-imp_res_tac IL1_TYPE_SUBSETS_THM
-imp_res_tac IL1_TYPE_SUBSET_THM
-imp_res_tac IL1_TYPE_SUBSETS_THM
-imp_res_tac IL1_TYPE_SUBSET_THM
-metis_tac []
-
-metis_tac [IL1_TYPE_SUBSETS_THM]
-
-
-
-
-`t = unitL1` by (Cases_on `t` THEN fs [Once bs_type_cases])
-∈rw []
-
-
- THEN metis_tac []
-fs [Once bs_type_cases]
-
-metis_tac [Once il1_type_cases]
-
-rw [Once il1_type_cases]
-
-
 val STORE_DOMAIN_INVERSE_THM = store_thm("STORE_DOMAIN_INVERSE_THM",
 ``!l s.User l ∈ FDOM (con_store s) ==> l ∈ FDOM s``,
 rw [con_store_def, FDOM_DEF, MAP_KEYS_def]);
 
-val L1_TO_IL1_TERMINATION_CORRECTNESS_THM = store_thm("L1_TO_IL1_TERMINATION_CORRECTNESS_THM",
+val no_red_l1_def = Define `no_red_l1 = B_Plus (B_Value (B_N 0)) (B_Value (B_B T))`;
 
+val no_red_l1_thm = store_thm("no_red_l1_thm", ``!s v s'.~big_step(no_red_l1, s) v s'``, rw [no_red_l1_def, Once big_step_cases] THEN CCONTR_TAC THEN fs[] THEN rw [] THEN `~big_step (B_Value (B_B T), s''') (B_N n2) s'` by fs [Once big_step_cases]);
 
-!ct e st ex ct'.(l1_to_il1_pair ct e = (st, ex, ct')) ==> !cs v cs'.bs_il1 (IL1_Seq st (IL1_Expr ex), cs) v cs' ==> !s.equiv (con_store s) cs ==> ?s'.big_step (e, s) (il1_l1_val v) s' /\ equiv (con_store s') cs'
-recInduct (fetch "-" "l1_to_il1_pair_ind") THEN rw [] THEN rw [Once big_step_cases]
-THEN TRY (fs [l1_to_il1_pair_def] THEN rw [] THEN imp_res_tac IL1_SEQ_BACK_THM THEN imp_res_tac IL1_EXPR_BACK_THM THEN rw [] THEN imp_res_tac BS_IL1_EXPR_VALUE_BACK_THM THEN rw [il1_l1_val_def])
+val unwind_l1_def = Define `
+(unwind_l1 0 e1 _ = B_If e1 no_red_l1 (B_Value B_Skip)) /\
+(unwind_l1 (SUC n) e1 e2 = B_If e1 (B_Seq e2 (unwind_l1 n e1 e2)) (B_Value B_Skip))`;
 
-metis_tac [BS_IL1_EXPR_DEREF_BACK_THM, il1_l1_val_def, STORE_DOMAIN_INVERSE_THM, con_store_def, STORE_L1_IL1_INJ, equiv_def]
+val no_red_il1_def = Define `no_red_il1 = IL1_Expr (IL1_Plus (IL1_Value (IL1_Integer 0)) (IL1_Value (IL1_Boolean T)))`;
 
-(* Assign case *)
-`?stjj exjj ctjj.l1_to_il1_pair lc e = (stjj, exjj, ctjj)` by total
-THEN fs [LET_DEF] THEN rw []
-THEN imp_res_tac IL1_SEQ_BACK_THM
-THEN imp_res_tac IL1_ASSIGN_BACK_THM
-THEN fs []
-THEN rw []
-THEN imp_res_tac IL1_DETERMINACY_THM THEN imp_res_tac BS_IL1_EXPR_DETERMINACY THEN imp_res_tac IL1_DETERMINACY_THM THEN fs [] THEN rw []
-THEN imp_res_tac BS_IL1_EXPR_VALUE_BACK_THM THEN imp_res_tac BS_IL1_EXPR_DETERMINACY THEN rw [il1_l1_val_def]
+val no_red_il1_thm = store_thm("no_red_il1_thm", ``!s v s'.~bs_il1(no_red_il1, s) v s'``, rw [no_red_il1_def, Once bs_il1_cases, Once bs_il1_expr_cases] THEN CCONTR_TAC THEN fs[] THEN rw [] THEN `~bs_il1_expr (IL1_Value (IL1_Boolean T), s) (IL1_Integer n2)` by fs [Once bs_il1_expr_cases]);
 
-THEN `bs_il1 (IL1_Expr exjj, s') (IL1_Integer n) s'` by (rw [Once bs_il1_cases] THEN metis_tac [])
-THEN `bs_il1 (IL1_Seq stjj (IL1_Expr exjj), cs) (IL1_Integer n) s'` by (rw [Once bs_il1_cases] THEN metis_tac [])
+val unwind_il1_def = Define `
+(unwind_il1 0 e1 _ = IL1_SIf e1 no_red_il1 (IL1_Expr (IL1_Value IL1_ESkip))) /\
+(unwind_il1 (SUC n) e1 e2 = IL1_SIf e1 (IL1_Seq e2 (unwind_il1 n e1 e2)) (IL1_Expr (IL1_Value (IL1_ESkip))))
+`;
 
-THEN res_tac THEN imp_res_tac IL1_DETERMINACY_THM THEN imp_res_tac BS_IL1_EXPR_DETERMINACY THEN imp_res_tac IL1_DETERMINACY_THM THEN fs [] THEN rw []
-THEN metis_tac [IL1_DETERMINACY_THM, BS_IL1_EXPR_DETERMINACY, il1_l1_val_def, EQUIV_APPEND_THM, MAP_APPEND_EQUIV_THM, con_store_def, STORE_DOMAIN_INVERSE_THM, equiv_def, L1_DOM_CONSTANT_THM, SND]
-(* end assign case *)
-
-(* Begin seq case *)
-`?st ex ct1.l1_to_il1_pair lc e1 = (st, ex, ct1)` by total
-THEN `?st ex ct''.l1_to_il1_pair ct1 e2 = (st, ex, ct'')` by total
-THEN fs [LET_DEF] THEN rw []
-THEN imp_res_tac IL1_SEQ_BACK_THM
-THEN imp_res_tac IL1_SEQ_BACK_THM
-THEN imp_res_tac IL1_SEQ_BACK_THM
-THEN imp_res_tac IL1_EXPR_BACK_THM
-THEN imp_res_tac IL1_DETERMINACY_THM THEN imp_res_tac BS_IL1_EXPR_DETERMINACY THEN imp_res_tac IL1_DETERMINACY_THM THEN fs [] THEN rw []
-
-THEN `bs_il1 (IL1_Seq st' (IL1_Expr ex'), cs) IL1_ESkip s'` by (rw [Once bs_il1_cases] THEN metis_tac [])
-THEN `bs_il1 (IL1_Seq st'' (IL1_Expr ex), s') v cs'` by (rw [Once bs_il1_cases] THEN metis_tac [])
-THEN res_tac THEN imp_res_tac IL1_DETERMINACY_THM THEN imp_res_tac BS_IL1_EXPR_DETERMINACY THEN imp_res_tac IL1_DETERMINACY_THM THEN fs [] THEN rw []
-THEN metis_tac [il1_l1_val_def]
-
-(* End seq case apart from screwy case *)
-
-(* Begin plus case *)
-`?st ex ct1.l1_to_il1_pair lc e1 = (st, ex, ct1)` by total
-THEN `?st ex ct2.l1_to_il1_pair ct1 e2 = (st, ex, ct2)` by total
-(* `?st ex ct''.l1_to_il1_pair ct2 e3 = (st, ex, ct'')` by total *)
-THEN fs [LET_DEF] THEN rw []
-
-THEN imp_res_tac BS_IL1_EXPR_PLUS_BACK_THM THEN imp_res_tac BS_IL1_EXPR_GEQ_BACK_THM THEN rw [] THEN fs [il1_l1_val_def]
-THEN rw []
-
-THEN `?ts1 n1'.bs_il1 (IL1_Seq st' (IL1_Expr ex'), cs) (IL1_Integer n1') ts1` by (
-rw [Once bs_il1_cases]
-
-THEN imp_res_tac IL1_SEQ_BACK_THM
-THEN imp_res_tac IL1_SEQ_BACK_THM
-THEN imp_res_tac IL1_SEQ_BACK_THM
-THEN imp_res_tac IL1_EXPR_BACK_THM
-THEN imp_res_tac BS_IL1_EXPR_PLUS_BACK_THM
-THEN imp_res_tac IL1_ASSIGN_BACK_THM
-THEN imp_res_tac IL1_DETERMINACY_THM THEN imp_res_tac BS_IL1_EXPR_DETERMINACY THEN imp_res_tac IL1_DETERMINACY_THM THEN fs [] THEN rw []
-
-THEN `(s'''' |+ (Compiler ct2, n)) ' (Compiler ct2) = cs' ' (Compiler ct2)` by (`~contains_a (Compiler ct2) st''` by (CCONTR_TAC THEN fs [] THEN imp_res_tac UNCHANGED_LOC_SIMP_THM THEN decide_tac)
- THEN metis_tac [NOT_CONTAINS_MEANS_UNCHANGED_THM])
-
-THEN `n = cs' ' (Compiler ct2)` by metis_tac [FAPPLY_FUPDATE_THM]
-THEN rw []
-THEN `bs_il1 (IL1_Expr ex', s'''') (IL1_Integer (cs' ' (Compiler ct2))) s''''` by (rw [Once bs_il1_cases])
+val unwind_l1_lemma = store_thm("unwind_l1_lemma",
+``!p v s'.big_step p v s' ==> (v = B_Skip) ==> !e1 e2.(FST p = B_While e1 e2) ==> ?n'.!n.(n >= n') ==> big_step (unwind_l1 n e1 e2, SND p) v s'``,
+ho_match_mp_tac big_step_strongind THEN rw [FST, SND]
+THEN1 (`!n. (n >= SUC n') ==> big_step (unwind_l1 n e1 e2, s) B_Skip s'''` by (
+rw [] THEN
+Cases_on `n` THEN1 decide_tac
+THEN
+rw [unwind_l1_def] THEN
+rw [Once big_step_cases] THEN
+rw [Once (Q.SPECL [`(B_Seq e1 e2, s)`] big_step_cases)] THEN
+`n'' >= n'` by decide_tac THEN
+metis_tac [])
 THEN metis_tac [])
+THEN1 (
+`!n. (n >= 0) ==> big_step (unwind_l1 n e1 e2, s) B_Skip s'` by (
 
-THEN `?ts2.bs_il1 (IL1_Seq st' (IL1_Assign (Compiler ct2) ex'), cs) IL1_ESkip ts2 /\ bs_il1 (st'', ts2) IL1_ESkip cs'` by (imp_res_tac IL1_SEQ_BACK_THM THEN metis_tac [])
+Induct_on `n`
 
-THEN `ts2 = ts1 |+ (Compiler ct2, n1')` by (
-`bs_il1 (IL1_Assign (Compiler ct2) ex', ts1) IL1_ESkip ts2` by (
-`bs_il1 (st', cs) IL1_ESkip ts1` by (imp_res_tac IL1_SEQ_BACK_THM THEN imp_res_tac IL1_EXPR_BACK_THM THEN rw [] THEN metis_tac [])
+THEN1 (rw [Once big_step_cases, unwind_l1_def] THEN rw [Once (Q.SPECL [`(B_Value B_Skip, s)`] big_step_cases)])
 
-THEN imp_res_tac IL1_SEQ_BACK_THM THEN imp_res_tac IL1_DETERMINACY_THM THEN imp_res_tac BS_IL1_EXPR_DETERMINACY THEN imp_res_tac IL1_DETERMINACY_THM THEN fs [] THEN rw [] THEN metis_tac []
-)
+THEN rw [unwind_l1_def]
+THEN rw [Once big_step_cases]
+THEN metis_tac [big_step_cases])
+THEN metis_tac []));
 
-THEN `bs_il1_expr (ex', ts1) (IL1_Integer n1')` by (`bs_il1 (IL1_Expr ex', ts1) (IL1_Integer n1') ts1` by (imp_res_tac IL1_SEQ_BACK_THM THEN imp_res_tac IL1_EXPR_BACK_THM THEN rw [] THEN metis_tac [])
-THEN metis_tac [IL1_EXPR_BACK_THM])
+val unwind_l1_2_lemma = store_thm("unwind_l1_2_lemma", 
+``!n e1 e2 s s'.big_step (unwind_l1 n e1 e2, s) B_Skip s' ==> big_step (B_While e1 e2, s) B_Skip s'``,
+Induct_on `n`
+THEN1 (
+rw [unwind_l1_def]
+THEN fs [Once big_step_cases] THEN1 metis_tac [no_red_l1_thm]
+THEN imp_res_tac BS_VALUE_BACK_THM THEN rw [])
 
-THEN imp_res_tac IL1_ASSIGN_BACK_THM
-THEN imp_res_tac BS_IL1_EXPR_DETERMINACY
-THEN rw [])
+THEN rw [unwind_l1_def]
+THEN fs [Once (Q.SPECL [`(B_If e1 e2 e3, s')`] big_step_cases)]
+THEN1 (
+fs [Once (Q.SPECL [`(B_Seq e1 e2, s')`] big_step_cases)] THEN metis_tac [big_step_cases])
 
-THEN rw []
+THEN imp_res_tac BS_VALUE_BACK_THM THEN rw [] THEN metis_tac [big_step_cases]);
 
-THEN `(ts1 |+ (Compiler ct2, n1')) ' (Compiler ct2) = cs' ' (Compiler ct2)` by (`~contains_a (Compiler ct2) st''` by (CCONTR_TAC THEN fs [] THEN imp_res_tac UNCHANGED_LOC_SIMP_THM THEN decide_tac)
- THEN metis_tac [NOT_CONTAINS_MEANS_UNCHANGED_THM])
+val unwind_l1_thm = store_thm("unwind_l1_thm",
+``!e1 e2 s s'.big_step (B_While e1 e2, s) B_Skip s' <=> ?n.big_step (unwind_l1 n e1 e2, s) B_Skip s'``,
+rw [EQ_IMP_THM] THEN metis_tac [LESS_EQ_REFL, GREATER_EQ, unwind_l1_lemma, unwind_l1_2_lemma, FST, SND]);
 
-THEN imp_res_tac BS_IL1_EXPR_DEREF_BACK_THM
-
-THEN rw []
-
-THEN res_tac
-THEN fs [il1_l1_val_def] THEN rw []
-
-THEN `equiv (con_store s') (ts1 |+ (Compiler ct2, cs' ' (Compiler ct2)))` by (`equiv ts1 (ts1 |+ (Compiler ct2, cs' ' (Compiler ct2)))` by rw [equiv_def, FAPPLY_FUPDATE_THM] THEN metis_tac [EQUIV_TRANS_THM])
-
-THEN `bs_il1 (IL1_Seq st'' (IL1_Expr ex''), ts1 |+ (Compiler ct2, cs' ' (Compiler ct2))) (IL1_Integer n2) cs'` by (`bs_il1 (IL1_Expr ex'', cs') (IL1_Integer n2) cs'` by rw [Once bs_il1_cases] THEN rw [Once bs_il1_cases] THEN metis_tac [])
-
-THEN metis_tac [il1_l1_val_def]
-
-(* End plus case *)
-
-`?st ex ct1.l1_to_il1_pair lc e1 = (st, ex, ct1)` by total
-THEN `?st ex ct2.l1_to_il1_pair ct1 e2 = (st, ex, ct2)` by total
-THEN `?st ex ct''.l1_to_il1_pair ct2 e3 = (st, ex, ct'')` by total
-THEN fs [LET_DEF] THEN rw []
-
-
-THEN `?ts1 ts2.bs_il1 (st', cs) IL1_ESkip ts1 /\ bs_il1 (IL1_Assign (Compiler ct'') (IL1_EIf ex' (IL1_Value (IL1_Integer 1)) (IL1_Value (IL1_Integer 0))), ts1) (IL1_ESkip) ts2 /\ bs_il1 (IL1_SIf ex' st'' st''', ts2) IL1_ESkip cs'` by (imp_res_tac IL1_SEQ_BACK_THM THEN imp_res_tac IL1_SEQ_BACK_THM THEN metis_tac [])
-
-(* Case split *)
-
-
-THEN `?v.bs_il1_expr (IL1_EIf ex' (IL1_Value (IL1_Integer 1)) (IL1_Value (IL1_Integer 0)), ts1) v` by (imp_res_tac IL1_ASSIGN_BACK_THM THEN metis_tac[])
-
-(* Case split *)
-`(bs_il1_expr (ex', ts1) (IL1_Boolean T) /\ bs_il1_expr (IL1_Value (IL1_Integer 1), ts1) v') \/ (bs_il1_expr (ex', ts1) (IL1_Boolean F) /\ bs_il1_expr (IL1_Value (IL1_Integer 0), ts1) v')` by (imp_res_tac BS_IL1_EXPR_EIF_BACK_THM THEN metis_tac [])
-
-THEN1 (imp_res_tac BS_IL1_EXPR_VALUE_BACK_THM THEN rw []
-
-THEN `ts2 = ts1 |+ (Compiler ct'', 1)` by (imp_res_tac IL1_ASSIGN_BACK_THM THEN imp_res_tac IL1_DETERMINACY_THM THEN imp_res_tac BS_IL1_EXPR_DETERMINACY THEN imp_res_tac IL1_DETERMINACY_THM THEN fs [] THEN rw [] THEN metis_tac [])
-
-THEN rw []
-
-THEN `bs_il1 (st'', ts1 |+ (Compiler ct'', 1)) IL1_ESkip cs'` by (
-
-`bs_il1_expr (ex', ts1 |+ (Compiler ct'', 1)) (IL1_Boolean T)` by (
-
-`~contains (Compiler ct'') (l1_to_il1 e1 lc)` by (CCONTR_TAC THEN fs [] THEN imp_res_tac ALL_CO_LOCS_IN_RANGE THEN imp_res_tac COMP_LOC_INCREASING_THM THEN decide_tac)
-
-THEN fs [contains_def, l1_to_il1_def] THEN rw []
-THEN `~contains (Compiler ct'') (let (s, te, lc) = (st', ex', ct1) in IL1_Seq s (IL1_Expr te))` by metis_tac [EQ_SYM]
-THEN fs [LET_DEF] THEN rw []
-THEN fs [contains_def]
-THEN metis_tac [USELESS_LOC_EXPR_THM])
-
-THEN imp_res_tac IL1_SIF_BACK_THM THEN imp_res_tac IL1_DETERMINACY_THM THEN imp_res_tac BS_IL1_EXPR_DETERMINACY THEN imp_res_tac IL1_DETERMINACY_THM THEN fs [] THEN rw [] THEN metis_tac [])
-
-THEN `(ts1 |+ (Compiler ct'',1)) ' (Compiler ct'') = cs' ' (Compiler ct'')` by (`~contains_a (Compiler ct'') st''` by (CCONTR_TAC THEN fs [] THEN imp_res_tac UNCHANGED_LOC_SIMP_THM THEN imp_res_tac COMP_LOC_INCREASING_THM THEN decide_tac) THEN imp_res_tac NOT_CONTAINS_MEANS_UNCHANGED_THM THEN metis_tac [])
-
-THEN fs [FAPPLY_FUPDATE_THM]
-
-THEN `bs_il1_expr (ex'', cs') v` by (
-`bs_il1_expr (IL1_Geq (IL1_Deref (Compiler ct'')) (IL1_Value (IL1_Integer (cs' ' (Compiler ct'')))), cs') (IL1_Boolean T)` by (
-rw [Once bs_il1_expr_cases] THEN rw [Once bs_il1_expr_cases] THEN rw [Once bs_il1_expr_cases] THEN 
-`Compiler ct'' ∈ FDOM (ts1 |+ (Compiler ct'', cs' ' (Compiler ct'')))` by fs [FDOM_FUPDATE, INSERT_DEF]
-THEN metis_tac [FDOM_DEF, DOMS_SUBSET_THM, SUBSET_DEF]
-)
-THEN imp_res_tac BS_IL1_EXPR_EIF_BACK_THM THEN imp_res_tac IL1_DETERMINACY_THM THEN imp_res_tac BS_IL1_EXPR_DETERMINACY THEN imp_res_tac IL1_DETERMINACY_THM THEN fs [] THEN rw [] THEN metis_tac []
-)
-
-THEN `bs_il1 (IL1_Seq st' (IL1_Expr ex'), cs) (IL1_Boolean T) ts1` by (`bs_il1 (IL1_Expr ex', ts1) (IL1_Boolean T) ts1` by rw [Once bs_il1_expr_cases] THEN rw [Once bs_il1_cases] THEN metis_tac [])
-THEN `bs_il1 (IL1_Seq st'' (IL1_Expr ex''), ts1 |+ (Compiler ct'', 1)) v cs'` by (`bs_il1 (IL1_Expr ex'', cs') v cs'` by rw [Once bs_il1_expr_cases] THEN rw [Once bs_il1_cases] THEN metis_tac [])
-
-THEN res_tac
-
-THEN `equiv (con_store s') (ts1 |+ (Compiler ct'', 1))` by (`equiv ts1 (ts1 |+ (Compiler ct'', 1))` by rw [equiv_def, FAPPLY_FUPDATE_THM] THEN metis_tac [EQUIV_TRANS_THM])
-
-THEN metis_tac [il1_l1_val_def])
-
-(* End case split *)
-
-THEN1 (imp_res_tac BS_IL1_EXPR_VALUE_BACK_THM THEN rw []
-
-(* Changed *)
-THEN `ts2 = ts1 |+ (Compiler ct'', 0)` by (imp_res_tac IL1_ASSIGN_BACK_THM THEN imp_res_tac IL1_DETERMINACY_THM THEN imp_res_tac BS_IL1_EXPR_DETERMINACY THEN imp_res_tac IL1_DETERMINACY_THM THEN fs [] THEN rw [] THEN metis_tac [])
-
-THEN rw []
-
-THEN `bs_il1 (st''', ts1 |+ (Compiler ct'', 0)) IL1_ESkip cs'` by (
-
-`bs_il1_expr (ex', ts1 |+ (Compiler ct'', 0)) (IL1_Boolean F)` by (
-
-`~contains (Compiler ct'') (l1_to_il1 e1 lc)` by (CCONTR_TAC THEN fs [] THEN imp_res_tac ALL_CO_LOCS_IN_RANGE THEN imp_res_tac COMP_LOC_INCREASING_THM THEN decide_tac)
-
-THEN fs [contains_def, l1_to_il1_def] THEN rw []
-THEN `~contains (Compiler ct'') (let (s, te, lc) = (st', ex', ct1) in IL1_Seq s (IL1_Expr te))` by metis_tac [EQ_SYM]
-THEN fs [LET_DEF] THEN rw []
-THEN fs [contains_def]
-THEN metis_tac [USELESS_LOC_EXPR_THM])
-
-THEN imp_res_tac IL1_SIF_BACK_THM THEN imp_res_tac IL1_DETERMINACY_THM THEN imp_res_tac BS_IL1_EXPR_DETERMINACY THEN imp_res_tac IL1_DETERMINACY_THM THEN fs [] THEN rw [] THEN metis_tac [])
-
-THEN `(ts1 |+ (Compiler ct'',0)) ' (Compiler ct'') = cs' ' (Compiler ct'')` by (`~contains_a (Compiler ct'') st'''` by (CCONTR_TAC THEN fs [] THEN imp_res_tac UNCHANGED_LOC_SIMP_THM THEN imp_res_tac COMP_LOC_INCREASING_THM THEN decide_tac) THEN imp_res_tac NOT_CONTAINS_MEANS_UNCHANGED_THM THEN metis_tac [])
-
-THEN fs [FAPPLY_FUPDATE_THM]
-
-THEN `bs_il1_expr (ex''', cs') v` by (
-`bs_il1_expr (IL1_Geq (IL1_Deref (Compiler ct'')) (IL1_Value (IL1_Integer 1)), cs') (IL1_Boolean F)` by (
-rw [Once bs_il1_expr_cases] THEN rw [Once bs_il1_expr_cases] THEN rw [Once bs_il1_expr_cases] THEN1 decide_tac THEN 
-`Compiler ct'' ∈ FDOM (ts1 |+ (Compiler ct'', cs' ' (Compiler ct'')))` by fs [FDOM_FUPDATE, INSERT_DEF]
-THEN metis_tac [FDOM_DEF, DOMS_SUBSET_THM, SUBSET_DEF]
-)
-THEN imp_res_tac BS_IL1_EXPR_EIF_BACK_THM THEN imp_res_tac IL1_DETERMINACY_THM THEN imp_res_tac BS_IL1_EXPR_DETERMINACY THEN imp_res_tac IL1_DETERMINACY_THM THEN fs [] THEN rw [] THEN metis_tac []
-)
-
-THEN `bs_il1 (IL1_Seq st' (IL1_Expr ex'), cs) (IL1_Boolean F) ts1` by (`bs_il1 (IL1_Expr ex', ts1) (IL1_Boolean F) ts1` by rw [Once bs_il1_expr_cases] THEN rw [Once bs_il1_cases] THEN metis_tac [])
-THEN `bs_il1 (IL1_Seq st''' (IL1_Expr ex'''), ts1 |+ (Compiler ct'', 0)) v cs'` by (`bs_il1 (IL1_Expr ex''', cs') v cs'` by rw [Once bs_il1_expr_cases] THEN rw [Once bs_il1_cases] THEN metis_tac [])
-
-THEN res_tac
-
-THEN `equiv (con_store s') (ts1 |+ (Compiler ct'', 0))` by (`equiv ts1 (ts1 |+ (Compiler ct'', 0))` by rw [equiv_def, FAPPLY_FUPDATE_THM] THEN metis_tac [EQUIV_TRANS_THM])
-
-THEN metis_tac [il1_l1_val_def])
-
-(* ENd IF CASE *)
-
-`?st ex ct1.l1_to_il1_pair lc e1 = (st, ex, ct1)` by total
-THEN `?st ex ct2.l1_to_il1_pair ct1 e2 = (st, ex, ct2)` by total
-(* `?st ex ct''.l1_to_il1_pair ct2 e3 = (st, ex, ct'')` by total *)
-THEN fs [LET_DEF] THEN rw []
-
-imp_res_tac BS_IL1_EXPR_VALUE_BACK_THM THEN rw [il1_l1_val_def]
-
-SUBST_OCCS_TAC [([4], IL1_SEQ_BACK_THM)]
-
-val NEW_IL1_STRONGIND_THM = store_thm("NEW_IL1_STRONGIND_THM",
-``∀bs_il1'.
-     (∀e v s. bs_il1_expr (e,s) v ⇒ bs_il1' (IL1_Expr e,s) v s) ∧
-     (∀l e s n.
-        User l ∈ FDOM s ∧ bs_il1_expr (e,s) (IL1_Integer n) ⇒
-        bs_il1' (IL1_Assign (User l) e,s) IL1_ESkip (s |+ (User l,n))) ∧
-     (∀l e s n.
-        bs_il1_expr (e,s) (IL1_Integer n) ⇒
-        bs_il1' (IL1_Assign (Compiler l) e,s) IL1_ESkip
-          (s |+ (Compiler l,n))) ∧
-     (∀e1 e2 v s s' s''.
-        bs_il1 (e1,s) IL1_ESkip s' ∧ bs_il1' (e1,s) IL1_ESkip s' ∧
-        bs_il1 (e2,s') v s'' ∧ bs_il1' (e2,s') v s'' ⇒
-        bs_il1' (IL1_Seq e1 e2,s) v s'') ∧
-     (∀e1 e2 e3 v s s'.
-        bs_il1_expr (e1,s) (IL1_Boolean T) ∧ bs_il1 (e2,s) v s' ∧
-        bs_il1' (e2,s) v s' ⇒
-        bs_il1' (IL1_SIf e1 e2 e3,s) v s') ∧
-     (∀e1 e2 e3 v s s'.
-        bs_il1_expr (e1,s) (IL1_Boolean F) ∧ bs_il1 (e3,s) v s' ∧
-        bs_il1' (e3,s) v s' ⇒
-        bs_il1' (IL1_SIf e1 e2 e3,s) v s') ∧
-     (∀e1 e2 s s' s''.
-        bs_il1_expr (e1,s) (IL1_Boolean T) ∧
-        bs_il1 (e2,s) IL1_ESkip s' ∧ bs_il1' (e2,s) IL1_ESkip s' ∧
-        bs_il1 (IL1_While e1 e2,s') IL1_ESkip s'' ∧
-        bs_il1' (IL1_While e1 e2,s') IL1_ESkip s'' ⇒
-        bs_il1' (IL1_While e1 e2,s) IL1_ESkip s'') ∧
-     (∀e1 e2 s.
-        bs_il1_expr (e1,s) (IL1_Boolean F) ⇒
-        bs_il1' (IL1_While e1 e2,s) IL1_ESkip s) ⇒
-     ∀p0 p1 a1 a2. bs_il1 (p0, p1) a1 a2 ⇒ bs_il1' (p0, p1) a1 a2``,
-rw [] THEN imp_res_tac bs_il1_strongind);
-
-!e s v s'.bs_il1 (e, s) v s' ==> !st ex lc lc' e cs.(FST p = IL1_Seq st (IL1_Expr ex)) /\ (l1_to_il1_pair lc e = (st, ex, lc')) /\ equiv (con_store cs) (SND p) ==> ?cs'.big_step (e, cs) (il1_l1_val v) cs' /\ equiv s' (con_store cs')
+val unwind_il1_lemma = store_thm("unwind_il1_lemma",
+``!p v s'.bs_il1 p v s' ==> (v = IL1_ESkip) ==> !e1 e2.(FST p = IL1_While e1 e2) ==> ?n'.!n.(n >= n') ==> bs_il1 (unwind_il1 n e1 e2, SND p) v s'``,
 ho_match_mp_tac bs_il1_strongind THEN rw [FST, SND]
+THEN1 (`!n. (n >= SUC n') ==> bs_il1 (unwind_il1 n e1 e2, s) IL1_ESkip s''` by (
+rw [] THEN
+Cases_on `n` THEN1 decide_tac
+THEN
+rw [unwind_il1_def] THEN
+rw [Once bs_il1_cases] THEN
+rw [Once bs_il1_cases] THEN
+`n'' >= n'` by decide_tac THEN
+metis_tac [])
+THEN metis_tac [])
+THEN1 (
+`!n. (n >= 0) ==> bs_il1 (unwind_il1 n e1 e2, s') IL1_ESkip s'` by (
 
+Induct_on `n`
 
+THEN1 (rw [Once bs_il1_cases, unwind_il1_def] THEN rw [Once (Q.SPECL [`(IL1_Expr X, s)`] bs_il1_cases), Once (Q.SPECL [`(IL1_Value IL1_ESkip, s')`] bs_il1_expr_cases)])
 
+THEN rw [unwind_il1_def]
+THEN rw [Once bs_il1_cases]
+THEN rw [Once (Q.SPECL [`(IL1_Expr X, s)`] bs_il1_cases), Once (Q.SPECL [`(IL1_Value IL1_ESkip, s')`] bs_il1_expr_cases)])
+THEN metis_tac []));
 
+val unwind_il1_2_lemma = store_thm("unwind_il1_2_lemma", 
+``!n e1 e2 s s'.bs_il1 (unwind_il1 n e1 e2, s) IL1_ESkip s' ==> bs_il1 (IL1_While e1 e2, s) IL1_ESkip s'``,
+Induct_on `n`
+THEN1 (
+rw [unwind_il1_def]
+THEN fs [Once bs_il1_cases] THEN1 metis_tac [no_red_il1_thm]
+THEN imp_res_tac IL1_EXPR_BACK_THM THEN rw [])
 
+THEN rw [unwind_il1_def]
+THEN fs [Once (Q.SPECL [`(IL1_SIf e1 e2 e3, s')`] bs_il1_cases)]
+THEN1 (
+fs [Once (Q.SPECL [`(IL1_Seq e1 e2, s')`] bs_il1_cases)] THEN metis_tac [bs_il1_cases])
 
+THEN imp_res_tac IL1_EXPR_BACK_THM THEN rw [] THEN metis_tac [bs_il1_cases]);
 
-
+val unwind_il1_thm = store_thm("unwind_il1_thm",
+``!e1 e2 s s'.bs_il1 (IL1_While e1 e2, s) IL1_ESkip s' <=> ?n'.bs_il1 (unwind_il1 n' e1 e2, s) IL1_ESkip s'``,
+rw [EQ_IMP_THM] THEN metis_tac [GREATER_EQ, LESS_EQ_REFL, unwind_il1_lemma, unwind_il1_2_lemma, FST, SND]);
 
 val _ = export_theory ();
 
