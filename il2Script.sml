@@ -20,21 +20,22 @@ val fetch_def = Define `fetch (x::xs) n = if n = &0 then x else fetch xs (n-1)`;
 val _ = Parse.overload_on("!!", ``fetch``);
 
 
-val exec_instr_def = Define `
-(exec_instr IL2_Nop (pc, stk, st) = (pc+1, stk, st)) /\
-(exec_instr (IL2_Push n) (pc, stk, st) = (pc+1, n::stk, st)) /\
-(exec_instr (IL2_Load l) (pc, stk, st) = (pc+1, (st ' l)::stk, st)) /\
-(exec_instr (IL2_Store l) (pc, v::stk, st) = (pc+1, stk, st |+ (l, v))) /\
-(exec_instr IL2_Pop (pc, v::stk, st) = (pc+1, stk, st)) /\
-(exec_instr IL2_Plus (pc, v1::v2::stk, st) = (pc+1, (v1+v2)::stk, st)) /\
-(exec_instr IL2_Halt (pc, stk, st) = (pc, stk, st)) /\
-(exec_instr (IL2_Jump n) (pc, stk, st) = (pc + 1 + n, stk, st)) /\
-(exec_instr (IL2_Jgeq n) (pc, v1::v2::stk, st) = if v1 >= v2 then (pc + 1 + n, stk, st) else (pc + 1, stk, st))`;
+val (exec_instr_rules, exec_instr_ind, exec_instr_cases) = Hol_reln `
+(exec_instr IL2_Nop (pc, stk, st) (pc+1, stk, st)) /\
+(exec_instr (IL2_Push n) (pc, stk, st) (pc+1, n::stk, st)) /\
+(exec_instr (IL2_Load l) (pc, stk, st) (pc+1, (st ' l)::stk, st)) /\
+(exec_instr (IL2_Store l) (pc, v::stk, st) (pc+1, stk, st |+ (l, v))) /\
+(exec_instr IL2_Pop (pc, v::stk, st) (pc+1, stk, st)) /\
+(exec_instr IL2_Plus (pc, v1::v2::stk, st) (pc+1, (v1+v2)::stk, st)) /\
+(exec_instr IL2_Halt (pc, stk, st) (pc, stk, st)) /\
+(exec_instr (IL2_Jump n) (pc, stk, st) (pc + 1 + n, stk, st)) /\
+((v1 >= v2) ==> exec_instr (IL2_Jgeq n) (pc, v1::v2::stk, st) (pc + 1 + n, stk, st)) /\
+((v1 < v2) ==> exec_instr (IL2_Jgeq n) (pc, v1::v2::stk, st) (pc + 1, stk, st))`;
 
-val exec_one_def = Hol_reln `
+val (exec_one_rules, exec_one_ind, exec_one_cases) = Hol_reln `
 !instrs pc stk st pc' stk' st'.
-       (pc >= 0 /\ pc < &(LENGTH instrs) /\
-        (exec_instr (instrs !! pc) (pc, stk, st) = (pc', stk', st')))
+       ((pc >= 0) /\ (pc < &(LENGTH instrs)) /\
+        (exec_instr (instrs !! pc) (pc, stk, st) (pc', stk', st')))
     ==> exec_one instrs (pc, stk, st) (pc', stk', st')`;
 
 val exec_def = Define `exec P c c' = (exec_one P)^* c c'`;
