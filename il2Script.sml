@@ -19,6 +19,43 @@ val _ = type_abbrev("il2_prog", ``:(il2_stm list)``);
 val fetch_def = Define `fetch (x::xs) n = if n = &0 then x else fetch xs (n-1)`;
 val _ = Parse.overload_on("!!", ``fetch``);
 
+val FETCH_SUC_THM = store_thm("FETCH_SUC_THM",
+``!x xs i.(i >= 0) ==> (xs !! i = (x::xs) !! (i+1))``,
+rw [fetch_def] THEN1
+full_simp_tac (srw_ss () ++ intSimps.INT_ARITH_ss) []
+THEN `i + 1 - 1 = i` by full_simp_tac (srw_ss () ++ intSimps.INT_ARITH_ss) [] THEN rw []);
+
+val fsa = full_simp_tac (srw_ss () ++ intSimps.INT_ARITH_ss);
+val rwa = full_simp_tac (srw_ss () ++ intSimps.INT_ARITH_ss);
+
+val fetch_append_thm = store_thm("fetch_append_thm",
+``!i xs ys.(&0 <= i) ==> ((xs ++ ys) !! i = (if i < &LENGTH xs then xs !! i else ys !! (i - &LENGTH xs)))``,
+Induct_on `xs` THEN rw []
+
+THEN1 metis_tac [int_le]
+
+THEN1 (Cases_on `i = 0` THEN rw [APPEND, fetch_def]
+
+THEN `xs ++ ys !! (i-1) = xs !! (i-1)` by (`0 <= (i-1)` by fsa [] THEN `i - 1 < &LENGTH xs` by fsa [] THEN metis_tac []))
+
+THEN fsa [INT_NOT_LT]
+
+THEN `~(i-1 < &LENGTH xs)` by fsa []
+THEN `xs ++ ys !! (i-1) = ys !! (i-1) - &LENGTH xs` by (fsa [])
+
+THEN Cases_on `i = 0` THEN fsa [APPEND, fetch_def] THEN rw []
+THEN fsa [INT]
+THEN `i - 1 - &LENGTH xs = i - (&LENGTH xs + 1)` by fsa [INT, INT_SUB_LNEG, INT_ADD_COMM]
+THEN rw []);
+
+val LIST_APPEND_THM = store_thm("LIST_APPEND_THM",
+``!xs.(xs ++ [] = xs)``,
+rw [APPEND]);
+
+
+val FETCH_RANGE_THM = store_thm("FETCH_RANGE_THM",
+``!xs.&LENGTH xs > 0 ==> !n.(n >= &0) /\ (n < &(LENGTH xs)) ==> ?x.(xs !! n = x)``,
+rw []);
 
 val (exec_instr_rules, exec_instr_ind, exec_instr_cases) = Hol_reln `
 (exec_instr IL2_Nop (pc, stk, st) (pc+1, stk, st)) /\
