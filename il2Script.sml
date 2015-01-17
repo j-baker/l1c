@@ -14,6 +14,8 @@ val _ = Hol_datatype `il2_stm = IL2_Nop
                               | IL2_Jump of int
                               | IL2_Jgeq of int`;
 
+val _ = type_abbrev("il2_prog", ``:(il2_stm list)``);
+
 val fetch_def = Define `fetch (x::xs) n = if n = &0 then x else fetch xs (n-1)`;
 val _ = Parse.overload_on("!!", ``fetch``);
 
