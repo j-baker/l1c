@@ -145,6 +145,14 @@ THEN fsa [incr_pc_def]
 THEN fsa [exec_def, INT_ADD_COMM]
 THEN metis_tac [RTC_TRANSITIVE, transitive_def]);
 
+val EX_COM_THM = store_thm("EX_COM_THM",
+``!P P' stk st stk' st' stk'' st''.exec P (0, stk, st) (&LENGTH P, stk', st') /\ exec P' (0, stk', st') (&LENGTH P', stk'', st'') ==> exec (P ++ P') (0, stk, st) (&LENGTH P + &LENGTH P', stk'', st'')``,
+mp_tac EXECUTION_COMPOSE_THM
+THEN rw []
+THEN `&LENGTH P <= &LENGTH P` by metis_tac [INT_LE_REFL]
+THEN `&LENGTH P - &LENGTH P = 0` by rwa []
+THEN metis_tac [EXECUTION_COMPOSE_THM, INT_LE_REFL]);
+
 
 
 
