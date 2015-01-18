@@ -20,6 +20,11 @@ val il1e_to_il2_def = Define `
 (il1e_to_il2 (IL1_Geq e1 e2) = (il1e_to_il2 e2) ++ (il1e_to_il2 e1) ++ [IL2_Geq])
 `;
 
+val il1_il2_val_def = Define `
+(il1_il2_val (IL1_Integer n) = n) /\
+(il1_il2_val (IL1_ESkip) = skip_value) /\
+(il1_il2_val (IL1_Boolean T) = true_value) /\
+(il1_il2_val (IL1_Boolean F) = false_value)`;
 
 
 
