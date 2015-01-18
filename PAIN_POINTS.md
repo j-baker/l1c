@@ -13,3 +13,5 @@ This has really saved me a lot of time since I've done that - my proofs go about
 4. When building HOL on OS X with Poly and Homebrew, there's a quirk since poly requires a custom compiler flag. This could be put in the build instructions explicitly?
 
 5. A link to Tactic in HOL-interaction would be really useful. I've only just found it.
+
+6. Hol-interaction gives a few basic tactics. It would be useful for there to be some examples of goal manipulation - uses of Q.SPECL to avoid expanding variables, and really just a list of things that are found useful in everyday life. Almost all of my pain has been with manipulating theorems, not actually the core proving of them.
