@@ -6,8 +6,8 @@ val _ = type_abbrev("il2_expr", ``:il1_expr``);
 
 val _ = Hol_datatype `il2_stm = IL2_Nop
                               | IL2_Push of int
-                              | IL2_Load of loc
-                              | IL2_Store of loc
+                              | IL2_Load of il1_loc
+                              | IL2_Store of il1_loc
                               | IL2_Pop
                               | IL2_Plus
                               | IL2_Halt
