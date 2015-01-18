@@ -26,6 +26,9 @@ val il1_il2_val_def = Define `
 (il1_il2_val (IL1_Boolean T) = true_value) /\
 (il1_il2_val (IL1_Boolean F) = false_value)`;
 
+val length_thm = store_thm("length_thm",
+``!l1 l2.&LENGTH l1 + &LENGTH l2 = &LENGTH (l1 ++ l2)``,
+Induct_on `l1` THEN rwa [LENGTH, INT]);
 
 
 val _ = export_theory ();
