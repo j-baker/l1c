@@ -10,9 +10,10 @@ val _ = Hol_datatype `il2_stm = IL2_Nop
                               | IL2_Store of il1_loc
                               | IL2_Pop
                               | IL2_Plus
+                              | IL2_Geq 
                               | IL2_Halt
                               | IL2_Jump of int
-                              | IL2_Jgeq of int`;
+                              | IL2_Jz of int`;
 
 val _ = type_abbrev("il2_prog", ``:(il2_stm list)``);
 
@@ -57,6 +58,12 @@ val FETCH_RANGE_THM = store_thm("FETCH_RANGE_THM",
 ``!xs.&LENGTH xs > 0 ==> !n.(n >= &0) /\ (n < &(LENGTH xs)) ==> ?x.(xs !! n = x)``,
 rw []);
 
+val true_value_def = Define `true_value = 1`;
+
+val false_value_def = Define `false_value = 0`;
+
+val skip_value_def = Define `skip_value = 0`;
+
 val (exec_instr_rules, exec_instr_ind, exec_instr_cases) = Hol_reln `
 (exec_instr IL2_Nop (pc, stk, st) (pc+1, stk, st)) /\
 (exec_instr (IL2_Push n) (pc, stk, st) (pc+1, n::stk, st)) /\
@@ -66,8 +73,10 @@ val (exec_instr_rules, exec_instr_ind, exec_instr_cases) = Hol_reln `
 (exec_instr IL2_Plus (pc, v1::v2::stk, st) (pc+1, (v1+v2)::stk, st)) /\
 (exec_instr IL2_Halt (pc, stk, st) (pc, stk, st)) /\
 (exec_instr (IL2_Jump n) (pc, stk, st) (pc + 1 + n, stk, st)) /\
-((v1 >= v2) ==> exec_instr (IL2_Jgeq n) (pc, v1::v2::stk, st) (pc + 1 + n, stk, st)) /\
-((v1 < v2) ==> exec_instr (IL2_Jgeq n) (pc, v1::v2::stk, st) (pc + 1, stk, st))`;
+(exec_instr (IL2_Jz n) (pc, 0::stk, st) (pc + 1 + n, stk, st)) /\
+(exec_instr (IL2_Jz n) (pc, t::stk, st) (pc + 1, stk, st)) /\
+((v1 >= v2) ==> exec_instr (IL2_Geq) (pc, v1::v2::stk, st) (pc + 1, true_value::stk, st)) /\
+((v1 < v2) ==> exec_instr (IL2_Geq) (pc, v1::v2::stk, st) (pc + 1, false_value::stk, st))`;
 
 val (exec_one_rules, exec_one_ind, exec_one_cases) = Hol_reln `
 !instrs pc stk st pc' stk' st'.
