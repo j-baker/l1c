@@ -2,6 +2,8 @@ open HolKernel boolLib bossLib listTheory Parse IndDefLib finite_mapTheory relat
 
 val _ = new_theory "il1_to_il2";
 
+val fsa = full_simp_tac (srw_ss () ++ intSimps.INT_ARITH_ss);
+val rwa = full_simp_tac (srw_ss () ++ intSimps.INT_ARITH_ss);
 
 val il1e_to_il2_def = Define `
 (il1e_to_il2 (IL1_Value (IL1_Integer n)) = [IL2_Push n]) /\
