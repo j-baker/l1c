@@ -9,12 +9,13 @@ val il1e_to_il2_def = Define `
 (il1e_to_il2 (IL1_Value (IL1_Boolean T)) = [IL2_Push true_value]) /\
 (il1e_to_il2 (IL1_Value (IL1_Boolean F)) = [IL2_Push false_value]) /\
 
-(il1e_to_il2 (IL1_Plus e1 e2) = (il1e_to_il2 e1 ++ il1e_to_il2 e2 ++ [IL2_Plus])) /\
+(il1e_to_il2 (IL1_Plus e1 e2) = (il1e_to_il2 e2 ++ il1e_to_il2 e1 ++ [IL2_Plus])) /\
 
 (il1e_to_il2 (IL1_Deref l) = [IL2_Load l]) /\
 
 (il1e_to_il2 (IL1_EIf e1 e2 e3) =
-                                    (il1e_to_il2 e1) ++ [IL2_Jgeq (&LENGTH (il1e_to_il2 e2))] ++ (il1e_to_il2 e2) ++ [IL2_Jump (&LENGTH  (il1e_to_il2 e3))] ++  (il1e_to_il2 e3))
+                                    (il1e_to_il2 e1) ++ [IL2_Jz (&LENGTH (il1e_to_il2 e2) + 1)] ++ (il1e_to_il2 e2) ++ [IL2_Jump (&LENGTH  (il1e_to_il2 e3))] ++  (il1e_to_il2 e3)) /\
+(il1e_to_il2 (IL1_Geq e1 e2) = (il1e_to_il2 e2) ++ (il1e_to_il2 e1) ++ [IL2_Geq])
 `;
 
 
