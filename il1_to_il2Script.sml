@@ -182,9 +182,8 @@ THEN `&LENGTH
 
 THEN metis_tac []));
 
-
 val EXPR_CORRECTNESS_THM = store_thm("EXPR_CORRECTNESS_THM",
-``!e s v.bs_il1_expr (e, s) v ⇒
+``!e s v.bs_il1_expr (e, s) v ==>
      !stk.
        exec (il1e_to_il2 e) (0,stk,s)
          (&LENGTH (il1e_to_il2 e),il1_il2_val v::stk,s)``,
