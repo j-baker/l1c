@@ -20,6 +20,15 @@ val il1e_to_il2_def = Define `
 (il1e_to_il2 (IL1_Geq e1 e2) = (il1e_to_il2 e2) ++ (il1e_to_il2 e1) ++ [IL2_Geq])
 `;
 
+
+val il1_to_il2_def = Define `
+(il1_to_il2 (IL1_Expr e) = il1e_to_il2 e) /\
+(il1_to_il2 (IL1_Assign l e) = (il1e_to_il2 e) ++ [IL2_Store l; IL2_Push skip_value]) /\
+(il1_to_il2 (IL1_Seq e1 e2) = (il1_to_il2 e1) ++ [IL2_Pop] ++ (il1_to_il2 e2)) /\
+(il1_to_il2 (IL1_SIf e1 e2 e3) = (il1e_to_il2 e1) ++ [IL2_Jz (&LENGTH (il1_to_il2 e2) + 1)] ++ (il1_to_il2 e2) ++ [IL2_Jump (&LENGTH (il1_to_il2 e3))] ++ (il1_to_il2 e3)) /\
+
+(il1_to_il2 (IL1_While e1 e2) = (il1e_to_il2 e1) ++ [IL2_Jz (&LENGTH (il1_to_il2 e2) + 2)] ++ (il1_to_il2 e2) ++ [IL2_Pop; IL2_Jump (-&(LENGTH ((il1e_to_il2 e1) ++ [IL2_Jz (&LENGTH (il1_to_il2 e2) + 2)] ++ (il1_to_il2 e2)) + 2))] ++ [IL2_Push skip_value])`;
+
 val il1_il2_val_def = Define `
 (il1_il2_val (IL1_Integer n) = n) /\
 (il1_il2_val (IL1_ESkip) = skip_value) /\
