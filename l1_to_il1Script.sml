@@ -2,6 +2,41 @@ open HolKernel boolLib bossLib listTheory Parse IndDefLib finite_mapTheory relat
 
 val _ = new_theory "l1_to_il1";
 
+val contains_expr_def = Define `
+    (contains_expr l (IL1_Value v) = F) /\
+    (contains_expr l (IL1_Plus e1 e2) = contains_expr l e1 \/ contains_expr l e2) /\
+    (contains_expr l (IL1_Geq e1 e2) = contains_expr l e1 \/ contains_expr l e2) /\
+    (contains_expr l1 (IL1_Deref l2) = (l1 = l2)) /\
+    (contains_expr l (IL1_EIf e1 e2 e3) = contains_expr l e1 \/ contains_expr l e2 \/ contains_expr l e3)`;
+
+val contains_def = Define `
+    (contains l (IL1_Expr e) = contains_expr l e) /\
+    (contains l1 (IL1_Assign l2 e) = (l1 = l2) \/ contains_expr l1 e) /\
+    (contains l (IL1_Seq e1 e2) = contains l e1 \/ contains l e2) /\
+    (contains l (IL1_SIf e1 e2 e3) = contains_expr l e1 \/ contains l e2 \/ contains l e3) /\
+    (contains l (IL1_While e1 e2) = contains_expr l e1 \/ contains l e2)`;
+
+val contains_a_def = Define `
+    (contains_a l (IL1_Expr _) = F) /\
+    (contains_a l1 (IL1_Assign l2 e) = (l1 = l2)) /\
+    (contains_a l (IL1_Seq e1 e2) = contains_a l e1 \/ contains_a l e2) /\
+    (contains_a l (IL1_SIf _ e2 e3) = contains_a l e2 \/ contains_a l e3) /\
+    (contains_a l (IL1_While _ e2) = contains_a l e2)`;
+
+val CONTAINS_A_SUB = store_thm("CONTAINS_A_SUB",
+``!l e.contains_a l e ==> contains l e``,
+Induct_on `e` THEN metis_tac [contains_a_def, contains_def]);
+
+
+val WHILE_UNWIND_ONCE_THM = store_thm("WHILE_UNWIND_ONCE_THM",
+``!e1 s e2 v s'.bs_il1_expr (e1, s) (IL1_Boolean T) ==> (bs_il1 (IL1_While e1 e2, s) IL1_ESkip s' <=> bs_il1 (IL1_Seq e2 (IL1_While e1 e2), s) IL1_ESkip s')``,
+rw [EQ_IMP_THM] THEN1
+(imp_res_tac IL1_WHILE_BACK_THM
+THEN1 (imp_res_tac BS_IL1_EXPR_DETERMINACY THEN rw [])
+THEN1 (rw [Once bs_il1_cases] THEN metis_tac []))
+THEN1 (rw [Once bs_il1_cases] THEN imp_res_tac IL1_SEQ_BACK_THM THEN metis_tac [IL1_SEQ_BACK_THM])
+);
+
 val l1_to_il1_pair_def = Define `
     (l1_to_il1_pair lc (B_Value (B_N n)) = (IL1_Expr (IL1_Value IL1_ESkip), IL1_Value (IL1_Integer n), lc)) /\
     (l1_to_il1_pair lc (B_Value (B_B b)) = (IL1_Expr (IL1_Value IL1_ESkip), IL1_Value (IL1_Boolean b), lc)) /\
