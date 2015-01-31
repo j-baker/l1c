@@ -1,5 +1,9 @@
 language: c
 sudo: false
-install: build/cached-deps.sh
+install: build/install-deps.sh
 script: build/build-travis.sh
 env: PATH=$PATH:$HOME/HOL/bin LD_LIBRARY_PATH=$HOME/polyml/lib
+cache:
+  directories:
+    - HOL
+    - polyml
