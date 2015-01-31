@@ -31,4 +31,4 @@ do
       exit 1
   fi
   popd
-done < developers/build-sequence
+done < build/build-sequence
