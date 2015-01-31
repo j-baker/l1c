@@ -1,1 +1,1 @@
-INCLUDES = ../../semantics/il2/proofs
+INCLUDES = ../../semantics/il1/proofs ../../semantics/il1 ../../semantics/l1 ../../semantics/l1/proofs
