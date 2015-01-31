@@ -8,7 +8,7 @@ pushd $HOME
 
 # Poly/ML
 
-if [ -d "polyml" ]; then
+if which polyml >/dev/null; then
     echo "Dependencies already appear to be present. Not rebuilding them."
     exit 0
 fi
