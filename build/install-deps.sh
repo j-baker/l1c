@@ -8,6 +8,9 @@ pushd $HOME
 
 # Poly/ML
 
+export PATH=$PATH:$HOME/polyml/bin
+export LD_LIBRARY_PATH=$HOME/polyml/lib
+
 if which poly >/dev/null; then
     echo "Dependencies already appear to be present. Not rebuilding them."
     exit 0
@@ -20,9 +23,6 @@ make
 make compiler
 make install
 popd
-
-export PATH=$PATH:$HOME/polyml/bin
-export LD_LIBRARY_PATH=$HOME/polyml/lib
 
 # HOL
 
