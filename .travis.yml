@@ -7,3 +7,5 @@ cache:
   directories:
     - $HOME/HOL
     - $HOME/polyml
+notifications:
+  email: false
