@@ -25,13 +25,7 @@ val count_deref_def = Define `
 (count_deref (IL1_Seq e1 e2) l = count_deref e1 l + count_deref e2 l)`;
 
 val CONTAINS_SIMPED_THM = store_thm("CONTAINS_SIMPED_THM",
-``!n e st ex n' l.(l1_to_il1_pair n e = (st, ex, n')) ==> (contains_a l (l1_to_il1 e n) <=> contains_a l st)``,
-rw [EQ_IMP_THM]
-THEN1 (fs [l1_to_il1_def]
-THEN `contains_a l (let (s, te, lc) = (st, ex, n') in IL1_Seq s (IL1_Expr te))` by metis_tac []
-THEN fs [LET_DEF, contains_a_def])
-THEN rw [l1_to_il1_def] THEN rw [contains_a_def]
-);
+``!n e st ex n' l.(l1_to_il1_pair n e = (st, ex, n')) ==> (contains_a l (l1_to_il1 e n) <=> contains_a l st)``, rfs [EQ_IMP_THM,l1_to_il1_def, LET_DEF, contains_a_def]);
 
 val COMP_LOC_INCREASING_THM = store_thm("COMP_LOC_INCREASING_THM",
 ``!e n n' sl1 e1'.(l1_to_il1_pair n e = (sl1, e1', n')) ==> (n' >= n)``,
