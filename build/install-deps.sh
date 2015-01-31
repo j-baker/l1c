@@ -21,6 +21,9 @@ make compiler
 make install
 popd
 
+export PATH=$PATH:$HOME/polyml/bin
+export LD_LIBRARY_PATH=$HOME/polyml/lib
+
 # HOL
 
 git clone --quiet https://github.com/mn200/HOL.git
