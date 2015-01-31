@@ -1,5 +1,7 @@
 #!/bin/bash
 
+ulimit -Sv 2000000
+
 set -e
 
 HOLDIR=$(heapname | xargs dirname) || exit $?
