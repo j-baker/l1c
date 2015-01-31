@@ -1,1 +1,2 @@
 INCLUDES = ../../semantics/il1/proofs ../../semantics/il1 ../../semantics/l1 ../../semantics/l1/proofs
+OPTIONS = QUIT_ON_FAILURE
