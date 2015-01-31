@@ -32,3 +32,5 @@ bin/build -nograph
 popd
 
 popd
+
+ls -a
