@@ -24,7 +24,7 @@ val (exec_instr_rules, exec_instr_ind, exec_instr_cases) = Hol_reln `
 (!pc stk st.exec_instr IL2_Halt (pc, stk, st) (pc, stk, st)) /\
 (!n pc stk st.exec_instr (IL2_Jump n) (pc, stk, st) (pc + 1 + n, stk, st)) /\
 (!n pc stk st.exec_instr (IL2_Jz n) (pc, 0::stk, st) (pc + 1 + n, stk, st)) /\
-(!n pc t stk st.exec_instr (IL2_Jz n) (pc, t::stk, st) (pc + 1, stk, st)) /\
+(!n pc t stk st.(t <> 0) ==> exec_instr (IL2_Jz n) (pc, t::stk, st) (pc + 1, stk, st)) /\
 (!v1 v2 pc stk st.(v1 >= v2) ==> exec_instr (IL2_Geq) (pc, v1::v2::stk, st) (pc + 1, true_value::stk, st)) /\
 (!v1 v2 pc stk st.(v1 < v2) ==> exec_instr (IL2_Geq) (pc, v1::v2::stk, st) (pc + 1, false_value::stk, st))`;
 
