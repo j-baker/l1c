@@ -28,7 +28,6 @@ popd
 
 git clone --quiet https://github.com/mn200/HOL.git
 pushd HOL
-git checkout tags/kananaskis-10
 poly < tools/smart-configure.sml
 bin/build -nograph
 popd
