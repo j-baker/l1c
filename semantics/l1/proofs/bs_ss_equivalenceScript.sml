@@ -127,10 +127,8 @@ val bs_imp_ss = prove(``!p v s'.bs_l1 p v s' ==> ss_l1^* p (L1_Value v, s')``,
 
 ho_match_mp_tac bs_l1_strongind THEN (REVERSE (rw [FST, SND]))
 
-THEN_LT (Tactical.NTH_GOAL (        `ss_l1 (L1_While e1 e2, s) (L1_If e1 (L1_Seq e2 (L1_While e1 e2)) (L1_Value (L1_Skip)), s)` by METIS_TAC [ss_l1_cases]
-THEN        imp_res_tac SS_BS_STAR_IF_T_THM
-THEN        imp_res_tac SS_BS_STAR_SEQ_THM
-THEN  METIS_TAC [RTC_SUBSET, RTC_CASES_RTC_TWICE]) 2)
+THEN_LT (Tactical.NTH_GOAL (`ss_l1 (L1_While e1 e2, s) (L1_If e1 (L1_Seq e2 (L1_While e1 e2)) (L1_Value L1_Skip), s)` by metis_tac [ss_l1_cases]
+THEN metis_tac [RTC_SUBSET, RTC_CASES_RTC_TWICE, SS_BS_STAR_IF_T_THM, SS_BS_STAR_SEQ_THM]) 2)
 
 THEN
 metis_tac [SS_BS_STAR_PLUS_THM, SS_BS_STAR_GEQ_THM, RTC_SUBSET, SS_BS_STAR_ASSIGN_THM, SS_BS_STAR_SEQ_THM, SS_BS_STAR_IF_T_THM, RTC_CASES_RTC_TWICE, SS_BS_STAR_IF_F_THM, RTC_SUBSET, ss_l1_cases]);
