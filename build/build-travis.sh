@@ -1,6 +1,6 @@
 #!/bin/bash
 
-ulimit -Sv 2000000
+ulimit -Sv 2700000
 
 set -e
 

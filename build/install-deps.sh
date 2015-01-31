@@ -2,6 +2,8 @@
 
 set -e
 
+ulimit -Sv 2700000
+
 pushd $HOME
 
 # Poly/ML
