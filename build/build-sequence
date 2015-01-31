@@ -4,7 +4,6 @@ semantics/il1
 semantics/il1/proofs
 semantics/il2
 semantics/il2/proofs
-
 compiler/l1_to_il1
 compiler/l1_to_il1/proof
 compiler/il1_to_il2
