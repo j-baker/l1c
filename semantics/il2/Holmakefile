@@ -1,1 +1,2 @@
 INCLUDES = ../il1 ../l1
+OPTIONS = QUIT_ON_FAILURE

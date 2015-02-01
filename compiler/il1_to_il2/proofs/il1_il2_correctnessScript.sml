@@ -149,38 +149,65 @@ THEN HINT_EXISTS_TAC
 
 THEN rwa [il1e_to_il2_def, exec_def, Once RTC_CASES1, exec_one_cases, fetch_def, exec_instr_cases, RTC_REFL])
 
-THEN1 (
-REWRITE_TAC [GSYM APPEND_ASSOC]
-THEN match_mp_tac thmtest1
-THEN (tac (P "stk"))
-THEN first_assum (match_exists_tac o concl)
-THEN rwa []
-THEN PURE_ONCE_REWRITE_TAC [append_thm]
-THEN match_mp_tac thmtest2
-THEN rwa []
+THEN1 (rw [il1e_to_il2_def]
 
-THEN `exec [IL2_Jz (&LENGTH (il1e_to_il2 e2) + 1)] (0, false_value::stk, s) (1 + &LENGTH (il1e_to_il2 e2) + 1, stk, s)` by (rw [exec_def] THEN fs [RTC_SINGLE] THEN
- rw [exec_def, Once RTC_CASES1, exec_one_cases, fetch_def, exec_instr_cases, RTC_REFL, length_thm, false_value_def]
-THEN
-`(exec_one [IL2_Jz (&LENGTH (il1e_to_il2 e2) + 1)])^* (1 + &LENGTH (il1e_to_il2 e2) + 1, stk, s)
-    (1 + &LENGTH (il1e_to_il2 e2) + 1,stk,s)` by metis_tac [RTC_REFL]
-THEN
-HINT_EXISTS_TAC
-THEN
-rwa []
+THEN `exec (il1e_to_il2 e1) (0, stk, s) (&LENGTH (il1e_to_il2 e1), false_value::stk, s)` by metis_tac []
+THEN `exec [IL2_Jz (&LENGTH (il1e_to_il2 e2) + 1)] (0, false_value::stk, s) (1 + &LENGTH (il1e_to_il2 e2) + 1, stk, s)` by (rwa [exec_def]
+THEN match_mp_tac RTC_SUBSET
+THEN rwa [exec_one_cases, fetch_def, exec_instr_cases, false_value_def])
+
+
+THEN `exec ([IL2_Jz (&LENGTH (il1e_to_il2 e2) + 1)] ++ il1e_to_il2 e2) (0, false_value::stk, s) (1 + &LENGTH (il1e_to_il2 e2) + 1, stk, s)` by metis_tac [APPEND_TRACE_SAME_THM]
+
+THEN `exec (il1e_to_il2 e3) (0, stk, s) (&LENGTH (il1e_to_il2 e3), (il1_il2_val v)::stk, s)` by metis_tac []
+
+THEN `exec [IL2_Jz (&LENGTH (il1e_to_il2 e2) + 1)] (&LENGTH (il1e_to_il2 e1) - &LENGTH (il1e_to_il2 e1),false_value::stk,s)
+        (1 + &LENGTH (il1e_to_il2 e2) + 1,stk,s)` by rwa []
+
+THEN `exec (il1e_to_il2 e1 ++ [IL2_Jz (&LENGTH (il1e_to_il2 e2) + 1)])
+         (0,stk,s)
+         (&LENGTH (il1e_to_il2 e1) + (1 + &LENGTH (il1e_to_il2 e2) + 1),stk,
+          s)` by (imp_res_tac EXECUTION_COMPOSE_THM THEN rwa [])
+
+THEN `exec (il1e_to_il2 e1 ++ [IL2_Jz (&LENGTH (il1e_to_il2 e2) + 1)] ++ il1e_to_il2 e2)
+         (0,stk,s)
+         (&LENGTH (il1e_to_il2 e1) + (1 + &LENGTH (il1e_to_il2 e2) + 1),stk,
+          s)` by metis_tac [APPEND_TRACE_SAME_THM]
+
+THEN `&LENGTH (il1e_to_il2 e1) + (1 + &LENGTH (il1e_to_il2 e2) + 1) = (&LENGTH (il1e_to_il2 e1 ++ [IL2_Jz (&LENGTH (il1e_to_il2 e2) + 1)] ++ il1e_to_il2 e2 ++ [IL2_Jump (&LENGTH (il1e_to_il2 e3))]))` by rwa []
+
+THEN `exec (il1e_to_il2 e1 ++ [IL2_Jz (&LENGTH (il1e_to_il2 e2) + 1)] ++ il1e_to_il2 e2)
+         (0,stk,s)
+         ((&LENGTH (il1e_to_il2 e1 ++ [IL2_Jz (&LENGTH (il1e_to_il2 e2) + 1)] ++ il1e_to_il2 e2 ++ [IL2_Jump (&LENGTH (il1e_to_il2 e3))])),stk,
+          s)` by metis_tac []
+
+THEN `exec
+         (il1e_to_il2 e1 ++ [IL2_Jz (&LENGTH (il1e_to_il2 e2) + 1)] ++
+          il1e_to_il2 e2 ++ [IL2_Jump (&LENGTH (il1e_to_il2 e3))]) (0,stk,s)
+         (&LENGTH
+             (il1e_to_il2 e1 ++ [IL2_Jz (&LENGTH (il1e_to_il2 e2) + 1)] ++
+              il1e_to_il2 e2 ++ [IL2_Jump (&LENGTH (il1e_to_il2 e3))]),
+          stk,s)` by metis_tac [APPEND_TRACE_SAME_THM]
+
+
+THEN ` exec
+         (il1e_to_il2 e1 ++ [IL2_Jz (&LENGTH (il1e_to_il2 e2) + 1)] ++
+          il1e_to_il2 e2 ++ [IL2_Jump (&LENGTH (il1e_to_il2 e3))] ++ il1e_to_il2 e3) (0,stk,s)
+         (&LENGTH
+             (il1e_to_il2 e1 ++ [IL2_Jz (&LENGTH (il1e_to_il2 e2) + 1)] ++
+              il1e_to_il2 e2 ++ [IL2_Jump (&LENGTH (il1e_to_il2 e3))]) + &LENGTH (il1e_to_il2 e3),
+          il1_il2_val v::stk,s)` by (imp_res_tac EX_COM_THM THEN rwa [])
+
+THEN `&LENGTH
+             (il1e_to_il2 e1 ++
+              [IL2_Jz (&LENGTH (il1e_to_il2 e2) + 1)] ++
+              il1e_to_il2 e2 ++ [IL2_Jump (&LENGTH (il1e_to_il2 e3))]) +
+          &LENGTH (il1e_to_il2 e3) = &(LENGTH (il1e_to_il2 e1) + 1 + LENGTH (il1e_to_il2 e2) + 1 +
+     LENGTH (il1e_to_il2 e3))` by rwa [length_thm]
 
 THEN metis_tac [])
 
-THEN first_assum (match_exists_tac o concl)
-THEN rwa []
-THEN `(&(1 + (LENGTH (il1e_to_il2 e2) + (1 + LENGTH (il1e_to_il2 e3)))) =
-   1 + &(LENGTH (il1e_to_il2 e2) + (1 + LENGTH (il1e_to_il2 e3))))` by rwa []
-THEN HINT_EXISTS_TAC
-THEN rwa []
-
-THEN match_mp_tac thmtest3
-THEN first_assum (match_exists_tac o concl)
-THEN rwa []));
+);
 
 val EXPR_CORRECTNESS_THM = store_thm("EXPR_CORRECTNESS_THM",
 ``!e s v.bs_il1_expr (e, s) v ==>
@@ -285,18 +312,22 @@ THEN metis_tac [])
 
 THEN1 (rw [il1_to_il2_def]
 
+THEN `exec [IL2_Jz (&LENGTH (il1_to_il2 e2) + 1)] (0,false_value::stk,s) (1 + &LENGTH (il1_to_il2 e2) + 1, stk, s)` by (rwa [exec_def]
+THEN match_mp_tac RTC_SUBSET
+THEN rwa [exec_one_cases, fetch_def, exec_instr_cases, false_value_def])
+
+
+
 THEN `exec (il1e_to_il2 e1) (0, stk, s) (&LENGTH (il1e_to_il2 e1), false_value::stk, s)` by metis_tac [EXPR_CORRECTNESS_THM, il1_il2_val_def]
 THEN `exec [IL2_Jz (&LENGTH (il1_to_il2 e2) + 1)] (0, false_value::stk, s) (1 + &LENGTH (il1_to_il2 e2) + 1, stk, s)` by (rw [exec_def] THEN fs [RTC_SINGLE] THEN
  rw [exec_def, Once RTC_CASES1, exec_one_cases, fetch_def, exec_instr_cases, RTC_REFL, length_thm, false_value_def]
 THEN
 `(exec_one [IL2_Jz (&LENGTH (il1_to_il2 e2) + 1)])^* (1 + &LENGTH (il1_to_il2 e2) + 1, stk, s)
     (1 + &LENGTH (il1_to_il2 e2) + 1,stk,s)` by metis_tac [RTC_REFL]
-THEN
-HINT_EXISTS_TAC
-THEN
-fsa []
-
-THEN metis_tac [])
+THEN `1 + &(LENGTH (il1_to_il2 e2) + 1) = 1 + &LENGTH (il1_to_il2 e2) + 1` by rwa []
+THEN rwa []
+THEN metis_tac []
+)
 
 
 THEN `exec ([IL2_Jz (&LENGTH (il1_to_il2 e2) + 1)] ++ il1_to_il2 e2) (0, false_value::stk, s) (1 + &LENGTH (il1_to_il2 e2) + 1, stk, s)` by metis_tac [APPEND_TRACE_SAME_THM]
