@@ -1,6 +1,8 @@
 Snorkel: A simple verified toy compiler for a toy language
 ==========================================================
 
+[![Build Status](https://magnum.travis-ci.com/j-baker/partii.svg?token=KqfCygaVMsrvPPnULqeX&branch=develop)](https://magnum.travis-ci.com/j-baker/partii)
+
 This project is being written to form the basis of my
 University of Cambridge BA Computer Science Part II
 dissertation.
