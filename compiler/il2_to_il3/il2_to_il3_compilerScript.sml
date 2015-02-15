@@ -472,6 +472,26 @@ val vsm_exec_correctness_thm = prove(``!P pc stk st pc' stk' st'.exec_il3 P (pc,
 
 metis_tac [FST, SND, exec_il3_imp_vsm_exec, astack_produces_valid_store]);
 
+val il2_to_il3_def = Define `il2_to_il3 P = MAP (il2_to_il3m (FST (make_loc_map P))) P`;
 
+val nice_il3_eql_il2 = prove(``!P pc stk st pc' stk' st'.exec P (pc, stk, st) (pc', stk', st') /\ ms_il2 P st ==>
+exec_il3 (il2_to_il3 P) (pc, stk, MAP_KEYS (map_fun (FST (make_loc_map P))) st)
+(pc', stk', MAP_KEYS (map_fun (FST (make_loc_map P))) st')``,
+metis_tac [il3_eql_il2, FST, SND, il2_to_il3_def]);
+
+val il2_vsm_correctness = prove(``
+!P pc stk st pc' stk' st'.
+exec P (pc, stk, st) (pc', stk', st') /\ ms_il2 P st ==>
+
+?n astk.vsm_exec (il2_to_il3 P) (pc, astack (il2_to_il3 P) (MAP_KEYS (map_fun (FST (make_loc_map P))) st) stk) (pc', astk) /\ (stk' = TAKE n astk)``,
+
+rw []
+THEN imp_res_tac nice_il3_eql_il2
+
+THEN `ms_il2 P st ==> (!l.l ∈ FDOM (MAP_KEYS (map_fun (FST (make_loc_map P))) st) <=> (l <= largest_loc (il2_to_il3 P)))` by cheat
+
+THEN imp_res_tac vsm_exec_correctness_thm
+THEN rfs []
+THEN metis_tac []);
 
 val _ = export_theory ();
