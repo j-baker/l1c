@@ -9,5 +9,4 @@ compiler/l1_to_il1
 compiler/l1_to_il1/proof
 compiler/il1_to_il2
 compiler/il1_to_il2/proofs
-compiler/il2_to_vsm0
 compiler/il2_to_il3
