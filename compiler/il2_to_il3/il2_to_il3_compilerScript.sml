@@ -399,13 +399,13 @@ THEN rw []
 THEN res_tac
 THEN fs [SND]);
 
-val astack_def = Define `astack P st stk = stk ++ (REVERSE (GENLIST (\l.st ' l) (largest_loc P)))`;
+val astack_def = Define `astack P st stk = stk ++ (REVERSE (GENLIST (\l.st ' l) (SUC (largest_loc P))))`;
 
-val astack_produces_valid_store = prove(``!P st stk.(!l.l ∈ FDOM st <=> l < largest_loc P) ==> ?n.(stk = TAKE n (astack P st stk)) /\ stack_contains_store st (DROP n (astack P st stk))``,
+val astack_produces_valid_store = prove(``!P st stk.(!l.l ∈ FDOM st <=> l <= largest_loc P) ==> ?n.(stk = TAKE n (astack P st stk)) /\ stack_contains_store st (DROP n (astack P st stk))``,
 
 rw [astack_def]
 THEN EXISTS_TAC ``(LENGTH stk)`` THEN
-rw [take_thm, drop_thm, stack_contains_store_def, fetch_rev_def, FETCH_EL]);
+rw [take_thm, drop_thm, stack_contains_store_def, fetch_rev_def, FETCH_EL, LESS_EQ_IMP_LESS_SUC]);
 
 
 val exec_il3_imp_vsm_exec = prove(``!P c c'.exec_il3 P c c' ==> !n astk.(FST (SND c) = TAKE n astk) /\ stack_contains_store (SND (SND c)) (DROP n astk) /\ (!l.l ∈ FDOM (SND (SND c)) <=> l <= largest_loc P) ==> 
@@ -466,7 +466,7 @@ THEN metis_tac []);
 
 
 val vsm_exec_correctness_thm = prove(``!P pc stk st pc' stk' st'.exec_il3 P (pc, stk, st) (pc', stk', st') /\
-(!l.l ∈ FDOM st ==> l < largest_loc P)
+(!l.l ∈ FDOM st <=> l <= largest_loc P)
 ==> 
 ?n astk.vsm_exec P (pc, astack P st stk) (pc', astk) /\ (stk' = TAKE n astk)``,
 
