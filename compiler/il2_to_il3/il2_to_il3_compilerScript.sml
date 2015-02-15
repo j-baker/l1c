@@ -399,8 +399,6 @@ THEN rw []
 THEN res_tac
 THEN fs [SND]);
 
-metis_tac [lloc_2_thm, SND]);
-
 val astack_def = Define `astack P st stk = stk ++ (REVERSE (GENLIST (\l.st ' l) (largest_loc P)))`;
 
 val astack_produces_valid_store = prove(``!P st stk.(!l.l ∈ FDOM st <=> l < largest_loc P) ==> ?n.(stk = TAKE n (astack P st stk)) /\ stack_contains_store st (DROP n (astack P st stk))``,
