@@ -1,3 +1,4 @@
+open HolKernel bossLib boolLib Parse ast_il2Theory ast_vsm0Theory lcsymtacs pairTheory finite_mapTheory pred_setTheory integerTheory smallstep_il2Theory relationTheory listTheory smallstep_vsm0Theory;
 
 val _ = new_theory "il2_to_il3_compiler";
 
@@ -23,6 +24,7 @@ Induct_on `P` THEN  rw [locs_to_map_def] THEN rw []);
 
 val make_loc_map_def = Define `make_loc_map il2_prog = (locs_to_map (get_locations il2_prog))`;
 
+val dum_lt_thm = prove(``!x y. (&x < &y) ==> (x < y)``, rw [])
 
 val every_store_inc_in_map = prove(``!i P.(?n.(n < LENGTH P) /\ (P !! &n = IL2_Store i)) ==> i ∈ FDOM (FST (make_loc_map P))``,
 Induct_on `P`
@@ -43,6 +45,8 @@ val ms_il2_def = Define `ms_il2 P s = (FDOM s = FDOM (FST (make_loc_map P)))`;
 
 val ms_il2_trans = prove(``!P r''' i v.ms_il2 P r''' /\ ms_il2 P (r''' |+ (i, v)) ==> (FDOM r''' = FDOM (r''' |+ (i, v)))``,
 metis_tac [ms_il2_def]);
+
+val ms_il3_def = Define `ms_il3 P s = (FDOM s = FDOM (FST (locs_to_map (get_locations_il3 P))))`;
 
 val ms_const = prove(``!P c c'.exec P c c' ==> ms_il2 P (SND (SND c)) ==> ms_il2 P (SND (SND c'))``,
 fs [exec_def] THEN STRIP_TAC THEN ho_match_mp_tac RTC_STRONG_INDUCT
@@ -74,6 +78,23 @@ THEN rw [make_loc_map_def, locs_to_map_def, get_locations_def]
 THEN `?m n.locs_to_map (get_locations P) = (m, n)` by metis_tac [locs_to_map_total_thm]
 THEN Cases_on `h` THEN fs [get_locations_def] THEN fs [make_loc_map_def, locs_to_map_def, get_locations_def] THEN fs [LET_DEF] THEN Cases_on `i ∈ FDOM m` THEN fs [FST, SND] THEN (TRY decide_tac) THEN rw []
 THEN rw [FAPPLY_FUPDATE_THM] THEN res_tac THEN decide_tac);
+
+(* TODO combine these two proofs *)
+val map_range_il3_thm = prove(``!P n.((SND (locs_to_map (get_locations_il3 P))) = n) ==> !x.(x ∈ FDOM (FST (locs_to_map (get_locations_il3 P)))) ==> ((FST (locs_to_map (get_locations_il3 P))) ' x < n)``,
+
+Induct_on `P`
+
+THEN rw [make_loc_map_def, locs_to_map_def, get_locations_il3_def]
+
+THEN `?m n.locs_to_map (get_locations_il3 P) = (m, n)` by metis_tac [locs_to_map_total_thm]
+THEN rw [] THEN Cases_on `h` THEN fs [get_locations_il3_def] THEN rw [] THEN rfs [FST] THEN fs [make_loc_map_def, locs_to_map_def, get_locations_il3_def] THEN rfs [LET_DEF] THEN Cases_on `n' ∈ FDOM m` THEN fs [FST, SND] THEN rw [locs_to_map_def] THEN (TRY decide_tac) THEN rw []
+THEN rw [FAPPLY_FUPDATE_THM] THEN res_tac THEN decide_tac);
+
+
+val map_fun_def = Define `map_fun m = \x.m ' x`;
+
+val map_fun_exec = prove(``!m x.map_fun m x = m ' x``, REPEAT STRIP_TAC THEN EVAL_TAC);
+
 
 val make_loc_map_inj = prove(``!P.INJ (map_fun (FST (make_loc_map P))) (FDOM (FST (make_loc_map P))) UNIV``,
 rw [INJ_DEF, map_fun_def, make_loc_map_def]
@@ -127,9 +148,6 @@ val (exec_il3_instr_rules, exec_il3_instr_ind, exec_il3_instr_cases) = Hol_reln 
 (!v1 v2 pc stk st.(v1 >= v2) ==> exec_il3_instr (VSM_Geq) (pc, v1::v2::stk, st) (pc + 1, true_value::stk, st)) /\
 (!v1 v2 pc stk st.(v1 < v2) ==> exec_il3_instr (VSM_Geq) (pc, v1::v2::stk, st) (pc + 1, false_value::stk, st))`;
 
-val dum_lt_thm = prove(``!x y. (&x < &y) ==> (x < y)``, rw [])
-
-
 val map_fetch_thm = prove(``!f xs n.(n < LENGTH xs) ==> ((MAP f xs) !! (&n) = f (xs !! (&n)))``,
 Induct_on `xs`
 THEN1 rw [LENGTH]
@@ -154,10 +172,6 @@ val (exec_il3_one_rules, exec_il3_one_ind, exec_il3_one_cases) = Hol_reln `
        ((pc >= 0) /\ (pc < &(LENGTH instrs)) /\
         (exec_il3_instr (instrs !! pc) (pc, stk, st) (pc', stk', st')))
     ==> exec_il3_one instrs (pc, stk, st) (pc', stk', st')`;
-
-val map_fun_def = Define `map_fun m = \x.m ' x`;
-
-val map_fun_exec = prove(``!m x.map_fun m x = m ' x``, REPEAT STRIP_TAC THEN EVAL_TAC);
 
 val exec_il3_def = Define `exec_il3 P c c' = (exec_il3_one P)^* c c'`;
 
@@ -341,6 +355,12 @@ val vsm_lemma = prove(``!P pc stk st pc' stk' st' stkst stkst'.
 
 rw [c_exec_il3_one_cases] THEN fs [exec_il3_one_cases] THEN rw [vsm_exec_one_cases] THEN Cases_on `P !! pc` THEN fs [exec_il3_instr_cases, vsm_exec_instr_cases, up_stack_cases, stack_contains_store_def] THEN rw [] THEN fs [GSYM fb_append_thm, update_loc_def, fetch_rev_def]);
 
+val drop_thm = prove(``!xs ys.DROP (LENGTH xs) (xs ++ ys) = ys``,
+Induct_on `xs` THEN rw []);
+
+val take_thm = prove(``!xs ys.TAKE (LENGTH xs) (xs ++ ys) = xs``,
+Induct_on `xs` THEN rw []);
+
 val vsm_2_lemma = prove(``!P pc stk st pc' stk' st' stkst stkst'.
 stack_contains_store st stkst /\
 up_stack (P !! pc) stk stkst stkst' /\
@@ -349,29 +369,70 @@ exec_il3_one P (pc, stk, st) (pc', stk', st')
 stack_contains_store st' stkst'``,
 metis_tac [cexec_step_thm, vsm_lemma]);
 
-RTC_STRONG_INDUCT
+
+val largest_loc_def = Define `(largest_loc [] = 0) /\ (largest_loc (VSM_Load l::xs) = MAX l (largest_loc xs)) /\ (largest_loc (VSM_Store l::xs) = MAX l (largest_loc xs)) /\ (largest_loc (_::xs) = largest_loc xs)`;
 
 
+val astack_def = Define `astack P st stk = stk ++ (REVERSE (GENLIST (\l.st ' l) (largest_loc P)))`;
 
-val astack_def = Define `astack P st stk = stk ++ (REVERSE (GENLIST (\l.st ' l) (SND (locs_to_map (get_locations_il3 P)))))`;
+val astack_produces_valid_store = prove(``!P st stk.(!l.l ∈ FDOM st ==> l < largest_loc P) ==> ?n.(stk = TAKE n (astack P st stk)) /\ stack_contains_store st (DROP n (astack P st stk))``,
 
-!P c c'.exec_il3 P c c' ==> !n astk.(FST (SND c) = TAKE n astk) /\ stack_contains_store (SND (SND c)) (DROP n astk) ==> 
-    ?n' astk'.vsm_exec P (FST c, astk) (FST c', astk') /\ (FST (SND c') = TAKE n' astk') /\ stack_contains_store (SND (SND c')) (DROP n' astk')
+rw [astack_def]
+THEN EXISTS_TAC ``(LENGTH stk)`` THEN
+rw [take_thm, drop_thm, stack_contains_store_def, fetch_rev_def, FETCH_EL]);
+
+
+val exec_il3_imp_vsm_exec = prove(``!P c c'.exec_il3 P c c' ==> !n astk.(FST (SND c) = TAKE n astk) /\ stack_contains_store (SND (SND c)) (DROP n astk) ==> 
+    ?n' astk'.vsm_exec P (FST c, astk) (FST c', astk') /\ (FST (SND c') = TAKE n' astk') /\ stack_contains_store (SND (SND c')) (DROP n' astk')``,
 STRIP_TAC THEN fs [exec_il3_def] THEN ho_match_mp_tac RTC_STRONG_INDUCT THEN rw []
 
 THEN1 (Cases_on `c` THEN Cases_on `r` THEN fs [FST, SND] THEN rw [] THEN metis_tac [vsm_exec_def, RTC_REFL])
 
-Cases_on `c` THEN Cases_on `c'` THEN Cases_on `c''` THEN Cases_on `r` THEN Cases_on `r'` THEN Cases_on `r''` THEN fs [FST, SND] THEN rw []
+THEN Cases_on `c` THEN Cases_on `c'` THEN Cases_on `c''` THEN Cases_on `r` THEN Cases_on `r'` THEN Cases_on `r''` THEN fs [FST, SND] THEN rw []
 
 
 
-rw [vsm_exec_def]
+THEN rw [vsm_exec_def]
 
-`?stkst'. up_stack (P !! q) (TAKE n astk) (DROP n astk) stkst'` by all_tac
+THEN `?stkst'. up_stack (P !! q) (TAKE n astk) (DROP n astk) stkst'` by (
 
 Cases_on `P !! q` THEN rw [up_stack_cases]
 
-fs [stack_contains_store_def]
+THEN fs [stack_contains_store_def, ms_il3_def]
 
-vsm_2_lemma
+THEN `n' ∈ FDOM r'''` by cheat
+
+THEN res_tac
+THEN rw []
+
+THEN Cases_on `TAKE n astk`
+
+THEN1 fs [exec_il3_one_cases, exec_il3_instr_cases]
+
+THEN metis_tac [])
+
+THEN imp_res_tac vsm_2_lemma
+
+THEN fs [TAKE_DROP]
+
+THEN `stack_contains_store r (DROP (LENGTH q'''') (q'''' ++ stkst'))` by rw [drop_thm]
+THEN `q'''' = TAKE (LENGTH q'''') (q'''' ++ stkst')` by rw [take_thm]
+
+THEN res_tac THEN rw []
+
+THEN rw [Once RTC_CASES1]
+
+THEN fs [vsm_exec_def]
+THEN metis_tac []);
+
+
+val vsm_exec_correctness_thm = prove(``!P pc stk st pc' stk' st'.exec_il3 P (pc, stk, st) (pc', stk', st') /\
+(!l.l ∈ FDOM st ==> l < largest_loc P)
+==> 
+?n astk.vsm_exec P (pc, astack P st stk) (pc', astk) /\ (stk' = TAKE n astk)``,
+
+metis_tac [FST, SND, exec_il3_imp_vsm_exec, astack_produces_valid_store]);
+
+
+
 val _ = export_theory ();
