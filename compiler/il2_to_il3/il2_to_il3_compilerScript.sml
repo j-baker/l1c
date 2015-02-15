@@ -373,16 +373,44 @@ metis_tac [cexec_step_thm, vsm_lemma]);
 val largest_loc_def = Define `(largest_loc [] = 0) /\ (largest_loc (VSM_Load l::xs) = MAX l (largest_loc xs)) /\ (largest_loc (VSM_Store l::xs) = MAX l (largest_loc xs)) /\ (largest_loc (_::xs) = largest_loc xs)`;
 
 
+val lloc_thm = prove(``!P q n.(q < LENGTH P) /\ (P !! &q = VSM_Store n) ==> (n <= largest_loc P)``,
+Induct_on `q` THEN rw [] THEN rfs [FETCH_EL] THEN (Cases_on `P` THEN1 (fs [LENGTH]))
+THEN1 (fs [] THEN rw [largest_loc_def])
+THEN
+Cases_on `h` THEN fs [EL, largest_loc_def] THEN rw [] THEN fs [] THEN rw [] THEN res_tac THEN fs [FETCH_EL]);
+
+val lloc_2_thm = prove(``!P c c'.exec_il3 P c c' ==> (!l.l ∈ FDOM (SND (SND c)) <=> l <= largest_loc P) ==> (!l.l ∈ FDOM (SND (SND c')) <=> l <= largest_loc P)``,
+STRIP_TAC THEN fs [exec_il3_def] THEN ho_match_mp_tac RTC_STRONG_INDUCT THEN rw []
+
+THEN Cases_on `c` THEN Cases_on `c'` THEN Cases_on `c''` THEN Cases_on `r`  THEN Cases_on `r'` THEN Cases_on `r''` THEN fs [FST, SND] THEN rw []
+
+THEN fs [exec_il3_one_cases] THEN Cases_on `P !! q` THEN fs [exec_il3_instr_cases] THEN rw []
+THEN `?nq.q = &nq` by metis_tac [NUM_POSINT_EXISTS, int_ge] THEN rw []
+THEN imp_res_tac lloc_thm
+THEN fs [dum_lt_thm] THEN rfs []
+THEN `!l. (l = n) ==> (l <= largest_loc P)` by metis_tac []
+THEN `!l. l ∈ FDOM r' ⇔ l ≤ largest_loc P` by metis_tac [EQ_IMP_THM]
+THEN metis_tac []);
+
+val lloc_21_thm = prove(``!P pc stk st pc' stk' st'.exec_il3 P (pc, stk, st) (pc', stk', st') /\ (!l.l ∈ FDOM st <=> l <= largest_loc P) ==> (!l.l ∈ FDOM st' <=> l <= largest_loc P)``,
+rw []
+THEN mp_tac lloc_2_thm
+THEN rw []
+THEN res_tac
+THEN fs [SND]);
+
+metis_tac [lloc_2_thm, SND]);
+
 val astack_def = Define `astack P st stk = stk ++ (REVERSE (GENLIST (\l.st ' l) (largest_loc P)))`;
 
-val astack_produces_valid_store = prove(``!P st stk.(!l.l ∈ FDOM st ==> l < largest_loc P) ==> ?n.(stk = TAKE n (astack P st stk)) /\ stack_contains_store st (DROP n (astack P st stk))``,
+val astack_produces_valid_store = prove(``!P st stk.(!l.l ∈ FDOM st <=> l < largest_loc P) ==> ?n.(stk = TAKE n (astack P st stk)) /\ stack_contains_store st (DROP n (astack P st stk))``,
 
 rw [astack_def]
 THEN EXISTS_TAC ``(LENGTH stk)`` THEN
 rw [take_thm, drop_thm, stack_contains_store_def, fetch_rev_def, FETCH_EL]);
 
 
-val exec_il3_imp_vsm_exec = prove(``!P c c'.exec_il3 P c c' ==> !n astk.(FST (SND c) = TAKE n astk) /\ stack_contains_store (SND (SND c)) (DROP n astk) ==> 
+val exec_il3_imp_vsm_exec = prove(``!P c c'.exec_il3 P c c' ==> !n astk.(FST (SND c) = TAKE n astk) /\ stack_contains_store (SND (SND c)) (DROP n astk) /\ (!l.l ∈ FDOM (SND (SND c)) <=> l <= largest_loc P) ==> 
     ?n' astk'.vsm_exec P (FST c, astk) (FST c', astk') /\ (FST (SND c') = TAKE n' astk') /\ stack_contains_store (SND (SND c')) (DROP n' astk')``,
 STRIP_TAC THEN fs [exec_il3_def] THEN ho_match_mp_tac RTC_STRONG_INDUCT THEN rw []
 
@@ -400,7 +428,10 @@ Cases_on `P !! q` THEN rw [up_stack_cases]
 
 THEN fs [stack_contains_store_def, ms_il3_def]
 
-THEN `n' ∈ FDOM r'''` by cheat
+
+THEN `n' ∈ FDOM r'''` by (`?nq.(q = &nq)` by fs [exec_il3_one_cases, NUM_POSINT_EXISTS, int_ge, dum_lt_thm] THEN rw []
+THEN `nq < LENGTH P` by fs [dum_lt_thm, exec_il3_one_cases]
+THEN `n' <= largest_loc P` by metis_tac [lloc_thm] THEN  metis_tac [])
 
 THEN res_tac
 THEN rw []
@@ -423,6 +454,16 @@ THEN res_tac THEN rw []
 THEN rw [Once RTC_CASES1]
 
 THEN fs [vsm_exec_def]
+
+THEN `(∀l. l ∈ FDOM r ⇔ l ≤ largest_loc P)` by (
+match_mp_tac lloc_21_thm
+
+THEN rw [exec_il3_def]
+THEN metis_tac [RTC_SUBSET])
+
+THEN fs [drop_thm, take_thm]
+THEN rw []
+
 THEN metis_tac []);
 
 
