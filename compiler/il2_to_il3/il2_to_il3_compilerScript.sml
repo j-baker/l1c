@@ -8,12 +8,6 @@ val get_locations_def = Define `
 (get_locations ((IL2_Load l)::stms) = l::(get_locations stms)) /\
 (get_locations (_::stms) = get_locations stms)`;
 
-val get_locations_il3_def = Define `
-(get_locations_il3 [] = []) /\
-(get_locations_il3 ((VSM_Store l)::stms) = l::(get_locations_il3 stms)) /\
-(get_locations_il3 ((VSM_Load l)::stms) = l::(get_locations_il3 stms)) /\
-(get_locations_il3 (_::stms) = get_locations_il3 stms)`;
-
 val locs_to_map_def = Define `
 (locs_to_map [] = (FEMPTY,(0:num))) /\
 (locs_to_map (l::ls) = let (map, next_loc) = locs_to_map ls
@@ -78,18 +72,6 @@ THEN rw [make_loc_map_def, locs_to_map_def, get_locations_def]
 THEN `?m n.locs_to_map (get_locations P) = (m, n)` by metis_tac [locs_to_map_total_thm]
 THEN Cases_on `h` THEN fs [get_locations_def] THEN fs [make_loc_map_def, locs_to_map_def, get_locations_def] THEN fs [LET_DEF] THEN Cases_on `i ∈ FDOM m` THEN fs [FST, SND] THEN (TRY decide_tac) THEN rw []
 THEN rw [FAPPLY_FUPDATE_THM] THEN res_tac THEN decide_tac);
-
-(* TODO combine these two proofs *)
-val map_range_il3_thm = prove(``!P n.((SND (locs_to_map (get_locations_il3 P))) = n) ==> !x.(x ∈ FDOM (FST (locs_to_map (get_locations_il3 P)))) ==> ((FST (locs_to_map (get_locations_il3 P))) ' x < n)``,
-
-Induct_on `P`
-
-THEN rw [make_loc_map_def, locs_to_map_def, get_locations_il3_def]
-
-THEN `?m n.locs_to_map (get_locations_il3 P) = (m, n)` by metis_tac [locs_to_map_total_thm]
-THEN rw [] THEN Cases_on `h` THEN fs [get_locations_il3_def] THEN rw [] THEN rfs [FST] THEN fs [make_loc_map_def, locs_to_map_def, get_locations_il3_def] THEN rfs [LET_DEF] THEN Cases_on `n' ∈ FDOM m` THEN fs [FST, SND] THEN rw [locs_to_map_def] THEN (TRY decide_tac) THEN rw []
-THEN rw [FAPPLY_FUPDATE_THM] THEN res_tac THEN decide_tac);
-
 
 val map_fun_def = Define `map_fun m = \x.m ' x`;
 
