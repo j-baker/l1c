@@ -487,6 +487,17 @@ exec_il3 (il2_to_il3 P) (pc, stk, MAP_KEYS (map_fun (FST (make_loc_map P))) st)
 (pc', stk', MAP_KEYS (map_fun (FST (make_loc_map P))) st')``,
 metis_tac [il3_eql_il2, FST, SND, il2_to_il3_def]);
 
+val cheated_thm = prove(``!P st.ms_il2 P st ==> (!l.l ∈ FDOM (MAP_KEYS (map_fun (FST (make_loc_map P))) st) <=> (l < s_uloc (il2_to_il3 P)))``,
+
+rw [ms_il2_def]
+
+THEN rw [MAP_KEYS_def, make_loc_map_inj]
+
+THEN `s_uloc (il2_to_il3 P) = (SND (make_loc_map P))` by cheat
+
+THEN metis_tac [locs_to_map_total_thm, map_fun_def, map_range_thm, make_loc_map_def,EQ_IMP_THM, map_range_2_thm, FST, SND, make_loc_map_def]);
+
+
 val il2_vsm_correctness = store_thm("il2_vsm_correctness",``
 !P pc stk st pc' stk' st'.
 exec P (pc, stk, st) (pc', stk', st') /\ ms_il2 P st ==>
@@ -496,7 +507,7 @@ exec P (pc, stk, st) (pc', stk', st') /\ ms_il2 P st ==>
 rw []
 THEN imp_res_tac nice_il3_eql_il2
 
-THEN `ms_il2 P st ==> (!l.l ∈ FDOM (MAP_KEYS (map_fun (FST (make_loc_map P))) st) <=> (l < s_uloc (il2_to_il3 P)))` by cheat
+THEN `ms_il2 P st ==> (!l.l ∈ FDOM (MAP_KEYS (map_fun (FST (make_loc_map P))) st) <=> (l < s_uloc (il2_to_il3 P)))` by metis_tac [cheated_thm]
 
 THEN imp_res_tac vsm_exec_correctness_thm
 THEN rfs []
