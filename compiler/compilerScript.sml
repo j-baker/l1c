@@ -1,4 +1,4 @@
-open HolKernel boolLib bossLib l1_to_il1_compilerTheory il1_to_il2_compilerTheory store_creationTheory il1_il2_correctnessTheory l1_il1_correctnessTheory lcsymtacs il2_to_il3_compilerTheory listTheory;
+open HolKernel boolLib bossLib l1_to_il1_compilerTheory il1_to_il2_compilerTheory store_creationTheory il1_il2_correctnessTheory l1_il1_correctnessTheory lcsymtacs il2_to_il3_compilerTheory listTheory pairTheory pred_setTheory;
 
 val _ = new_theory "compiler"
 
@@ -6,7 +6,19 @@ val compile_il2_def = Define `compile_il2 e = il1_to_il2 (l1_to_il1 e 0)`;
 
 val compile_def = Define `compile e = il2_to_il3 (compile_il2 e)`;
 
-val ms_il2_st_thm = prove(``!e.ms_il2 e (create_il2_store e)``, cheat)
+val ms_il2_st_thm = prove(``!e.ms_il2 e (create_il2_store e)``,
+
+Induct_on `e` THEN rw [ms_il2_def, create_il2_store_def, make_loc_map_def, locs_to_map_def, get_locations_def, FST]
+
+THEN Cases_on `h` THEN fs [create_il2_store_def, get_locations_def] THEN rw [] THEN fs [make_loc_map_def, ms_il2_def]
+
+THEN fs [locs_to_map_def]
+
+THEN `?m n.locs_to_map (get_locations e) = (m, n)` by metis_tac [locs_to_map_total_thm]
+
+THEN rw [LET_DEF]
+
+THEN metis_tac [ABSORPTION_RWT]);
 
 val il2_equiv_thm = prove(``!e st1 pc v st1' st2. exec (compile_il2 e) (0, [], st1) (pc, [v], st1') /\ equiv st1 st2 ==> ?st2'.
 exec (compile_il2 e) (0, [], st2) (pc, [v], st2') /\ equiv st1' st2'``, cheat);

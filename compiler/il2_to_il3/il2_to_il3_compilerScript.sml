@@ -13,7 +13,7 @@ val locs_to_map_def = Define `
 (locs_to_map (l::ls) = let (map, next_loc) = locs_to_map ls
                         in (if l ∈ FDOM map then (map, next_loc) else (map |+ (l, next_loc), next_loc + 1)))`;
 
-val locs_to_map_total_thm = prove(``!P.?m n.locs_to_map P = (m, n)``,
+val locs_to_map_total_thm = store_thm("locs_to_map_total_thm", ``!P.?m n.locs_to_map P = (m, n)``,
 Induct_on `P` THEN  rw [locs_to_map_def] THEN rw []);
 
 val make_loc_map_def = Define `make_loc_map il2_prog = (locs_to_map (get_locations il2_prog))`;
