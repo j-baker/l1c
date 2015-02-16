@@ -1,4 +1,4 @@
-open HolKernel boolLib bossLib l1_to_il1_compilerTheory il1_to_il2_compilerTheory store_creationTheory il1_il2_correctnessTheory l1_il1_correctnessTheory lcsymtacs il2_to_il3_compilerTheory listTheory pairTheory pred_setTheory l1_il1_totalTheory bigstep_il1Theory;
+open HolKernel boolLib bossLib l1_to_il1_compilerTheory il1_to_il2_compilerTheory store_creationTheory il1_il2_correctnessTheory l1_il1_correctnessTheory lcsymtacs il2_to_il3_compilerTheory listTheory pairTheory pred_setTheory l1_il1_totalTheory bigstep_il1Theory ast_l1Theory store_equivalenceTheory finite_mapTheory;
 
 val _ = new_theory "compiler"
 
@@ -26,7 +26,88 @@ THEN rw [LET_DEF]
 
 THEN metis_tac [ABSORPTION_RWT]);
 
-val store_equiv_gen_thm = prove(``!e.equiv (con_store (create_store e)) (create_il2_store (compile_il2 e))``, cheat);
+fun btotal f x = f x handle HOL_ERR _ => false;
+
+fun P id tm =
+  btotal ((equal id) o fst o dest_var) tm orelse
+  P id (snd(listSyntax.dest_cons tm));
+
+fun tac P (g as (asl,w)) =
+  let
+    val ts = mk_set(List.concat (map (find_terms (btotal P)) (w::asl)))
+    val ths = mapfilter (fn tm => map (C SPEC (ASSUME tm)) ts) asl
+  in
+    map_every assume_tac (List.concat ths)
+  end g;
+
+
+val union_abs_thm = prove(``!x y.x ⊌ y ⊌ x = x ⊌ y``,
+Induct_on `x` THEN rw [FUNION_FEMPTY_1, FUNION_FEMPTY_2] THEN rw [FUNION_FUPDATE_1, FUNION_FUPDATE_2]);
+
+
+val il2_store_etc = prove(``!x y.create_il2_store (x ++ y) = create_il2_store x ⊌ create_il2_store y``, Induct_on `x` THEN 
+rw [create_il2_store_def, FUNION_FEMPTY_1] THEN Cases_on `h` THEN rw [create_il2_store_def, FUNION_FUPDATE_1]);
+
+val con_store_etc = prove(``!x y.con_store (x ⊌ y) = (con_store x) ⊌ (con_store y)``, rw [con_store_def]
+
+THEN Induct_on `x` THEN Induct_on `y` THEN rw [FUNION_FEMPTY_1, FUNION_FEMPTY_2] THEN fs [GSYM MAP_APPEND_EQUIV_THM, FUNION_FUPDATE_1, FUNION_FUPDATE_2]);
+
+val zeroed_def = Define `zeroed m = !l.l ∈ FDOM m ==> (m ' l = 0)`;
+
+val equiv_etc = prove(``!a b c d.equiv a b /\ equiv c d ==> equiv (a ⊌ c) (b ⊌ d)``, rw [equiv_def] THEN Cases_on `User k ∈ FDOM a`
+THEN metis_tac [FUNION_DEF]);
+
+val il2_store_etc2 = prove(``!l e.l ∈ FDOM (create_il2_store e) ==> ((create_il2_store e) ' l = 0)``,
+Induct_on `e`
+THEN rw [create_il2_store_def, FDOM_FEMPTY] THEN Cases_on `h` THEN fs [create_il2_store_def] THEN rw [] THEN Cases_on `i = l` THEN rw [FAPPLY_FUPDATE_THM]);
+
+
+val store_equiv_gen_thm = prove(``!e n.equiv (con_store (create_store e)) (create_il2_store (il1_to_il2 (l1_to_il1 e n)))``,
+
+
+Induct_on `e` THEN fs [compile_il2_def, il1_to_il2_def, il1e_to_il2_def, l1_to_il1_def, l1_to_il1_pair_def] THEN rw []
+
+THEN1 (
+rw [create_store_def]
+THEN Cases_on `l` THEN
+fs [l1_to_il1_pair_def] THEN rw []
+THEN (TRY (Cases_on `b`)) THEN
+
+ rw [il1_to_il2_def, create_il2_store_def, il2_store_etc, il1e_to_il2_def, con_store_def, MAP_KEYS_FEMPTY, EQUIV_REFL_THM])
+
+THEN tac (P "n'")
+THEN tac (P "n")
+THEN tac (P "lc2")
+THEN tac (P "lc3")
+THEN tac (P "lc")
+THEN rfs [LET_THM]
+
+THEN rw []
+
+
+THEN fs [il1_to_il2_def, il1e_to_il2_def]
+
+THEN fs [il2_store_etc, create_il2_store_def, FUNION_FEMPTY_1, FUNION_FEMPTY_2, FUNION_FUPDATE_1, FUNION_FUPDATE_2]
+
+
+THEN Cases_on `User n ∈ FDOM (create_il2_store (il1_to_il2 sl))`
+THEN (TRY (Cases_on `User n ∈ FDOM (create_il2_store (il1_to_il2 e'))`))
+THEN (TRY (Cases_on `User n ∈ FDOM (create_il2_store (il1e_to_il2 e'))`))
+THEN Cases_on `Compiler lc3 ∈ FDOM (create_il2_store (il1_to_il2 sl1))` THEN Cases_on `Compiler lc3 ∈ FDOM (create_il2_store (il1e_to_il2 e1'))` 
+THEN TRY (Cases_on `Compiler lc4 ∈ FDOM (create_il2_store (il1_to_il2 sl1))` THEN Cases_on `Compiler lc4 ∈ FDOM (create_il2_store (il1e_to_il2 e1'))` )
+THEN fs [] THEN rw [create_store_def] THEN fs [con_store_etc] THEN fs [equiv_def] THEN rw [] THEN `(create_il2_store (il1_to_il2 sl1) ⊌
+ create_il2_store (il1e_to_il2 e1') ⊌
+ create_il2_store (il1_to_il2 sl2) ⊌
+ create_il2_store (il1e_to_il2 e2') ⊌
+ create_il2_store (il1_to_il2 sl1)) = (create_il2_store (il1_to_il2 sl1) ⊌
+ create_il2_store (il1e_to_il2 e1') ⊌
+ create_il2_store (il1_to_il2 sl2) ⊌
+ create_il2_store (il1e_to_il2 e2'))` by metis_tac [FUNION_ASSOC, union_abs_thm]
+THEN rw []
+
+THEN rw [GSYM FUNION_ASSOC, FUNION_DEF, FAPPLY_FUPDATE_THM, il2_store_etc2] THEN (TRY (metis_tac [il2_store_etc2])) THEN Cases_on `n=k` THEN rw [] THEN fs [con_store_def, GSYM MAP_APPEND_EQUIV_THM, MAP_KEYS_FEMPTY, FAPPLY_FUPDATE_THM] THEN rw [il2_store_etc2]
+
+THEN rw [DISJ_ASSOC, EQ_IMP_THM] THEN TRY (metis_tac []));
 
 val TOTAL_CORRECTNESS_THM = store_thm("TOTAL_CORRECTNESS_THM",
 ``!e v s'.bs_l1 (e, create_store e) v s' ==> ?s''.exec (compile_il2 e) (0, [], con_store (create_store e)) (&LENGTH (compile_il2 e), [(il1_il2_val (l1_il1_val v))], s'')``,
