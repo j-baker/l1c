@@ -20,15 +20,32 @@ val make_loc_map_def = Define `make_loc_map il2_prog = (locs_to_map (get_locatio
 
 val dum_lt_thm = prove(``!x y. (&x < &y) ==> (x < y)``, rw [])
 
-val every_store_inc_in_map = prove(``!i P.(?n.(n < LENGTH P) /\ (P !! &n = IL2_Store i)) ==> i ∈ FDOM (FST (make_loc_map P))``,
+val every_store_inc_in_map = prove(``!i P n.((n < LENGTH P) /\ ((P !! &n = IL2_Store i) \/ (P !! &n = IL2_Load i))) ==> i ∈ FDOM (FST (make_loc_map P))``,
 Induct_on `P`
 THEN rw []
 
 THEN rw [make_loc_map_def, get_locations_def]
-THEN Cases_on `n`
-THEN1 (fs [fetch_def] THEN rw [] THEN rw [get_locations_def] THEN rw [locs_to_map_def] THEN Cases_on `i ∈ FDOM map` THEN rw [])
 
-THEN `P !! &n' = IL2_Store i` by (fs [fetch_def] THEN (`&SUC n' - 1 = &n'` by fs [INT, int_sub] THEN rw [Once (GSYM INT_ADD_ASSOC)]) THEN fs [])
+THEN Cases_on `h` THEN fs [get_locations_def]
+
+THEN (TRY (Cases_on `n` THEN fs [fetch_def] THEN rw []
+
+THEN fs [make_loc_map_def]
+
+THEN `&SUC n' - 1 = &n'` by ((fs [INT, int_sub] THEN rw [Once (GSYM INT_ADD_ASSOC)]) THEN rw [])
+THEN fs []
+
+THEN (TRY (metis_tac []))
+
+THEN rw [locs_to_map_def]
+
+THEN (TRY (Cases_on `i' ∈ FDOM map`)) THEN (TRY (Cases_on `i ∈ FDOM map`)) THEN fs [FST, SND] THEN rw [] THEN (TRY (metis_tac [])) THEN rw [get_locations_def, locs_to_map_def, FST, FAPPLY_FUPDATE_THM] THEN Cases_on `i ∈ FDOM map'` THEN rw [])));
+
+
+THEN Cases_on `n`
+THEN (TRY ((fs [fetch_def] THEN rw [] THEN rw [get_locations_def] THEN rw [locs_to_map_def] THEN Cases_on `i ∈ FDOM map` THEN rw [] THEN FAIL_TAC "fail")))
+
+THENL [`P !! &n' = IL2_Store i` by (fs [fetch_def] THEN (`&SUC n' - 1 = &n'` by fs [INT, int_sub] THEN rw [Once (GSYM INT_ADD_ASSOC)]) THEN fs []), `P !! &n' = IL2_Load i` by (fs [fetch_def] THEN (`&SUC n' - 1 = &n'` by fs [INT, int_sub] THEN rw [Once (GSYM INT_ADD_ASSOC)]) THEN fs [])]
 THEN `n' < LENGTH P` by decide_tac
 THEN res_tac
 THEN fs [make_loc_map_def]
@@ -62,14 +79,27 @@ THEN rw []);
 val ms_const_2 = prove(``!P pc stk st pc' stk' st'.exec_one P (pc, stk, st) (pc', stk', st') ==> ms_il2 P st ==> ms_il2 P st'``, metis_tac [ms_const, SND, exec_def, RTC_SUBSET]);
 
 val map_range_thm = prove(``!P n.((SND (make_loc_map P)) = n) ==> !x.(x ∈ FDOM (FST (make_loc_map P))) ==> ((FST (make_loc_map P)) ' x < n)``,
+rw [EQ_IMP_THM]
 
-Induct_on `P`
+THEN1 (Induct_on `P`
 
 THEN rw [make_loc_map_def, locs_to_map_def, get_locations_def]
 
 THEN `?m n.locs_to_map (get_locations P) = (m, n)` by metis_tac [locs_to_map_total_thm]
 THEN Cases_on `h` THEN fs [get_locations_def] THEN fs [make_loc_map_def, locs_to_map_def, get_locations_def] THEN fs [LET_DEF] THEN Cases_on `i ∈ FDOM m` THEN fs [FST, SND] THEN (TRY decide_tac) THEN rw []
-THEN rw [FAPPLY_FUPDATE_THM] THEN res_tac THEN decide_tac);
+THEN rw [FAPPLY_FUPDATE_THM] THEN res_tac THEN decide_tac));
+
+val map_range_2_thm = prove(``!P x.x < (SND (make_loc_map P)) ==> ?k.k ∈ FDOM (FST (make_loc_map P)) /\ ((FST (make_loc_map P)) ' k = x)``,
+
+
+Induct_on `P` THEN rw [make_loc_map_def, locs_to_map_def, get_locations_def] THEN Cases_on `h` THEN fs [get_locations_def] THEN fs [locs_to_map_def, make_loc_map_def, get_locations_def]
+
+THEN `?map next_loc.locs_to_map (get_locations P) = (map, next_loc)` by metis_tac [locs_to_map_total_thm]
+THEN fs [LET_DEF] THEN rw [] THEN fs []
+
+THEN Cases_on `k = i` THEN REWRITE_TAC [FAPPLY_FUPDATE_THM]
+
+THEN (Cases_on `x = next_loc` THEN fs [] THEN1 metis_tac  [FAPPLY_FUPDATE_THM] THEN `x < next_loc` by decide_tac THEN res_tac THEN metis_tac [map_range_thm]));
 
 val map_fun_def = Define `map_fun m = \x.m ' x`;
 
@@ -442,7 +472,6 @@ THEN fs [drop_thm, take_thm]
 THEN rw []
 
 THEN metis_tac []);
-
 
 val vsm_exec_correctness_thm = prove(``!P pc stk st pc' stk' st'.exec_il3 P (pc, stk, st) (pc', stk', st') /\
 (!l.l ∈ FDOM st <=> l < s_uloc P)
