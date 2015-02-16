@@ -403,7 +403,7 @@ THEN `?stkst'. up_stack (P !! q) (TAKE n astk) (DROP n astk) stkst'` by (
 
 Cases_on `P !! q` THEN rw [up_stack_cases]
 
-THEN fs [stack_contains_store_def, ms_il3_def]
+THEN fs [stack_contains_store_def]
 
 
 THEN `n' ∈ FDOM r'''` by (`?nq.(q = &nq)` by fs [exec_il3_one_cases, NUM_POSINT_EXISTS, int_ge, dum_lt_thm] THEN rw []
