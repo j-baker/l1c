@@ -478,7 +478,7 @@ exec_il3 (il2_to_il3 P) (pc, stk, MAP_KEYS (map_fun (FST (make_loc_map P))) st)
 (pc', stk', MAP_KEYS (map_fun (FST (make_loc_map P))) st')``,
 metis_tac [il3_eql_il2, FST, SND, il2_to_il3_def]);
 
-val il2_vsm_correctness = prove(``
+val il2_vsm_correctness = store_thm("il2_vsm_correctness",``
 !P pc stk st pc' stk' st'.
 exec P (pc, stk, st) (pc', stk', st') /\ ms_il2 P st ==>
 
