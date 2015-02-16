@@ -20,6 +20,7 @@ THEN rw [LET_DEF]
 
 THEN metis_tac [ABSORPTION_RWT]);
 
+(* Weaker but sufficient thm follows immediately from L1_IL1_CORRECTNESS_LEMMA *)
 val il2_equiv_thm = prove(``!e st1 pc v st1' st2. exec (compile_il2 e) (0, [], st1) (pc, [v], st1') /\ equiv st1 st2 ==> ?st2'.
 exec (compile_il2 e) (0, [], st2) (pc, [v], st2') /\ equiv st1' st2'``, cheat);
 
