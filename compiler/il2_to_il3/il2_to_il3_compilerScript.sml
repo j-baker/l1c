@@ -370,45 +370,44 @@ stack_contains_store st' stkst'``,
 metis_tac [cexec_step_thm, vsm_lemma]);
 
 
-val largest_loc_def = Define `(largest_loc [] = 0) /\ (largest_loc (VSM_Load l::xs) = MAX l (largest_loc xs)) /\ (largest_loc (VSM_Store l::xs) = MAX l (largest_loc xs)) /\ (largest_loc (_::xs) = largest_loc xs)`;
+val s_uloc_def = Define `(s_uloc [] = 0) /\ (s_uloc (VSM_Load l::xs) = MAX (l + 1) (s_uloc xs)) /\ (s_uloc (VSM_Store l::xs) = MAX (l+1) (s_uloc xs)) /\ (s_uloc (_::xs) = s_uloc xs)`;
 
-
-val lloc_thm = prove(``!P q n.(q < LENGTH P) /\ (P !! &q = VSM_Store n) ==> (n <= largest_loc P)``,
+val suloc_thm = prove(``!P q n.(q < LENGTH P) /\ (P !! &q = VSM_Store n) ==> (n < s_uloc P)``,
 Induct_on `q` THEN rw [] THEN rfs [FETCH_EL] THEN (Cases_on `P` THEN1 (fs [LENGTH]))
-THEN1 (fs [] THEN rw [largest_loc_def])
+THEN1 (fs [] THEN rw [s_uloc_def])
 THEN
-Cases_on `h` THEN fs [EL, largest_loc_def] THEN rw [] THEN fs [] THEN rw [] THEN res_tac THEN fs [FETCH_EL]);
+Cases_on `h` THEN fs [EL, s_uloc_def] THEN rw [] THEN fs [] THEN rw [] THEN res_tac THEN fs [FETCH_EL]);
 
-val lloc_2_thm = prove(``!P c c'.exec_il3 P c c' ==> (!l.l ∈ FDOM (SND (SND c)) <=> l <= largest_loc P) ==> (!l.l ∈ FDOM (SND (SND c')) <=> l <= largest_loc P)``,
+val suloc_2_thm = prove(``!P c c'.exec_il3 P c c' ==> (!l.l ∈ FDOM (SND (SND c)) <=> l < s_uloc P) ==> (!l.l ∈ FDOM (SND (SND c')) <=> l < s_uloc P)``,
 STRIP_TAC THEN fs [exec_il3_def] THEN ho_match_mp_tac RTC_STRONG_INDUCT THEN rw []
 
 THEN Cases_on `c` THEN Cases_on `c'` THEN Cases_on `c''` THEN Cases_on `r`  THEN Cases_on `r'` THEN Cases_on `r''` THEN fs [FST, SND] THEN rw []
 
 THEN fs [exec_il3_one_cases] THEN Cases_on `P !! q` THEN fs [exec_il3_instr_cases] THEN rw []
 THEN `?nq.q = &nq` by metis_tac [NUM_POSINT_EXISTS, int_ge] THEN rw []
-THEN imp_res_tac lloc_thm
+THEN imp_res_tac suloc_thm
 THEN fs [dum_lt_thm] THEN rfs []
-THEN `!l. (l = n) ==> (l <= largest_loc P)` by metis_tac []
-THEN `!l. l ∈ FDOM r' ⇔ l ≤ largest_loc P` by metis_tac [EQ_IMP_THM]
+THEN `!l. (l = n) ==> (l < s_uloc P)` by metis_tac []
+THEN `!l. l ∈ FDOM r' ⇔ l < s_uloc P` by metis_tac [EQ_IMP_THM]
 THEN metis_tac []);
 
-val lloc_21_thm = prove(``!P pc stk st pc' stk' st'.exec_il3 P (pc, stk, st) (pc', stk', st') /\ (!l.l ∈ FDOM st <=> l <= largest_loc P) ==> (!l.l ∈ FDOM st' <=> l <= largest_loc P)``,
+val suloc_21_thm = prove(``!P pc stk st pc' stk' st'.exec_il3 P (pc, stk, st) (pc', stk', st') /\ (!l.l ∈ FDOM st <=> l < s_uloc P) ==> (!l.l ∈ FDOM st' <=> l < s_uloc P)``,
 rw []
-THEN mp_tac lloc_2_thm
+THEN mp_tac suloc_2_thm
 THEN rw []
 THEN res_tac
 THEN fs [SND]);
 
-val astack_def = Define `astack P st stk = stk ++ (REVERSE (GENLIST (\l.st ' l) (SUC (largest_loc P))))`;
+val astack_def = Define `astack P st stk = stk ++ (REVERSE (GENLIST (\l.st ' l) (s_uloc P)))`;
 
-val astack_produces_valid_store = prove(``!P st stk.(!l.l ∈ FDOM st <=> l <= largest_loc P) ==> ?n.(stk = TAKE n (astack P st stk)) /\ stack_contains_store st (DROP n (astack P st stk))``,
+val astack_produces_valid_store = prove(``!P st stk.(!l.l ∈ FDOM st <=> l < s_uloc P) ==> ?n.(stk = TAKE n (astack P st stk)) /\ stack_contains_store st (DROP n (astack P st stk))``,
 
 rw [astack_def]
 THEN EXISTS_TAC ``(LENGTH stk)`` THEN
 rw [take_thm, drop_thm, stack_contains_store_def, fetch_rev_def, FETCH_EL, LESS_EQ_IMP_LESS_SUC]);
 
 
-val exec_il3_imp_vsm_exec = prove(``!P c c'.exec_il3 P c c' ==> !n astk.(FST (SND c) = TAKE n astk) /\ stack_contains_store (SND (SND c)) (DROP n astk) /\ (!l.l ∈ FDOM (SND (SND c)) <=> l <= largest_loc P) ==> 
+val exec_il3_imp_vsm_exec = prove(``!P c c'.exec_il3 P c c' ==> !n astk.(FST (SND c) = TAKE n astk) /\ stack_contains_store (SND (SND c)) (DROP n astk) /\ (!l.l ∈ FDOM (SND (SND c)) <=> l < s_uloc P) ==> 
     ?n' astk'.vsm_exec P (FST c, astk) (FST c', astk') /\ (FST (SND c') = TAKE n' astk') /\ stack_contains_store (SND (SND c')) (DROP n' astk')``,
 STRIP_TAC THEN fs [exec_il3_def] THEN ho_match_mp_tac RTC_STRONG_INDUCT THEN rw []
 
@@ -429,7 +428,7 @@ THEN fs [stack_contains_store_def, ms_il3_def]
 
 THEN `n' ∈ FDOM r'''` by (`?nq.(q = &nq)` by fs [exec_il3_one_cases, NUM_POSINT_EXISTS, int_ge, dum_lt_thm] THEN rw []
 THEN `nq < LENGTH P` by fs [dum_lt_thm, exec_il3_one_cases]
-THEN `n' <= largest_loc P` by metis_tac [lloc_thm] THEN  metis_tac [])
+THEN `n' < s_uloc P` by metis_tac [suloc_thm] THEN  metis_tac [])
 
 THEN res_tac
 THEN rw []
@@ -453,8 +452,8 @@ THEN rw [Once RTC_CASES1]
 
 THEN fs [vsm_exec_def]
 
-THEN `(∀l. l ∈ FDOM r ⇔ l ≤ largest_loc P)` by (
-match_mp_tac lloc_21_thm
+THEN `(∀l. l ∈ FDOM r ⇔ l < s_uloc P)` by (
+match_mp_tac suloc_21_thm
 
 THEN rw [exec_il3_def]
 THEN metis_tac [RTC_SUBSET])
@@ -466,7 +465,7 @@ THEN metis_tac []);
 
 
 val vsm_exec_correctness_thm = prove(``!P pc stk st pc' stk' st'.exec_il3 P (pc, stk, st) (pc', stk', st') /\
-(!l.l ∈ FDOM st <=> l <= largest_loc P)
+(!l.l ∈ FDOM st <=> l < s_uloc P)
 ==> 
 ?n astk.vsm_exec P (pc, astack P st stk) (pc', astk) /\ (stk' = TAKE n astk)``,
 
@@ -488,7 +487,7 @@ exec P (pc, stk, st) (pc', stk', st') /\ ms_il2 P st ==>
 rw []
 THEN imp_res_tac nice_il3_eql_il2
 
-THEN `ms_il2 P st ==> (!l.l ∈ FDOM (MAP_KEYS (map_fun (FST (make_loc_map P))) st) <=> (l <= largest_loc (il2_to_il3 P)))` by cheat
+THEN `ms_il2 P st ==> (!l.l ∈ FDOM (MAP_KEYS (map_fun (FST (make_loc_map P))) st) <=> (l < s_uloc (il2_to_il3 P)))` by cheat
 
 THEN imp_res_tac vsm_exec_correctness_thm
 THEN rfs []
