@@ -1,4 +1,4 @@
-open HolKernel bossLib boolLib Parse ast_il2Theory ast_vsm0Theory lcsymtacs pairTheory finite_mapTheory pred_setTheory integerTheory smallstep_il2Theory relationTheory listTheory smallstep_vsm0Theory;
+open HolKernel bossLib boolLib Parse ast_il2Theory ast_vsm0Theory lcsymtacs pairTheory finite_mapTheory pred_setTheory integerTheory smallstep_il2Theory relationTheory listTheory smallstep_vsm0Theory arithmeticTheory;
 
 val _ = new_theory "il2_to_il3_compiler";
 
