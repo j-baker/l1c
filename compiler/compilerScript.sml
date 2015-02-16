@@ -6,6 +6,12 @@ val compile_il2_def = Define `compile_il2 e = il1_to_il2 (l1_to_il1 e 0)`;
 
 val compile_def = Define `compile e = il2_to_il3 (compile_il2 e)`;
 
+val create_il2_store_def = Define `
+(create_il2_store [] = FEMPTY) /\
+(create_il2_store (IL2_Store l::xs) = (create_il2_store xs) |+ (l, 0)) /\
+(create_il2_store (IL2_Load l::xs) = (create_il2_store xs) |+ (l, 0)) /\
+(create_il2_store (_::xs) = (create_il2_store xs))`;
+
 val ms_il2_st_thm = prove(``!e.ms_il2 e (create_il2_store e)``,
 
 Induct_on `e` THEN rw [ms_il2_def, create_il2_store_def, make_loc_map_def, locs_to_map_def, get_locations_def, FST]
@@ -31,12 +37,6 @@ val TOTAL_CORRECTNESS_THM = store_thm("TOTAL_CORRECTNESS_THM",
 metis_tac [compile_il2_def, L1_TO_IL1_EXISTS_CORRECTNESS_THM, CORRECTNESS_THM]);
 
 val length_prog_thm = prove(``!e.LENGTH (compile e) = LENGTH (compile_il2 e)``, rw [compile_def, compile_il2_def, il2_to_il3_def]);
-
-val create_il2_store_def = Define `
-(create_il2_store [] = FEMPTY) /\
-(create_il2_store (IL2_Store l::xs) = (create_il2_store xs) |+ (l, 0)) /\
-(create_il2_store (IL2_Load l::xs) = (create_il2_store xs) |+ (l, 0)) /\
-(create_il2_store (_::xs) = (create_il2_store xs))`;
 
 val make_stack_def = Define `make_stack e = astack (compile e)
             (MAP_KEYS (map_fun (FST (make_loc_map (compile_il2 e))))
