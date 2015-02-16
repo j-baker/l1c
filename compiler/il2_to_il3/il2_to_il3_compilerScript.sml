@@ -40,8 +40,6 @@ val ms_il2_def = Define `ms_il2 P s = (FDOM s = FDOM (FST (make_loc_map P)))`;
 val ms_il2_trans = prove(``!P r''' i v.ms_il2 P r''' /\ ms_il2 P (r''' |+ (i, v)) ==> (FDOM r''' = FDOM (r''' |+ (i, v)))``,
 metis_tac [ms_il2_def]);
 
-val ms_il3_def = Define `ms_il3 P s = (FDOM s = FDOM (FST (locs_to_map (get_locations_il3 P))))`;
-
 val ms_const = prove(``!P c c'.exec P c c' ==> ms_il2 P (SND (SND c)) ==> ms_il2 P (SND (SND c'))``,
 fs [exec_def] THEN STRIP_TAC THEN ho_match_mp_tac RTC_STRONG_INDUCT
 
