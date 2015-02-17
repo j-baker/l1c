@@ -43,7 +43,7 @@ rw []);
 
 val APPEND_TRACE_SAME_THM = store_thm("APPEND_TRACE_SAME_THM",
 ``!P c c'.exec P c c' ==> !P'.exec (P ++ P') c c'``,
-fs [exec_def] THEN strip_tac THEN ho_match_mp_tac exec_strongind_right THEN rw []
+fs [exec_def] THEN strip_tac THEN ho_match_mp_tac RTC_STRONG_INDUCT_RIGHT1 THEN rw []
 THEN fs [Once exec_one_cases]
 
 THEN `(exec_one (P ++ P'))^* c (pc, stk, st)` by metis_tac []
@@ -60,7 +60,7 @@ Cases_on `x` THEN rwa [EQ_IMP_THM, exec_instr_cases] THEN Cases_on `s` THEN fsa 
 val APPEND_TRACE_SAME_2_THM = store_thm("APPEND_TRACE_SAME_2_THM",
 ``!P c c'.exec P c c' ==> !P'.exec (P' ++ P) (incr_pc c (&LENGTH P')) (incr_pc c' (&LENGTH P'))``,
 fs [exec_def] THEN strip_tac
-THEN ho_match_mp_tac exec_strongind_right THEN rw [] THEN Cases_on `c` THEN Cases_on `c'` THEN Cases_on `c''` THEN fs [Once exec_one_cases] THEN rw [] THEN fs [incr_pc_def] THEN rw []
+THEN ho_match_mp_tac RTC_STRONG_INDUCT_RIGHT1 THEN rw [] THEN Cases_on `c` THEN Cases_on `c'` THEN Cases_on `c''` THEN fs [Once exec_one_cases] THEN rw [] THEN fs [incr_pc_def] THEN rw []
 
 
 THEN `exec_instr ((P' ++ P) !! (q' + &LENGTH P')) (&LENGTH P' + q', stk, st) (&LENGTH P' + q'', stk', st')` by (

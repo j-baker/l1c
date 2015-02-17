@@ -36,16 +36,4 @@ val (exec_one_rules, exec_one_ind, exec_one_cases) = Hol_reln `
 
 val exec_def = Define `exec P c c' = (exec_one P)^* c c'`;
 
-val exec_strongind = store_thm("exec_strongind",
-``!PR P.
-     (∀x. P x x) ∧ (∀x y z. (exec_one PR) x y ∧ (exec_one PR)^* y z ∧ P y z ⇒ P x z) ⇒
-     !c1 c2. (exec_one PR)^* c1 c2 ⇒ P c1 c2``,
-metis_tac [RTC_STRONG_INDUCT]);
-
-val exec_strongind_right = store_thm("exec_strongind_right",
-``∀R P.
-           (∀x. P x x) ∧ (∀x y z. P x y ∧ (exec_one R)^* x y ∧ (exec_one R) y z ⇒ P x z) ⇒
-           ∀x y. (exec_one R)^* x y ⇒ P x y``,
-metis_tac [RTC_STRONG_INDUCT_RIGHT1]);
-
 val _ = export_theory ();
