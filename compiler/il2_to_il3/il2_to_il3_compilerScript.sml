@@ -42,15 +42,6 @@ THEN rw [locs_to_map_def]
 THEN (TRY (Cases_on `i' ∈ FDOM map`)) THEN (TRY (Cases_on `i ∈ FDOM map`)) THEN fs [FST, SND] THEN rw [] THEN (TRY (metis_tac [])) THEN rw [get_locations_def, locs_to_map_def, FST, FAPPLY_FUPDATE_THM] THEN Cases_on `i ∈ FDOM map'` THEN rw [])));
 
 
-THEN Cases_on `n`
-THEN (TRY ((fs [fetch_def] THEN rw [] THEN rw [get_locations_def] THEN rw [locs_to_map_def] THEN Cases_on `i ∈ FDOM map` THEN rw [] THEN FAIL_TAC "fail")))
-
-THENL [`P !! &n' = IL2_Store i` by (fs [fetch_def] THEN (`&SUC n' - 1 = &n'` by fs [INT, int_sub] THEN rw [Once (GSYM INT_ADD_ASSOC)]) THEN fs []), `P !! &n' = IL2_Load i` by (fs [fetch_def] THEN (`&SUC n' - 1 = &n'` by fs [INT, int_sub] THEN rw [Once (GSYM INT_ADD_ASSOC)]) THEN fs [])]
-THEN `n' < LENGTH P` by decide_tac
-THEN res_tac
-THEN fs [make_loc_map_def]
-
-THEN Cases_on `h` THEN rw [get_locations_def] THEN rw [locs_to_map_def] THEN Cases_on `i' ∈ FDOM map` THEN fs [FST]);
 
 val ms_il2_def = Define `ms_il2 P s = (FDOM s = FDOM (FST (make_loc_map P)))`;
 
