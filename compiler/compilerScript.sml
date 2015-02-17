@@ -89,12 +89,10 @@ THEN fs [il1_to_il2_def, il1e_to_il2_def]
 
 THEN fs [il2_store_etc, create_il2_store_def, FUNION_FEMPTY_1, FUNION_FEMPTY_2, FUNION_FUPDATE_1, FUNION_FUPDATE_2]
 
+THENL [Cases_on `Compiler lc3 ∈ FDOM (create_il2_store (il1_to_il2 sl1))` THEN Cases_on `Compiler lc3 ∈ FDOM (create_il2_store (il1e_to_il2 e1'))`,
+Cases_on `Compiler lc3 ∈ FDOM (create_il2_store (il1_to_il2 sl1))` THEN Cases_on `Compiler lc3 ∈ FDOM (create_il2_store (il1e_to_il2 e1'))`,
+Cases_on `Compiler lc4 ∈ FDOM (create_il2_store (il1_to_il2 sl1))` THEN Cases_on `Compiler lc4 ∈ FDOM (create_il2_store (il1e_to_il2 e1'))`, Cases_on `User n ∈ FDOM (create_il2_store (il1_to_il2 sl))` THEN (Cases_on `User n ∈ FDOM (create_il2_store (il1e_to_il2 e'))`), all_tac, all_tac, all_tac]
 
-THEN Cases_on `User n ∈ FDOM (create_il2_store (il1_to_il2 sl))`
-THEN (TRY (Cases_on `User n ∈ FDOM (create_il2_store (il1_to_il2 e'))`))
-THEN (TRY (Cases_on `User n ∈ FDOM (create_il2_store (il1e_to_il2 e'))`))
-THEN Cases_on `Compiler lc3 ∈ FDOM (create_il2_store (il1_to_il2 sl1))` THEN Cases_on `Compiler lc3 ∈ FDOM (create_il2_store (il1e_to_il2 e1'))` 
-THEN TRY (Cases_on `Compiler lc4 ∈ FDOM (create_il2_store (il1_to_il2 sl1))` THEN Cases_on `Compiler lc4 ∈ FDOM (create_il2_store (il1e_to_il2 e1'))` )
 THEN fs [] THEN rw [create_store_def] THEN fs [con_store_etc] THEN fs [equiv_def] THEN rw [] THEN `(create_il2_store (il1_to_il2 sl1) ⊌
  create_il2_store (il1e_to_il2 e1') ⊌
  create_il2_store (il1_to_il2 sl2) ⊌
