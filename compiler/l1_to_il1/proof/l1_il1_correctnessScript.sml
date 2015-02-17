@@ -345,9 +345,31 @@ THEN res_tac
 
 THEN fs [l1_il1_val_def]
 
-THEN `bs_il1 (IL1_Seq st2 (IL1_Seq st1 (IL1_While ex1 (IL1_Seq st2 st1))), fs') IL1_ESkip fs'''` by (rw [Once bs_il1_cases] THEN metis_tac [])
-THEN `bs_il1 (IL1_Seq (IL1_Seq st2 st1) (IL1_While ex1 (IL1_Seq st2 st1)), fs') IL1_ESkip fs'''` by metis_tac [IL1_SEQ_ASSOC_THM]
-THEN `bs_il1 (IL1_While ex1 (IL1_Seq st2 st1), fs') IL1_ESkip fs'''` by metis_tac [WHILE_UNWIND_ONCE_THM]
+THEN `bs_il1 (IL1_Seq st2 (IL1_Seq st1 (IL1_While ex1 (IL1_Seq st2 (IL1_Seq (IL1_Expr ex2) st1)))), fs') IL1_ESkip fs'''` by (rw [Once bs_il1_cases] THEN metis_tac [])
+THEN `bs_il1 (IL1_Seq (IL1_Seq st2 st1) (IL1_While ex1 (IL1_Seq st2 (IL1_Seq (IL1_Expr ex2) st1))), fs') IL1_ESkip fs'''` by metis_tac [IL1_SEQ_ASSOC_THM]
+THEN `bs_il1 (IL1_While ex1 (IL1_Seq st2 (IL1_Seq (IL1_Expr ex2) st1)), fs') IL1_ESkip fs'''` by (
+
+rw [Once WHILE_UNWIND_ONCE_THM]
+THEN rw [GSYM IL1_SEQ_ASSOC_THM]
+THEN rw [Once bs_il1_cases]
+
+THEN ` bs_il1 (st2,fs') IL1_ESkip fs'' ∧
+  bs_il1
+    (IL1_Seq (IL1_Seq (IL1_Expr ex2) st1)
+       (IL1_While ex1 (IL1_Seq st2 (IL1_Seq (IL1_Expr ex2) st1))),fs'')
+    IL1_ESkip fs'''` by (
+
+rw []
+
+THEN rw [Once bs_il1_cases]
+THEN rw [Once bs_il1_cases]
+THEN rw [Once bs_il1_cases]
+
+THEN fs[Q.SPEC`(IL1_Seq X Y, s)`bs_il1_cases] 
+
+THEN metis_tac [])
+
+THEN metis_tac [])
 
 THEN rw [Once bs_il1_cases]
 THEN metis_tac [])
@@ -360,7 +382,7 @@ THEN`?fs'.bs_il1 (st1, fs) IL1_ESkip fs' /\ bs_il1_expr (ex1, fs') (IL1_Boolean 
 
 THEN fs [l1_il1_val_def]
 
-THEN `bs_il1 (IL1_While ex1 (IL1_Seq st2 st1), fs') IL1_ESkip fs'` by (rw [Once bs_il1_cases] THEN metis_tac [])
+THEN `bs_il1 (IL1_While ex1 (IL1_Seq st2 (IL1_Seq (IL1_Expr ex2) st1)), fs') IL1_ESkip fs'` by (rw [Once bs_il1_cases] THEN metis_tac [])
 THEN rw [Once bs_il1_expr_cases] THEN metis_tac [])
 (* End while false case *));
 

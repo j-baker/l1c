@@ -1,0 +1,11 @@
+language: c
+sudo: false
+install: build/install-deps.sh
+script: build/build-travis.sh
+env: PATH=$PATH:$HOME/HOL/bin LD_LIBRARY_PATH=$HOME/polyml/lib
+cache:
+  directories:
+    - $HOME/HOL
+    - $HOME/polyml
+notifications:
+  email: false

@@ -1,0 +1,2 @@
+INCLUDES = l1_to_il1 il1_to_il2 l1_to_il1/proof il1_to_il2/proofs ../semantics/l1 il2_to_il3 ../semantics/il2 ../semantics/vsm0 il2_to_il3/proofs il3_to_vsm0 il3_to_vsm0/proofs ../semantics/l1/proofs
+OPTIONS = QUIT_ON_FAILURE
