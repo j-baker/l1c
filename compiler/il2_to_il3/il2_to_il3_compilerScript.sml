@@ -478,13 +478,75 @@ exec_il3 (il2_to_il3 P) (pc, stk, MAP_KEYS (map_fun (FST (make_loc_map P))) st)
 (pc', stk', MAP_KEYS (map_fun (FST (make_loc_map P))) st')``,
 metis_tac [il3_eql_il2, FST, SND, il2_to_il3_def]);
 
+val store_map_loc = prove(``!P i h.(h = IL2_Store i) \/ (h = IL2_Load i) ==> i ∈ FDOM (FST (make_loc_map (h::P)))``,
+rw [] THEN match_mp_tac every_store_inc_in_map THEN rw [] THEN `0 < SUC (LENGTH P)` by decide_tac THEN HINT_EXISTS_TAC THEN rw [fetch_def]);
+
+
+val load_1_thm = prove(``!P i'.MEM (IL2_Load i') P ==> i' ∈ FDOM (FST (make_loc_map P)) ``,
+Induct_on `P` THEN rw [] THEN fs [MEM, FST, make_loc_map_def, locs_to_map_def, get_locations_def]
+THEN (TRY (res_tac THEN Cases_on `h` THEN fs [fetch_def, make_loc_map_def, il2_to_il3_def, s_uloc_def, locs_to_map_def, get_locations_def, il2_to_il3m_def, FCARD_FEMPTY]))
+
+THEN `?m n.locs_to_map (get_locations P) = (m, n)` by metis_tac [locs_to_map_total_thm] THEN fs [LET_DEF]
+THEN Cases_on `i' ∈ FDOM m` THEN fs [] THEN rw []);
+
+val store_1_thm = prove(``!P i'.MEM (IL2_Store i') P ==> i' ∈ FDOM (FST (make_loc_map P)) ``,
+Induct_on `P` THEN rw [] THEN fs [MEM, FST, make_loc_map_def, locs_to_map_def, get_locations_def]
+THEN (TRY (res_tac THEN Cases_on `h` THEN fs [fetch_def, make_loc_map_def, il2_to_il3_def, s_uloc_def, locs_to_map_def, get_locations_def, il2_to_il3m_def, FCARD_FEMPTY]))
+
+THEN `?m n.locs_to_map (get_locations P) = (m, n)` by metis_tac [locs_to_map_total_thm] THEN fs [LET_DEF]
+THEN Cases_on `i' ∈ FDOM m` THEN fs [] THEN rw []);
+
+val snd_arg_fcard = prove(``!P.SND (make_loc_map P) = FCARD (FST (make_loc_map P))``,
+
+fs [make_loc_map_def] THEN Induct_on `P` THEN rw [get_locations_def, locs_to_map_def, FST, FCARD_FEMPTY] THEN Cases_on `h` THEN  fs [fetch_def, make_loc_map_def, il2_to_il3_def, s_uloc_def, locs_to_map_def, get_locations_def, il2_to_il3m_def] THEN `?m n.locs_to_map (get_locations P) = (m, n)` by metis_tac [locs_to_map_total_thm] THEN fs [LET_DEF]
+THEN Cases_on `i ∈ FDOM m` THEN fs [FCARD_FUPDATE] THEN decide_tac);
+
+val s_uloc_fcard = prove(``!P.s_uloc (il2_to_il3 P) = FCARD (FST (make_loc_map P))``,
+
+Induct_on `P` THEN rw [get_locations_def, locs_to_map_def, FST, FCARD_FEMPTY, s_uloc_def, make_loc_map_def, il2_to_il3_def]
+
+THEN Cases_on `h` THEN fs [fetch_def, make_loc_map_def, il2_to_il3_def, s_uloc_def, locs_to_map_def, get_locations_def, il2_to_il3m_def, FCARD_FEMPTY]
+
+THEN `?m n.locs_to_map (get_locations P) = (m, n)` by metis_tac [locs_to_map_total_thm] THEN fs [LET_DEF]
+
+THEN Cases_on `i ∈ FDOM m` THEN fs [FCARD_FUPDATE, FCARD_FEMPTY]
+
+THEN (TRY (`m ' i < FCARD m` by metis_tac [snd_arg_fcard, map_range_thm, FST, SND, make_loc_map_def]
+
+THEN `m ' i + 1 <= FCARD m` by decide_tac THEN rw [MAX_DEF] THEN decide_tac))
+
+THEN `MAP (il2_to_il3m (m |+ (i, n))) P = MAP (il2_to_il3m m) P` by (
+
+rw [MAP_EQ_f]
+
+THEN Cases_on `e` THEN  fs [il2_to_il3m_def, get_locations_def, s_uloc_def] THEN 
+
+
+`?m n.locs_to_map (get_locations P) = (m, n)` by metis_tac [locs_to_map_total_thm] THEN fs [LET_DEF]
+
+THEN fs [locs_to_map_def, get_locations_def] THEN fs [LET_DEF]
+
+THEN Cases_on `i' ∈ FDOM m'` THEN fs [] THEN rw [] THEN1 metis_tac [FAPPLY_FUPDATE_THM]
+
+THEN fs [FDOM_FUPDATE]
+
+THEN metis_tac [load_1_thm, store_1_thm, FST, make_loc_map_def, FAPPLY_FUPDATE_THM])
+
+THEN rw []
+
+THEN rw [MAX_DEF]
+
+THEN `FCARD m = n` by metis_tac [snd_arg_fcard, FST, make_loc_map_def, SND, MAX_DEF] THEN decide_tac);
+
+val cheated_2_thm = prove(``!P.SND (make_loc_map P) = s_uloc (il2_to_il3 P)``, metis_tac [s_uloc_fcard, snd_arg_fcard]);
+
 val cheated_thm = prove(``!P st.ms_il2 P st ==> (!l.l ∈ FDOM (MAP_KEYS (map_fun (FST (make_loc_map P))) st) <=> (l < s_uloc (il2_to_il3 P)))``,
 
 rw [ms_il2_def]
 
 THEN rw [MAP_KEYS_def, make_loc_map_inj]
 
-THEN `s_uloc (il2_to_il3 P) = (SND (make_loc_map P))` by cheat
+THEN `s_uloc (il2_to_il3 P) = (SND (make_loc_map P))` by metis_tac [cheated_2_thm]
 
 THEN metis_tac [locs_to_map_total_thm, map_fun_def, map_range_thm, make_loc_map_def,EQ_IMP_THM, map_range_2_thm, FST, SND, make_loc_map_def]);
 
