@@ -126,7 +126,7 @@ rw [make_stack_def]
 
 THEN imp_res_tac TOTAL_CORRECTNESS_THM
 
-THEN `equiv (con_store (create_store e)) (create_il2_store (compile_il2 e))` by metis_tac [store_equiv_gen_thm]
+THEN `equiv (con_store (create_store e)) (create_il2_store (compile_il2 e))` by metis_tac [compile_il2_def, store_equiv_gen_thm]
 
 THEN `∀st lc1' ex.
         ((st,ex,lc1') = l1_to_il1_pair 0 (FST (e,create_store e))) ⇒
