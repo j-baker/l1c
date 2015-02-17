@@ -1,0 +1,2 @@
+INCLUDES = ../../il2_to_il3 ../../il2_to_il3/proofs .. ../../../semantics/il2 ../../../semantics/vsm0 
+OPTIONS = QUIT_ON_FAILURE
