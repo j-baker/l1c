@@ -1,4 +1,4 @@
-open HolKernel bossLib boolLib Parse ast_il2Theory ast_vsm0Theory lcsymtacs pairTheory finite_mapTheory pred_setTheory integerTheory smallstep_il2Theory relationTheory listTheory smallstep_vsm0Theory arithmeticTheory;
+open HolKernel bossLib boolLib Parse ast_il2Theory ast_vsm0Theory lcsymtacs pairTheory finite_mapTheory pred_setTheory integerTheory smallstep_il2Theory relationTheory listTheory smallstep_vsm0Theory arithmeticTheory smallstep_il3Theory;
 
 val _ = new_theory "il2_to_il3_compiler";
 
@@ -135,20 +135,6 @@ val il2_to_il3m_def = Define `
 (il2_to_il3m m (IL2_Jump n) = (VSM_Jump n)) /\
 (il2_to_il3m m (IL2_Jz n) = VSM_Jz n)`;
 
-val (exec_il3_instr_rules, exec_il3_instr_ind, exec_il3_instr_cases) = Hol_reln `
-(!pc stk st.exec_il3_instr VSM_Nop (pc, stk, st) (pc+1, stk, st)) /\
-(!n pc stk st.exec_il3_instr (VSM_Push n) (pc, stk, st) (pc+1, n::stk, st)) /\
-(!l pc stk st.l ∈ FDOM st ==> exec_il3_instr (VSM_Load l) (pc, stk, st) (pc+1, (st ' l)::stk, st)) /\
-(!l pc v stk st.exec_il3_instr (VSM_Store l) (pc, v::stk, st) (pc+1, stk, st |+ (l, v))) /\
-(!pc v stk st.exec_il3_instr VSM_Pop (pc, v::stk, st) (pc+1, stk, st)) /\
-(!pc v1 v2 stk st.exec_il3_instr VSM_Plus (pc, v1::v2::stk, st) (pc+1, (v1+v2)::stk, st)) /\
-(!pc stk st.exec_il3_instr VSM_Halt (pc, stk, st) (pc, stk, st)) /\
-(!n pc stk st.exec_il3_instr (VSM_Jump n) (pc, stk, st) (pc + 1 + n, stk, st)) /\
-(!n pc stk st.exec_il3_instr (VSM_Jz n) (pc, 0::stk, st) (pc + 1 + n, stk, st)) /\
-(!n pc t stk st.(t <> 0) ==> exec_il3_instr (VSM_Jz n) (pc, t::stk, st) (pc + 1, stk, st)) /\
-(!v1 v2 pc stk st.(v1 >= v2) ==> exec_il3_instr (VSM_Geq) (pc, v1::v2::stk, st) (pc + 1, true_value::stk, st)) /\
-(!v1 v2 pc stk st.(v1 < v2) ==> exec_il3_instr (VSM_Geq) (pc, v1::v2::stk, st) (pc + 1, false_value::stk, st))`;
-
 val map_fetch_thm = prove(``!f xs n.(n < LENGTH xs) ==> ((MAP f xs) !! (&n) = f (xs !! (&n)))``,
 Induct_on `xs`
 THEN1 rw [LENGTH]
@@ -167,14 +153,6 @@ THEN rw [int_sub]
 THEN REWRITE_TAC [GSYM INT_ADD_ASSOC]
 THEN REWRITE_TAC [Once INT_ADD_SYM]
 THEN rw [INT_ADD_LINV]);
-
-val (exec_il3_one_rules, exec_il3_one_ind, exec_il3_one_cases) = Hol_reln `
-!instrs pc stk st pc' stk' st'.
-       ((pc >= 0) /\ (pc < &(LENGTH instrs)) /\
-        (exec_il3_instr (instrs !! pc) (pc, stk, st) (pc', stk', st')))
-    ==> exec_il3_one instrs (pc, stk, st) (pc', stk', st')`;
-
-val exec_il3_def = Define `exec_il3 P c c' = (exec_il3_one P)^* c c'`;
 
 val il3_eql_il2 = prove(``!P c c'. exec P c c' ==> (ms_il2 P (SND (SND c))) ==> exec_il3 (MAP (il2_to_il3m (FST (make_loc_map P))) P) (FST c, FST (SND c), MAP_KEYS (map_fun (FST (make_loc_map P))) (SND (SND c))) (FST c', FST (SND c'), MAP_KEYS (map_fun (FST (make_loc_map P))) (SND (SND c')))``, 
 STRIP_TAC
