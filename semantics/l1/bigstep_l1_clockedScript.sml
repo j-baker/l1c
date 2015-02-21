@@ -8,7 +8,7 @@ val (bs_l1_c_rules, bs_l1_c_ind, bs_l1_c_cases) = Hol_reln `
     (!p.bs_l1_c 0 p NONE) /\
 
     (* Values *)
-    (!cl v s.bs_l1_c (SUC cl) (L1_Value v, s) (SOME (v, s, cl))) /\
+    (!cl v s.bs_l1_c (SUC cl) (L1_Value v, s) (SOME (v, s, (SUC cl)))) /\
 
     (* Plus *)
     (!cl cl' cl'' e1 e2 n1 n2 s s' s''.
@@ -43,7 +43,7 @@ val (bs_l1_c_rules, bs_l1_c_ind, bs_l1_c_cases) = Hol_reln `
     (* Deref *)
     (!cl l s.
           l ∈ FDOM s
-      ==> bs_l1_c (SUC cl) (L1_Deref l, s) (SOME (L1_Int (s ' l), s, cl))) /\
+      ==> bs_l1_c (SUC cl) (L1_Deref l, s) (SOME (L1_Int (s ' l), s, (SUC cl)))) /\
 
     (* Assign *)
     (!cl cl' l e s n s'.
@@ -98,26 +98,26 @@ val (bs_l1_c_rules, bs_l1_c_ind, bs_l1_c_cases) = Hol_reln `
 
     (* While *)
     (!cl cl' cl'' cl''' e1 e2 s s' s'' s'''.
-        (bs_l1_c (SUC cl) (e1, s) (SOME (L1_Bool T, s', cl')) /\
+        (bs_l1_c cl (e1, s) (SOME (L1_Bool T, s', cl')) /\
    bs_l1_c cl' (e2, s') (SOME (L1_Skip, s'', cl'')) /\
    bs_l1_c cl'' (L1_While e1 e2, s'') (SOME (L1_Skip, s''', cl''')))
      ==> bs_l1_c (SUC cl) (L1_While e1 e2, s) (SOME (L1_Skip, s''', cl'''))) /\
 
     (!cl cl' e1 e2 s s'.
-         bs_l1_c (SUC cl) (e1, s) (SOME (L1_Bool F, s', cl'))
+         bs_l1_c cl (e1, s) (SOME (L1_Bool F, s', cl'))
      ==> bs_l1_c (SUC cl) (L1_While e1 e2, s) (SOME (L1_Skip, s', cl'))) /\
 
     (!cl e1 e2 s.
-         bs_l1_c (SUC cl) (e1, s) NONE
+         bs_l1_c cl (e1, s) NONE
      ==> bs_l1_c (SUC cl) (L1_While e1 e2, s) NONE) /\
 
     (!cl cl' e1 e2 s s'.
-        (bs_l1_c (SUC cl) (e1, s) (SOME (L1_Bool T, s', cl')) /\
+        (bs_l1_c cl (e1, s) (SOME (L1_Bool T, s', cl')) /\
    bs_l1_c cl' (e2, s') NONE)
      ==> bs_l1_c (SUC cl) (L1_While e1 e2, s) NONE) /\
 
     (!cl cl' cl'' e1 e2 s s' s''.
-        (bs_l1_c (SUC cl) (e1, s) (SOME (L1_Bool T, s', cl')) /\
+        (bs_l1_c cl (e1, s) (SOME (L1_Bool T, s', cl')) /\
    bs_l1_c cl' (e2, s') (SOME (L1_Skip, s'', cl'')) /\
    bs_l1_c cl'' (L1_While e1 e2, s'') NONE)
      ==> bs_l1_c (SUC cl) (L1_While e1 e2, s) NONE)

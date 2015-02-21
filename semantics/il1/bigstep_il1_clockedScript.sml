@@ -8,7 +8,7 @@ val (bs_il1_c_expr_rules, bs_il1_c_expr_ind, bs_il1_c_expr_cases) = Hol_reln `
     (!p.bs_il1_c_expr 0 p NONE) /\
 
     (* Values *)
-    (!cl v s.bs_il1_c_expr (SUC cl) (IL1_Value v, s) (SOME (v, cl))) /\
+    (!cl v s.bs_il1_c_expr (SUC cl) (IL1_Value v, s) (SOME (v, (SUC cl)))) /\
 
     (* Plus *)
     (!cl cl' cl'' e1 e2 n1 n2 s.
@@ -43,7 +43,7 @@ val (bs_il1_c_expr_rules, bs_il1_c_expr_ind, bs_il1_c_expr_cases) = Hol_reln `
     (* Deref *)
     (!cl l s.
         l ∈ FDOM s
-    ==> bs_il1_c_expr (SUC cl) (IL1_Deref l, s) (SOME (IL1_Integer (s ' l), cl))) /\
+    ==> bs_il1_c_expr (SUC cl) (IL1_Deref l, s) (SOME (IL1_Integer (s ' l), (SUC cl)))) /\
 
     (* EIf *)
     (!cl cl' cl'' e1 e2 e3 s v.
@@ -143,28 +143,28 @@ val (bs_il1_c_rules, bs_il1_c_ind, bs_il1_c_cases) = Hol_reln `
 
     (* While *)
     (!cl cl' cl'' cl''' e1 e2 s s' s''.
-        (bs_il1_c_expr (SUC cl) (e1, s) (SOME (IL1_Boolean T, cl')) /\
+        (bs_il1_c_expr cl (e1, s) (SOME (IL1_Boolean T, cl')) /\
          bs_il1_c cl' (e2, s) (SOME (IL1_ESkip, s', cl'')) /\
          bs_il1_c cl'' (IL1_While e1 e2, s') (SOME (IL1_ESkip, s'', cl''')))
      ==> bs_il1_c (SUC cl) (IL1_While e1 e2, s) (SOME (IL1_ESkip, s'', cl'''))) /\
 
     (!cl cl' e1 e2 s.
-       (bs_il1_c_expr (SUC cl) (e1, s) (SOME (IL1_Boolean F, cl')))
+       (bs_il1_c_expr cl (e1, s) (SOME (IL1_Boolean F, cl')))
     ==> bs_il1_c (SUC cl) (IL1_While e1 e2, s) (SOME (IL1_ESkip, s, cl'))) /\
 
     (!cl cl' e1 e2 s.
-        (bs_il1_c_expr (SUC cl) (e1, s) (SOME (IL1_Boolean T, cl')) /\
+        (bs_il1_c_expr cl (e1, s) (SOME (IL1_Boolean T, cl')) /\
          bs_il1_c cl' (e2, s) NONE)
      ==> bs_il1_c (SUC cl) (IL1_While e1 e2, s) NONE) /\
 
     (!cl cl' cl'' e1 e2 s s'.
-        (bs_il1_c_expr (SUC cl) (e1, s) (SOME (IL1_Boolean T, cl')) /\
+        (bs_il1_c_expr cl (e1, s) (SOME (IL1_Boolean T, cl')) /\
          bs_il1_c cl' (e2, s) (SOME (IL1_ESkip, s', cl'')) /\
          bs_il1_c cl'' (IL1_While e1 e2, s') NONE)
      ==> bs_il1_c (SUC cl) (IL1_While e1 e2, s) NONE) /\
 
     (!cl e1 e2 s.
-       (bs_il1_c_expr (SUC cl) (e1, s) NONE)
+       (bs_il1_c_expr cl (e1, s) NONE)
     ==> bs_il1_c (SUC cl) (IL1_While e1 e2, s) NONE)`;
 
 val _ = export_theory ();
