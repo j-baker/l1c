@@ -15,3 +15,5 @@ This has really saved me a lot of time since I've done that - my proofs go about
 5. A link to Tactic in HOL-interaction would be really useful. I've only just found it.
 
 6. Hol-interaction gives a few basic tactics. It would be useful for there to be some examples of goal manipulation - uses of Q.SPECL to avoid expanding variables, and really just a list of things that are found useful in everyday life. Almost all of my pain has been with manipulating theorems, not actually the core proving of them.
+
+7. I just discovered `Q.EXISTS_TAC`. I'm actually baffled that I got so far in without working out what Q is or does. It works much better than vanilla `EXISTS_TAC` (in particular it doesn't require type to be provided. This is another thing I only discovered today!) That *really* needs to be in HOL-interaction. I've never successfully used Q until today - so much garbage!
