@@ -3,6 +3,7 @@ open HolKernel Parse bossLib ast_il1Theory integerTheory;
 val _ = new_theory "ast_il2";
 
 val _ = Datatype `il2_stm = IL2_Nop
+                          | IL2_Tick
                           | IL2_Push  int
                           | IL2_Load  il1_loc
                           | IL2_Store il1_loc

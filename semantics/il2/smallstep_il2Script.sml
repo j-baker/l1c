@@ -16,6 +16,7 @@ val skip_value_def = Define `skip_value = 0`;
 
 val (exec_instr_rules, exec_instr_ind, exec_instr_cases) = Hol_reln `
 (!pc stk st.exec_instr IL2_Nop (pc, stk, st) (pc+1, stk, st)) /\
+(!pc stk st.exec_instr IL2_Tick (pc, stk, st) (pc+1, stk, st)) /\
 (!n pc stk st.exec_instr (IL2_Push n) (pc, stk, st) (pc+1, n::stk, st)) /\
 (!l pc stk st.l ∈ FDOM st ==> exec_instr (IL2_Load l) (pc, stk, st) (pc+1, (st ' l)::stk, st)) /\
 (!l pc v stk st.exec_instr (IL2_Store l) (pc, v::stk, st) (pc+1, stk, st |+ (l, v))) /\
