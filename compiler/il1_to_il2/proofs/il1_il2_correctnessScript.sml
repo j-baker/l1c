@@ -384,66 +384,66 @@ THEN1 (`exec (il1_to_il2 (IL1_While e1 e2)) (0, stk, s) (0, stk, s')` by all_tac
 
 THEN1 (rw [il1_to_il2_def]
 THEN `exec (il1e_to_il2 e1) (0, stk, s) (&LENGTH (il1e_to_il2 e1), true_value::stk, s)` by metis_tac [EXPR_CORRECTNESS_THM, il1_il2_val_def]
-THEN `exec [IL2_Jz (&LENGTH (il1_to_il2 e2) + 2)] (0, true_value::stk, s) (&LENGTH [IL2_Jz (&LENGTH (il1_to_il2 e2) + 2)], stk, s)` by (rw [exec_def, Once RTC_CASES1, exec_one_cases, fetch_def, exec_instr_cases, RTC_REFL, length_thm, true_value_def])
+THEN `exec [IL2_Jz (&LENGTH (il1_to_il2 e2) + 3)] (0, true_value::stk, s) (&LENGTH [IL2_Jz (&LENGTH (il1_to_il2 e2) + 3)], stk, s)` by (rw [exec_def, Once RTC_CASES1, exec_one_cases, fetch_def, exec_instr_cases, RTC_REFL, length_thm, true_value_def])
 
-THEN `exec (il1e_to_il2 e1 ++ [IL2_Jz (&LENGTH (il1_to_il2 e2) + 2)])
+THEN `exec (il1e_to_il2 e1 ++ [IL2_Jz (&LENGTH (il1_to_il2 e2) + 3)])
         (0,stk,s)
-        (&LENGTH (il1e_to_il2 e1 ++ [IL2_Jz (&LENGTH (il1_to_il2 e2) + 2)]),stk,s)` by (imp_res_tac EX_COM_THM THEN fsa [length_thm])
+        (&LENGTH (il1e_to_il2 e1 ++ [IL2_Jz (&LENGTH (il1_to_il2 e2) + 3)]),stk,s)` by (imp_res_tac EX_COM_THM THEN fsa [length_thm])
 
 THEN `exec (il1_to_il2 e2) (0, stk, s) (&LENGTH (il1_to_il2 e2), skip_value::stk, s')` by metis_tac []
 
 THEN `exec
-         (il1e_to_il2 e1 ++ [IL2_Jz (&LENGTH (il1_to_il2 e2) + 2)] ++
+         (il1e_to_il2 e1 ++ [IL2_Jz (&LENGTH (il1_to_il2 e2) + 3)] ++
           il1_to_il2 e2) (0,stk,s)
          (&LENGTH
              (il1e_to_il2 e1 ++
-              [IL2_Jz (&LENGTH (il1_to_il2 e2) + 2)] ++ (il1_to_il2 e2)),skip_value::stk,s')` by (imp_res_tac EX_COM_THM THEN fsa [length_thm])
+              [IL2_Jz (&LENGTH (il1_to_il2 e2) + 3)] ++ (il1_to_il2 e2)),skip_value::stk,s')` by (imp_res_tac EX_COM_THM THEN fsa [length_thm])
 
-THEN `exec  [IL2_Pop;
+THEN `exec  [IL2_Pop; IL2_Tick;
     IL2_Jump
-      (-&(LENGTH (il1e_to_il2 e1) + 1 + LENGTH (il1_to_il2 e2) + 2))]
+      (-&(LENGTH (il1e_to_il2 e1) + 1 + LENGTH (il1_to_il2 e2) + 3))]
 
-(0, skip_value::stk, s') (-&(LENGTH (il1e_to_il2 e1) + 1 + LENGTH (il1_to_il2 e2)), stk, s')` by (rw [exec_def, Once RTC_CASES1, Once exec_instr_cases, il1_il2_val_def, fetch_def, Once exec_one_cases, RTC_REFL] THEN rw [exec_def, Once RTC_CASES1, Once exec_instr_cases, il1_il2_val_def, fetch_def, Once exec_one_cases, RTC_REFL, INT] THEN `2 +
-   (-&(LENGTH (il1e_to_il2 e1) + 1 + LENGTH (il1_to_il2 e2) + 2)) = -&(LENGTH (il1e_to_il2 e1) + 1 + LENGTH (il1_to_il2 e2))` by fsa [INT] THEN metis_tac [RTC_REFL])
+(0, skip_value::stk, s') (-&(LENGTH (il1e_to_il2 e1) + 1 + LENGTH (il1_to_il2 e2)), stk, s')` by (rw [exec_def, Once RTC_CASES1, Once exec_instr_cases, il1_il2_val_def, fetch_def, Once exec_one_cases, RTC_REFL] THEN rw [exec_def, Once RTC_CASES1, Once exec_instr_cases, il1_il2_val_def, fetch_def, Once exec_one_cases, RTC_REFL] THEN rw [exec_def, Once RTC_CASES1, Once exec_instr_cases, il1_il2_val_def, fetch_def, Once exec_one_cases, RTC_REFL, INT] THEN `3 +
+   (-&(LENGTH (il1e_to_il2 e1) + 1 + LENGTH (il1_to_il2 e2) + 3)) = -&(LENGTH (il1e_to_il2 e1) + 1 + LENGTH (il1_to_il2 e2))` by fsa [INT] THEN metis_tac [RTC_REFL])
 
 THEN ` exec
-         [IL2_Pop;
+         [IL2_Pop; IL2_Tick;
           IL2_Jump
             (-&(LENGTH (il1e_to_il2 e1) + 1 + LENGTH (il1_to_il2 e2) +
-                2))] (&LENGTH
+                3))] (&LENGTH
                (il1e_to_il2 e1 ++
-                [IL2_Jz (&LENGTH (il1_to_il2 e2) + 2)] ++
+                [IL2_Jz (&LENGTH (il1_to_il2 e2) + 3)] ++
                 il1_to_il2 e2) −
             &LENGTH
                (il1e_to_il2 e1 ++
-                [IL2_Jz (&LENGTH (il1_to_il2 e2) + 2)] ++
+                [IL2_Jz (&LENGTH (il1_to_il2 e2) + 3)] ++
                 il1_to_il2 e2),skip_value::stk,s')
          (-&(LENGTH (il1e_to_il2 e1) + 1 + LENGTH (il1_to_il2 e2)),stk,
           s')` by rwa []
 
 THEN `
          exec
-           (il1e_to_il2 e1 ++ [IL2_Jz (&LENGTH (il1_to_il2 e2) + 2)] ++
-            il1_to_il2 e2 ++ [IL2_Pop;
+           (il1e_to_il2 e1 ++ [IL2_Jz (&LENGTH (il1_to_il2 e2) + 3)] ++
+            il1_to_il2 e2 ++ [IL2_Pop; IL2_Tick;
           IL2_Jump
             (-&(LENGTH (il1e_to_il2 e1) + 1 + LENGTH (il1_to_il2 e2) +
-                2))]) (0,stk,s)
+                3))]) (0,stk,s)
            (&LENGTH
                (il1e_to_il2 e1 ++
-                [IL2_Jz (&LENGTH (il1_to_il2 e2) + 2)] ++
+                [IL2_Jz (&LENGTH (il1_to_il2 e2) + 3)] ++
                 il1_to_il2 e2) + -&(LENGTH (il1e_to_il2 e1) + 1 + LENGTH (il1_to_il2 e2)),stk,s')` by (imp_res_tac EXECUTION_COMPOSE_THM THEN rwa [])
 
 
 THEN `exec
-         (il1e_to_il2 e1 ++ [IL2_Jz (&LENGTH (il1_to_il2 e2) + 2)] ++
+         (il1e_to_il2 e1 ++ [IL2_Jz (&LENGTH (il1_to_il2 e2) + 3)] ++
           il1_to_il2 e2 ++
-          [IL2_Pop;
+          [IL2_Pop; IL2_Tick;
            IL2_Jump
              (-&(LENGTH (il1e_to_il2 e1) + 1 + LENGTH (il1_to_il2 e2) +
-                 2))] ++ [IL2_Push skip_value]) (0,stk,s)
+                 3))] ++ [IL2_Push skip_value]) (0,stk,s)
          (&LENGTH
              (il1e_to_il2 e1 ++
-              [IL2_Jz (&LENGTH (il1_to_il2 e2) + 2)] ++ il1_to_il2 e2) +
+              [IL2_Jz (&LENGTH (il1_to_il2 e2) + 3)] ++ il1_to_il2 e2) +
           -&(LENGTH (il1e_to_il2 e1) + 1 + LENGTH (il1_to_il2 e2)),stk,
           s')` by metis_tac [APPEND_TRACE_SAME_THM]
 
@@ -454,47 +454,47 @@ THEN metis_tac [exec_def, RTC_TRANSITIVE, transitive_def])
 
 THEN1 (rw [il1_to_il2_def]
 THEN `exec (il1e_to_il2 e1) (0, stk, s') (&LENGTH (il1e_to_il2 e1), false_value::stk, s')` by metis_tac [EXPR_CORRECTNESS_THM, il1_il2_val_def]
-THEN `exec [IL2_Jz (&LENGTH (il1_to_il2 e2) + 2)] (0, false_value::stk, s') (1 + (&(LENGTH (il1_to_il2 e2)) + 2), stk, s')` by  (rw [exec_def, Once RTC_CASES1, exec_one_cases, fetch_def, exec_instr_cases, RTC_REFL, length_thm, false_value_def] THEN fsa [] THEN metis_tac [RTC_REFL])
+THEN `exec [IL2_Jz (&LENGTH (il1_to_il2 e2) + 3)] (0, false_value::stk, s') (1 + (&(LENGTH (il1_to_il2 e2)) + 3), stk, s')` by  (rw [exec_def, Once RTC_CASES1, exec_one_cases, fetch_def, exec_instr_cases, RTC_REFL, length_thm, false_value_def] THEN fsa [] THEN metis_tac [RTC_REFL])
 
-THEN `exec (il1e_to_il2 e1 ++ [IL2_Jz (&LENGTH (il1_to_il2 e2) + 2)]) (0, stk, s') (&LENGTH (il1e_to_il2 e1) + (1 + (&LENGTH (il1_to_il2 e2) + 2)), stk, s')` by (imp_res_tac EXECUTION_COMPOSE_THM THEN rwa [])
+THEN `exec (il1e_to_il2 e1 ++ [IL2_Jz (&LENGTH (il1_to_il2 e2) + 3)]) (0, stk, s') (&LENGTH (il1e_to_il2 e1) + (1 + (&LENGTH (il1_to_il2 e2) + 3)), stk, s')` by (imp_res_tac EXECUTION_COMPOSE_THM THEN rwa [])
 
 
-THEN `exec (il1e_to_il2 e1 ++ [IL2_Jz (&LENGTH (il1_to_il2 e2) + 2)] ++
+THEN `exec (il1e_to_il2 e1 ++ [IL2_Jz (&LENGTH (il1_to_il2 e2) + 3)] ++
    il1_to_il2 e2 ++
-   [IL2_Pop;
+   [IL2_Pop; IL2_Tick;
     IL2_Jump
-	(-&(LENGTH (il1e_to_il2 e1) + 1 + LENGTH (il1_to_il2 e2) + 2))]) (0, stk, s') (&LENGTH (il1e_to_il2 e1) + (1 + (&LENGTH (il1_to_il2 e2) + 2)), stk, s')` by metis_tac [APPEND_TRACE_SAME_THM]
+	(-&(LENGTH (il1e_to_il2 e1) + 1 + LENGTH (il1_to_il2 e2) + 3))]) (0, stk, s') (&LENGTH (il1e_to_il2 e1) + (1 + (&LENGTH (il1_to_il2 e2) + 3)), stk, s')` by metis_tac [APPEND_TRACE_SAME_THM]
 
 THEN `exec [IL2_Push skip_value] (0, stk, s') (&LENGTH [IL2_Push skip_value], skip_value::stk, s')` by  (rw [exec_def, Once RTC_CASES1, exec_one_cases, fetch_def, exec_instr_cases, RTC_REFL, length_thm, false_value_def] THEN rwa [])
 
 THEN `exec
-        (il1e_to_il2 e1 ++ [IL2_Jz (&LENGTH (il1_to_il2 e2) + 2)] ++
+        (il1e_to_il2 e1 ++ [IL2_Jz (&LENGTH (il1_to_il2 e2) + 3)] ++
          il1_to_il2 e2 ++
-         [IL2_Pop;
+         [IL2_Pop; IL2_Tick;
           IL2_Jump
             (-&(LENGTH (il1e_to_il2 e1) + 1 + LENGTH (il1_to_il2 e2) +
-                2))]) (0,stk,s')
-        (&LENGTH (il1e_to_il2 e1 ++ [IL2_Jz (&LENGTH (il1_to_il2 e2) + 2)] ++
+                3))]) (0,stk,s')
+        (&LENGTH (il1e_to_il2 e1 ++ [IL2_Jz (&LENGTH (il1_to_il2 e2) + 3)] ++
          il1_to_il2 e2 ++
-         [IL2_Pop;
+         [IL2_Pop; IL2_Tick;
           IL2_Jump
             (-&(LENGTH (il1e_to_il2 e1) + 1 + LENGTH (il1_to_il2 e2) +
-                2))]), stk, s')` by (rwa [INT, length_thm] THEN `&(LENGTH (il1e_to_il2 e1) + 1 + LENGTH (il1_to_il2 e2) + 2) = &LENGTH (il1e_to_il2 e1) + (1 + (&LENGTH (il1_to_il2 e2) + 2))` by rwa [] THEN fs [])
+                3))]), stk, s')` by (rwa [INT, length_thm] THEN `&(LENGTH (il1e_to_il2 e1) + 1 + LENGTH (il1_to_il2 e2) + 3) = &LENGTH (il1e_to_il2 e1) + (1 + (&LENGTH (il1_to_il2 e2) + 3))` by rwa [] THEN fs [])
 
 THEN ` exec
-        (il1e_to_il2 e1 ++ [IL2_Jz (&LENGTH (il1_to_il2 e2) + 2)] ++
+        (il1e_to_il2 e1 ++ [IL2_Jz (&LENGTH (il1_to_il2 e2) + 3)] ++
          il1_to_il2 e2 ++
-         [IL2_Pop;
+         [IL2_Pop; IL2_Tick;
           IL2_Jump
             (-&(LENGTH (il1e_to_il2 e1) + 1 + LENGTH (il1_to_il2 e2) +
-                2))] ++ [IL2_Push skip_value]) (0,stk,s')
+                3))] ++ [IL2_Push skip_value]) (0,stk,s')
         (&LENGTH
-            (il1e_to_il2 e1 ++ [IL2_Jz (&LENGTH (il1_to_il2 e2) + 2)] ++
+            (il1e_to_il2 e1 ++ [IL2_Jz (&LENGTH (il1_to_il2 e2) + 3)] ++
              il1_to_il2 e2 ++
-             [IL2_Pop;
+             [IL2_Pop; IL2_Tick;
               IL2_Jump
                 (-&(LENGTH (il1e_to_il2 e1) + 1 +
-                    LENGTH (il1_to_il2 e2) + 2))]) +
+                    LENGTH (il1_to_il2 e2) + 3))]) +
          &LENGTH [IL2_Push skip_value],skip_value::stk,s')` by imp_res_tac EX_COM_THM
 
 THEN fsa [INT, length_thm]));
