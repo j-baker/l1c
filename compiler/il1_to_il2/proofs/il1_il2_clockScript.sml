@@ -8,10 +8,6 @@ metis_tac [CLOCKED_IMP_UNCLOCKED_IL1, CORRECTNESS_THM, CLOCKED_IL1_EQUIV_BIMP]);
 
 val dud_diverge_thm = prove(``!e s.(!c.bs_il1_c c (e, s) NONE) ==> !tc stk. exec_clocked (il1_to_il2 e) (SOME (0, tc, stk, s)) NONE``, cheat);
 
-val bs_il1_c_det_thm = prove(``!c p r r'.exec_clocked p a b /\ exec_clocked p a c
-
-bs_il1_c c p r /\ bs_il1_c c p r' ==> (r = r')``, cheat);
-
 val no_step_def = Define `
 no_step p s = ~?r.exec_clocked_one p (SOME s) r
 `;
