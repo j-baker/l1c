@@ -18,7 +18,17 @@ val lem2 = prove(``!p stk s.(?c c' stk' s' r.exec_clocked p (SOME (0, c, stk, s)
 
 val lem3 = prove(``!e s.(!v s'.~bs_il1 (e, s) v s') <=> ~(?c r.bs_il1_c c (e, s) (SOME r))``, cheat);
 
-val lem4 = prove(``!e s.(!c.bs_il1_c c (e, s) NONE) ==> (!v s'.¬bs_il1 (e, s) v s')``, cheat);
+
+val bs_il1_c_det_thm = prove(``!c p r r'.bs_il1_c c p r /\ bs_il1_c c p r' ==> (r = r')``, cheat);
+
+val lem4 = prove(``!e s.(!c.bs_il1_c c (e, s) NONE) ==> (!v s'.¬bs_il1 (e, s) v s')``, rw [] THEN CCONTR_TAC THEN fs [] THEN rw []
+
+THEN imp_res_tac UNCLOCKED_IMP_CLOCKED_IL1
+
+THEN `∃cl. bs_il1_c (SUC cl) (e,s) (SOME (v,s',SUC 0))` by metis_tac []
+THEN `bs_il1_c (SUC cl) (e,s) NONE` by metis_tac []
+THEN `SOME (v, s', SUC 0) = NONE` by metis_tac [bs_il1_c_det_thm]
+THEN fs []);
 
 val cor_oneway = prove(``
 !e s.(~?v s'.bs_il1 (e, s) v s') ==> (!stk.~?stk' s'.exec (il1_to_il2 e) (0, stk, s) (&LENGTH (il1_to_il2 e), stk', s'))``,
