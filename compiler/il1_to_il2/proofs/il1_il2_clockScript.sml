@@ -16,8 +16,17 @@ val lem1 = prove(``!e s.(?c r.bs_il1_c c (e, s) (SOME r)) <=> ~(!c.bs_il1_c c (e
 
 val lem2 = prove(``!p stk s.(?c c' stk' s' r.exec_clocked p (SOME (0, c, stk, s)) (SOME (&LENGTH p, c', stk', s') )) <=> ~(!c.exec_clocked p (SOME (0, c, stk, s)) NONE)``, cheat);
 
-val lem3 = prove(``!e s.(!v s'.~bs_il1 (e, s) v s') <=> ~(?c r.bs_il1_c c (e, s) (SOME r))``, cheat);
+val lem3 = prove(``!e s.(!v s'.~bs_il1 (e, s) v s') <=> ~(?c r.bs_il1_c c (e, s) (SOME r))``,
+rw [EQ_IMP_THM]
 
+THEN CCONTR_TAC THEN fs []
+
+THEN1 (imp_res_tac CLOCKED_IMP_UNCLOCKED_IL1
+THEN Cases_on `r` THEN Cases_on `r'`
+THEN fs [] THEN metis_tac [])
+
+THEN imp_res_tac UNCLOCKED_IMP_CLOCKED_IL1
+THEN metis_tac []);
 
 val bs_il1_c_det_thm = prove(``!c p r r'.bs_il1_c c p r /\ bs_il1_c c p r' ==> (r = r')``, cheat);
 
