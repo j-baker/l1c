@@ -1,15 +1,16 @@
-open HolKernel boolLib bossLib listTheory Parse IndDefLib finite_mapTheory relationTheory arithmeticTheory ast_il1Theory bigstep_il1Theory pred_setTheory pairTheory lcsymtacs prim_recTheory integerTheory store_equivalenceTheory l1_to_il1_compilerTheory l1_il1_totalTheory il1_backTheory il1_determinacyTheory comp_locationTheory bigstep_l1Theory;
+open HolKernel boolLib bossLib listTheory Parse IndDefLib finite_mapTheory relationTheory arithmeticTheory ast_il1Theory bigstep_il1Theory pred_setTheory pairTheory lcsymtacs prim_recTheory integerTheory store_equivalenceTheory l1_to_il1_compilerTheory l1_il1_totalTheory il1_backTheory il1_determinacyTheory comp_locationTheory bigstep_l1Theory bigstep_il1_clockedTheory;
 
 val _ = new_theory "l1_il1_correctness"
 
 val WHILE_UNWIND_ONCE_THM = store_thm("WHILE_UNWIND_ONCE_THM",
-``!e1 s e2 v s'.bs_il1_expr (e1, s) (IL1_Boolean T) ==> (bs_il1 (IL1_While e1 e2, s) IL1_ESkip s' <=> bs_il1 (IL1_Seq e2 (IL1_While e1 e2), s) IL1_ESkip s')``,
+``!e1 s e2 v s' c c'.bs_il1_expr (e1, s) (IL1_Boolean T) ==> (bs_il1_c (SUC c) (IL1_While e1 e2, s) (SOME (IL1_ESkip, s', c')) <=> bs_il1_c c (IL1_Seq e2 (IL1_While e1 e2), s) (SOME (IL1_ESkip, s', c')))``,
 rw [EQ_IMP_THM] THEN1
-(imp_res_tac IL1_WHILE_BACK_THM
+(imp_res_tac IL1_WHILE_BACK_THM THEN rw []
 THEN1 (imp_res_tac BS_IL1_EXPR_DETERMINACY THEN rw [])
-THEN1 (rw [Once bs_il1_cases] THEN metis_tac []))
-THEN1 (rw [Once bs_il1_cases] THEN imp_res_tac IL1_SEQ_BACK_THM THEN metis_tac [IL1_SEQ_BACK_THM])
-);
+THEN1 (rw [Once bs_il1_c_cases] THEN
+Cases_on `c` THEN1 (fs [Once bs_il1_c_cases])
+THEN metis_tac []))
+THEN1 (rw [Once bs_il1_c_cases] THEN imp_res_tac IL1_SEQ_BACK_THM THEN metis_tac [IL1_SEQ_BACK_THM]));
 
 val l1_il1_val_def = Define `(l1_il1_val (L1_Int n) = IL1_Integer n) /\
 (l1_il1_val (L1_Bool b) = IL1_Boolean b) /\
