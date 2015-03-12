@@ -7,7 +7,7 @@ val fsa = full_simp_tac (srw_ss () ++ intSimps.INT_ARITH_ss);
 val rwa = rw_tac (srw_ss () ++ intSimps.INT_ARITH_ss);
 
 val exec_imp_clocked = prove(``
-!P c c'.exec P c c' ==> !clk'.?clk.exec_clocked P (SOME (FST c, clk, FST (SND c), SND (SND c))) (SOME (FST c', SUC clk', FST (SND c'), SND (SND c')))``,
+!P c c'.exec P c c' ==> !clk'.?clk.exec_clocked P (SOME (FST c, SUC clk, FST (SND c), SND (SND c))) (SOME (FST c', SUC clk', FST (SND c'), SND (SND c')))``,
 
 fs [exec_def] THEN STRIP_TAC THEN ho_match_mp_tac RTC_STRONG_INDUCT THEN rw []
 
