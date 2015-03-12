@@ -1,4 +1,4 @@
-open HolKernel boolLib bossLib listTheory Parse IndDefLib finite_mapTheory relationTheory arithmeticTheory ast_il1Theory bigstep_il1Theory pred_setTheory pairTheory lcsymtacs prim_recTheory integerTheory store_equivalenceTheory l1_to_il1_compilerTheory l1_il1_totalTheory il1_backTheory il1_determinacyTheory comp_locationTheory bigstep_l1Theory bigstep_il1_clockedTheory;
+open HolKernel boolLib bossLib listTheory Parse IndDefLib finite_mapTheory relationTheory arithmeticTheory ast_il1Theory bigstep_il1Theory pred_setTheory pairTheory lcsymtacs prim_recTheory integerTheory store_equivalenceTheory l1_to_il1_compilerTheory l1_il1_totalTheory il1_backTheory il1_determinacyTheory comp_locationTheory bigstep_l1Theory bigstep_il1_clockedTheory optionTheory;
 
 val _ = new_theory "l1_il1_correctness"
 
@@ -20,34 +20,30 @@ val il1_l1_val_def = Define `(il1_l1_val (IL1_Integer n) = L1_Int n) /\
 (il1_l1_val (IL1_Boolean b) = L1_Bool b) /\
 (il1_l1_val IL1_ESkip = L1_Skip)`;
 
-
-
 val BS_VALUE_THM = store_thm("BS_VALUE_THM",
 ``!v v' s.bs_il1_expr (IL1_Value v, s) v' ==> (v = v') /\ !s'.bs_il1_expr (IL1_Value v, s') v'``,
 Cases_on `v` THEN REPEAT (rw [Once bs_il1_expr_cases]));
-
-
 
 val MAP_FDOM_AFTER_INSERT = store_thm("MAP_FDOM_AFTER_INSERT",
 ``!f a b.a ∈ FDOM (f |+ (a, b))``,
 rw [FDOM_DEF]);
 
 val ASSIGN_ENSURES_IN_DOM_THM = store_thm("ASSIGN_ENSURES_IN_DOM_THM",
-``!l e s s'.bs_il1 (IL1_Assign l e, s) IL1_ESkip s' ==> l ∈ FDOM s'``,
-rw [Once bs_il1_cases] THEN rw [FDOM_DEF]);
+``!l c c' e s s'.bs_il1_c c (IL1_Assign l e, s) (SOME (IL1_ESkip, s', c')) ==> l ∈ FDOM s'``,
+rw [Once bs_il1_c_cases] THEN rw [FDOM_DEF]);
 
-val DOMS_SUBSET_THM_1 = store_thm("DOMS_SUBSET_THM",
-``!p v s'.bs_il1 p v s' ==> FDOM (SND p) ⊆ FDOM s'``,
-ho_match_mp_tac bs_il1_strongind THEN rw [FST, SND, SUBSET_DEF]);
+val DOMS_SUBSET_THM_1 = prove(
+``!c p r.bs_il1_c c p r ==> !x.(r = SOME x) ==> FDOM (SND p) ⊆ FDOM (FST (SND x))``,
+ho_match_mp_tac bs_il1_c_strongind THEN rw [FST, SND, SUBSET_DEF]);
 
 val DOMS_SUBSET_THM = store_thm("DOMS_SUBSET_THM",
-``!e s v s'.bs_il1 (e, s) v s' ==> FDOM s ⊆ FDOM s'``,
+``!e s v s' c c'.bs_il1_c c (e, s) (SOME (v, s', c')) ==> FDOM s ⊆ FDOM s'``,
 metis_tac [FST, SND, DOMS_SUBSET_THM_1]);
 
 val NO_INTERMEDIATE_WRITES_SAME_VALUE = store_thm("NO_INTERMEDIATE_WRITES_SAME_VALUE",
-``!p v.bs_il1_expr p v ==> !s' s'' l.l ∈ FDOM s'' ==> bs_il1 (IL1_Assign l (FST p), (SND p)) IL1_ESkip s' ==> ((s' ' l) = (s'' ' l)) ==> bs_il1_expr (IL1_Deref l, s'') v``,
+``!p v.bs_il1_expr p v ==> !c c' s' s'' l.l ∈ FDOM s'' ==> bs_il1_c c (IL1_Assign l (FST p), (SND p)) (SOME (IL1_ESkip, s', c')) ==> ((s' ' l) = (s'' ' l)) ==> bs_il1_expr (IL1_Deref l, s'') v``,
 Cases_on `p` THEN rw [FST, SND]
-THEN fs [Once bs_il1_cases]
+THEN fs [Once bs_il1_c_cases]
 THEN rw [Once bs_il1_expr_cases]
 THEN metis_tac [BS_IL1_EXPR_DETERMINACY, FAPPLY_FUPDATE]);
 
@@ -56,8 +52,8 @@ val SKIP_TO_SKIP_THM = store_thm("SKIP_TO_SKIP",
 rw [Once bs_il1_expr_cases] THEN metis_tac []);
 
 val SKIP_TO_SKIP_2_THM = store_thm("SKIP_TO_SKIP_2_THM",
-``!s.bs_il1 (IL1_Expr (IL1_Value IL1_ESkip), s) IL1_ESkip s``,
-rw [Once bs_il1_cases, Once bs_il1_expr_cases] THEN metis_tac []);
+``!c s.bs_il1_c (SUC c) (IL1_Expr (IL1_Value IL1_ESkip), s) (SOME (IL1_ESkip, s, (SUC c)))``,
+rw [Once bs_il1_c_cases, Once bs_il1_expr_cases] THEN metis_tac []);
 
 val ASSIGN_IMPLIES_SKIP_THM = store_thm("ASSIGN_IMPLIES_SKIP_THM",
 ``!e lc s st ex l lc'.(l1_to_il1_pair lc (L1_Assign l e) = (st, ex, lc')) ==> (ex = IL1_Value (IL1_ESkip))``,
@@ -69,7 +65,7 @@ val CONTAINS_CONVERT_THM = store_thm("CONTAINS_CONVERT_THM",
 ``!e n l.contains l (l1_to_il1 e n) <=> ?st ex n'.(l1_to_il1_pair n e = (st, ex, n')) /\ (contains l st \/ contains_expr l ex)``,
 rw [EQ_IMP_THM] THEN1 (`?st ex n'.l1_to_il1_pair n e = (st, ex, n')` by metis_tac [L1_TO_IL1_TOTAL_THM] THEN fs [l1_to_il1_def, LET_DEF, contains_def]) THEN rw [l1_to_il1_def, LET_DEF, contains_def]);
 
-val L1_USELESS_LOC_EXPR_THM = store_thm("L1_USELESS_LOC_EXPR_THM",
+val L1_USELESS_LOC_EXPR_THM = prove(
 ``!p r.bs_il1_expr p r ==> !k.~contains_expr k (FST p) ==> !v.bs_il1_expr (FST p, SND p |+ (k, v)) r``,
 HO_MATCH_MP_TAC bs_il1_expr_strongind THEN rw []
 THEN1 (Cases_on `r` THEN fs [Once bs_il1_expr_cases]) THEN TRY (
@@ -83,34 +79,34 @@ val USELESS_LOC_EXPR_THM = store_thm("USELESS_LOC_EXPR_THM",
 METIS_TAC [L1_USELESS_LOC_EXPR_THM, FST, SND]);
 
 
-val L1_USELESS_LOC_THM = store_thm("L1_USELESS_LOC_THM",
-``!p r s'.bs_il1 p r s' ==> !k.~contains k (FST p) ==> !v.bs_il1 (FST p, SND p |+ (k, v)) r (s' |+ (k, v))``,
-HO_MATCH_MP_TAC bs_il1_strongind THEN rw []
-THEN1 (fs [Once bs_il1_cases, contains_def] THEN METIS_TAC [USELESS_LOC_EXPR_THM])
-THEN rw [Once bs_il1_cases] THEN fs [contains_def, FUPDATE_COMMUTES] THEN METIS_TAC [USELESS_LOC_EXPR_THM]);
+val L1_USELESS_LOC_THM = prove(
+``!c p r.bs_il1_c c p r ==> !x.(r = SOME x) ==> !k.~contains k (FST p) ==> !v.bs_il1_c c (FST p, SND p |+ (k, v)) (SOME (FST x, FST (SND x) |+ (k, v), SND (SND x)))``,
+HO_MATCH_MP_TAC bs_il1_c_strongind THEN rw []
+THEN1 (fs [Once bs_il1_c_cases, contains_def] THEN METIS_TAC [USELESS_LOC_EXPR_THM])
+THEN rw [Once bs_il1_c_cases] THEN fs [contains_def, FUPDATE_COMMUTES] THEN METIS_TAC [USELESS_LOC_EXPR_THM]);
 
 val USELESS_LOC_THM = store_thm("USELESS_LOC_THM",
-``!e s r s'.bs_il1 (e, s) r s' ==> !k.~contains k e ==> !v.bs_il1 (e, s |+ (k, v)) r (s' |+ (k, v))``,
+``!e s r s' c c'.bs_il1_c c (e, s) (SOME (r, s', c')) ==> !k.~contains k e ==> !v.bs_il1_c c (e, s |+ (k, v)) (SOME (r, s' |+ (k, v), c'))``,
 METIS_TAC [FST, SND, L1_USELESS_LOC_THM]);
 
 val IL1_SEQ_ASSOC_THM = store_thm("IL1_SEQ_ASSOC_THM",
-``!e1 e2 e3 s v s'.bs_il1 (IL1_Seq e1 (IL1_Seq e2 e3), s) v s' <=> bs_il1 (IL1_Seq (IL1_Seq e1 e2) e3, s) v s'``,
+``!e1 e2 e3 s v s' c c'.bs_il1_c c (IL1_Seq e1 (IL1_Seq e2 e3), s) (SOME (v, s', c')) <=> bs_il1_c c (IL1_Seq (IL1_Seq e1 e2) e3, s) (SOME (v, s', c'))``,
 rw [EQ_IMP_THM]
-THEN1 (fs [Once bs_il1_cases] THEN rw [Once bs_il1_cases] THEN metis_tac [IL1_SEQ_BACK_THM])
-THEN1 (rw [Once bs_il1_cases] THEN imp_res_tac IL1_SEQ_BACK_THM THEN imp_res_tac IL1_SEQ_BACK_THM THEN metis_tac [bs_il1_cases]));
-
+THEN1 (fs [Once bs_il1_c_cases] THEN rw [Once bs_il1_c_cases] THEN metis_tac [IL1_SEQ_BACK_THM])
+THEN rw [Once bs_il1_c_cases] THEN (NTAC 2 (imp_res_tac IL1_SEQ_BACK_THM THEN imp_res_tac IL1_SEQ_BACK_THM THEN imp_res_tac IL1_SEQ_BACK_THM THEN imp_res_tac IL1_DETERMINACY_THM THEN rw [])) THEN Cases_on `c` THEN1 fs [Once bs_il1_c_cases] THEN rw [] THEN Q.LIST_EXISTS_TAC [`cl''`, `s'''`] THEN rw [] THEN rw [Once bs_il1_c_cases]
+THEN Cases_on `cl''` THEN1 fs [Once bs_il1_c_cases] THEN metis_tac []);
 
 val EXPR_PURE_THM = store_thm("EXPR_DOES_NOTHING_THM",
-``!st es s s' v.bs_il1 (IL1_Seq st (IL1_Expr es), s) v s' ==> bs_il1 (st, s) IL1_ESkip s'``,
+``!st es s s' v c c'.bs_il1_c c (IL1_Seq st (IL1_Expr es), s) (SOME (v, s', c')) ==> bs_il1_c c (st, s) (SOME (IL1_ESkip, s', c'))``,
 rw [] THEN
-`bs_il1 (st, s) IL1_ESkip s' /\ bs_il1 (IL1_Expr es, s') v s'` by ALL_TAC THEN
-IMP_RES_TAC IL1_SEQ_BACK_THM THEN
-`s'' = s'` by fs [Once bs_il1_cases] THEN
+`bs_il1_c c (st, s) (SOME (IL1_ESkip, s', c')) /\ bs_il1_c c' (IL1_Expr es, s') (SOME (v, s', c'))` by ALL_TAC THEN
+IMP_RES_TAC IL1_SEQ_BACK_THM THEN imp_res_tac IL1_DETERMINACY_THM THEN rw [] THEN
+`(s'' = s') /\ (c' = cl')` by fs [Once bs_il1_c_cases] THEN
 metis_tac []);
 
 val EXPR_PURE_2_THM = store_thm("EXPR_PURE_2_THM",
-``!e s v s'.bs_il1 (IL1_Expr e, s) v s' ==> (s = s')``,
-rw [Once bs_il1_cases]);
+``!e s v s' c c'.bs_il1_c c (IL1_Expr e, s) (SOME (v, s', c')) ==> (s = s') /\ (c = c')``,
+rw [Once bs_il1_c_cases]);
 
 val plus_case = (* Begin plus case *)
 (fs [l1_to_il1_pair_def, l1_il1_val_def]
