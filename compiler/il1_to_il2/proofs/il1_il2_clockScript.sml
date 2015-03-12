@@ -1,4 +1,4 @@
-open ast_il1Theory bigstep_il1Theory bigstep_il1_clockedTheory HolKernel Parse boolLib bossLib integerTheory finite_mapTheory lcsymtacs pairTheory il1_to_il2_compilerTheory il1_il2_correctnessTheory smallstep_il2Theory smallstep_il2_clockedTheory clocked_unclocked_il1_equivTheory clocked_il2_equivTheory ast_il2Theory;
+open ast_il1Theory bigstep_il1Theory bigstep_il1_clockedTheory HolKernel Parse boolLib bossLib integerTheory finite_mapTheory lcsymtacs pairTheory il1_to_il2_compilerTheory il1_il2_correctnessTheory smallstep_il2Theory smallstep_il2_clockedTheory clocked_unclocked_il1_equivTheory clocked_il2_equivTheory ast_il2Theory il1_typeTheory arithmeticTheory optionTheory pred_setTheory il1_type_propertiesTheory;
 
 val _ = new_theory "il1_il2_clock";
 
@@ -8,9 +8,6 @@ metis_tac [CLOCKED_IMP_UNCLOCKED_IL1, CORRECTNESS_THM, CLOCKED_IL1_EQUIV_BIMP]);
 
 val dud_diverge_thm = prove(``!e s.(!c.bs_il1_c c (e, s) NONE) ==> !tc stk. exec_clocked (il1_to_il2 e) (SOME (0, tc, stk, s)) NONE``, cheat);
 
-val no_step_def = Define `
-no_step p s = ~?r.exec_clocked_one p (SOME s) r
-`;
 
 val lem1 = prove(``!e s.(?c r.bs_il1_c c (e, s) (SOME r)) <=> ~(!c.bs_il1_c c (e, s) NONE)``, cheat);
 
