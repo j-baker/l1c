@@ -8,17 +8,17 @@ val (bs_il1_c_rules, bs_il1_c_ind, bs_il1_c_cases) = Hol_reln `
     (*  Expressions *)
     (!cl e v s.
         bs_il1_expr (e, s) v
-    ==> bs_il1_c (SUC cl) (IL1_Expr e, s) (SOME (v, s, cl))) /\
+    ==> bs_il1_c (SUC cl) (IL1_Expr e, s) (SOME (v, s, SUC cl))) /\
 
     (* Assign *)
     (!cl l e s n.
        (User l ∈ FDOM s /\
         bs_il1_expr (e, s) (IL1_Integer n))
-    ==> bs_il1_c (SUC cl) (IL1_Assign (User l) e, s) (SOME (IL1_ESkip, s |+ (User l, n), cl))) /\
+    ==> bs_il1_c (SUC cl) (IL1_Assign (User l) e, s) (SOME (IL1_ESkip, s |+ (User l, n), SUC cl))) /\
 
     (!cl l e s n.
         bs_il1_expr (e, s) (IL1_Integer n)
-    ==> bs_il1_c (SUC cl) (IL1_Assign (Compiler l) e, s) (SOME (IL1_ESkip, s |+ (Compiler l, n), cl))) /\
+    ==> bs_il1_c (SUC cl) (IL1_Assign (Compiler l) e, s) (SOME (IL1_ESkip, s |+ (Compiler l, n), SUC cl))) /\
 
     (* Seq *)
     (!cl cl' cl'' e1 e2 v s s' s''.
