@@ -15,6 +15,63 @@ val lem1 = prove(``!e s.(?c r.bs_il1_c c (e, s) (SOME r)) <=> ~(!c.bs_il1_c c (e
 val expr_never_none = prove(``!c p p'.bs_il1_c_expr c p p' ==> (c <> 0) ==> (p' <> NONE)``,
 ho_match_mp_tac bs_il1_c_expr_strongind THEN rw [] THEN CCONTR_TAC THEN fs [] THEN rw [] THEN imp_res_tac expr_doesnt_tick THEN fs []);
 
+val type_means_expr_reduces = prove(``!e g t.il1_expr_type e g t ==> !s.(g ⊆ FDOM s) ==> !c.?r.bs_il1_c_expr c (e, s) r``,
+ho_match_mp_tac il1_expr_type_strongind THEN rw []
+THEN Cases_on `c`
+THEN (TRY (rw [Once bs_il1_c_expr_cases]THEN metis_tac []))
+
+THEN (TRY (Cases_on `l` THEN fs [] THENL [`User n' ∈ FDOM s` by metis_tac [SUBSET_DEF], `Compiler n' ∈ FDOM s` by metis_tac [SUBSET_DEF]]
+THEN rw [Once bs_il1_c_expr_cases]))
+
+THEN `?r.bs_il1_c_expr (SUC n) (e,s) r` by metis_tac []
+
+THEN( Cases_on `r` 
+THEN1 (`NONE <> NONE` by metis_tac [SUC_NOT, expr_never_none] THEN fs [])
+THEN Cases_on `x`
+THEN `SOME (q, r) <> NONE` by fs []
+THEN `SND (THE (SOME (q, r))) = SUC n` by metis_tac [expr_doesnt_tick]
+THEN fs [SND, THE_DEF] THEN rw [])
+
+THEN `?r.bs_il1_c_expr (SUC n) (e',s) r` by metis_tac []
+
+THEN (Cases_on `r` 
+THEN1 (`NONE <> NONE` by metis_tac [SUC_NOT, expr_never_none] THEN fs [])
+THEN Cases_on `x`
+THEN `SOME (q', r) <> NONE` by fs []
+THEN `SND (THE (SOME (q', r))) = SUC n` by metis_tac [expr_doesnt_tick]
+THEN fs [SND, THE_DEF] THEN rw [])
+
+THEN (TRY (
+`?r.bs_il1_c_expr (SUC n) (e'',s) r` by metis_tac []
+
+THEN (Cases_on `r` 
+THEN1 (`NONE <> NONE` by metis_tac [SUC_NOT, expr_never_none] THEN fs [])
+THEN Cases_on `x`
+THEN `SOME (q'', r) <> NONE` by fs []
+THEN `SND (THE (SOME (q'', r))) = SUC n` by metis_tac [expr_doesnt_tick]
+THEN fs [SND, THE_DEF] THEN rw [])))
+
+THEN rw [Once bs_il1_c_expr_cases]
+
+THEN1 (
+`?a.q = IL1_Integer a` by cheat
+THEN `?b.q' = IL1_Integer b` by cheat
+THEN rw []
+THEN metis_tac [])
+
+THEN1 (
+`?a.q = IL1_Integer a` by cheat
+THEN `?b.q' = IL1_Integer b` by cheat
+THEN rw []
+THEN metis_tac [])
+
+THEN1 (
+`?a.q = IL1_Boolean a` by cheat
+THEN rw []
+THEN Cases_on `a` THEN metis_tac [])
+
+);
+
 val lem2 = prove(``!p stk s.(?c c' stk' s' r.exec_clocked p (SOME (0, c, stk, s)) (SOME (&LENGTH p, c', stk', s') )) <=> ~(!c.exec_clocked p (SOME (0, c, stk, s)) NONE)``, cheat);
 
 val lem3 = prove(``!e s.(!v s'.~bs_il1 (e, s) v s') <=> ~(?c r.bs_il1_c c (e, s) (SOME r))``,
