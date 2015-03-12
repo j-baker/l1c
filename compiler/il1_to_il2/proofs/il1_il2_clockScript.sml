@@ -8,8 +8,12 @@ metis_tac [CLOCKED_IMP_UNCLOCKED_IL1, CORRECTNESS_THM, CLOCKED_IL1_EQUIV_BIMP]);
 
 val dud_diverge_thm = prove(``!e s.(!c.bs_il1_c c (e, s) NONE) ==> !tc stk. exec_clocked (il1_to_il2 e) (SOME (0, tc, stk, s)) NONE``, cheat);
 
+val expr_doesnt_tick = prove(``!c p p'.bs_il1_c_expr c p p' ==> (p' <> NONE) ==> (SND (THE p') = c)``,
+ho_match_mp_tac bs_il1_c_expr_strongind THEN rw []);
 
 val lem1 = prove(``!e s.(?c r.bs_il1_c c (e, s) (SOME r)) <=> ~(!c.bs_il1_c c (e, s) NONE)``, cheat);
+val expr_never_none = prove(``!c p p'.bs_il1_c_expr c p p' ==> (c <> 0) ==> (p' <> NONE)``,
+ho_match_mp_tac bs_il1_c_expr_strongind THEN rw [] THEN CCONTR_TAC THEN fs [] THEN rw [] THEN imp_res_tac expr_doesnt_tick THEN fs []);
 
 val lem2 = prove(``!p stk s.(?c c' stk' s' r.exec_clocked p (SOME (0, c, stk, s)) (SOME (&LENGTH p, c', stk', s') )) <=> ~(!c.exec_clocked p (SOME (0, c, stk, s)) NONE)``, cheat);
 
