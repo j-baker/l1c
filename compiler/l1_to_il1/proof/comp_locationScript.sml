@@ -2,7 +2,6 @@ open HolKernel boolLib bossLib listTheory Parse IndDefLib finite_mapTheory relat
 
 val _ = new_theory "comp_location";
 
-
 val count_assign_def = Define `
 (count_assign (IL1_Expr _) _ = Num 0) /\
 (count_assign (IL1_SIf _ e2 e3) l = count_assign e2 l + count_assign e3 l) /\
