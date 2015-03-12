@@ -11,7 +11,6 @@ val dud_diverge_thm = prove(``!e s.(!c.bs_il1_c c (e, s) NONE) ==> !tc stk. exec
 val expr_doesnt_tick = prove(``!c p p'.bs_il1_c_expr c p p' ==> (p' <> NONE) ==> (SND (THE p') = c)``,
 ho_match_mp_tac bs_il1_c_expr_strongind THEN rw []);
 
-val lem1 = prove(``!e s.(?c r.bs_il1_c c (e, s) (SOME r)) <=> ~(!c.bs_il1_c c (e, s) NONE)``, cheat);
 val expr_never_none = prove(``!c p p'.bs_il1_c_expr c p p' ==> (c <> 0) ==> (p' <> NONE)``,
 ho_match_mp_tac bs_il1_c_expr_strongind THEN rw [] THEN CCONTR_TAC THEN fs [] THEN rw [] THEN imp_res_tac expr_doesnt_tick THEN fs []);
 
@@ -158,6 +157,12 @@ THEN rw [Once bs_il1_c_cases]
 THEN Cases_on `x`
 THEN Q.EXISTS_TAC `SOME (q, s, r)`
 THEN metis_tac []));
+
+val lem1 = prove(``!e s g' g t.il1_type e g t g' /\ g' ⊆ FDOM s ==> ~(!c.bs_il1_c c (e, s) NONE) ==> (?c r.bs_il1_c c (e, s) (SOME r))``,
+rw []
+THEN `?r.bs_il1_c c (e,s) r` by metis_tac [type_imp_reduces, IL1_TYPE_SUBSETS_THM, SUBSET_DEF]
+THEN Cases_on `r` THEN metis_tac []);
+
 val lem2 = prove(``!p stk s.(?c c' stk' s' r.exec_clocked p (SOME (0, c, stk, s)) (SOME (&LENGTH p, c', stk', s') )) <=> ~(!c.exec_clocked p (SOME (0, c, stk, s)) NONE)``, cheat);
 
 val lem3 = prove(``!e s.(!v s'.~bs_il1 (e, s) v s') <=> ~(?c r.bs_il1_c c (e, s) (SOME r))``,
@@ -184,7 +189,7 @@ THEN `SOME (v, s', SUC 0) = NONE` by metis_tac [bs_il1_c_det_thm]
 THEN fs []);
 
 val cor_oneway = prove(``
-!e s.(~?v s'.bs_il1 (e, s) v s') ==> (!stk.~?stk' s'.exec (il1_to_il2 e) (0, stk, s) (&LENGTH (il1_to_il2 e), stk', s'))``,
+!e s g g' t.il1_type e g t g' /\ g' ⊆ FDOM s ==> (~?v s'.bs_il1 (e, s) v s') ==> (!stk.~?stk' s'.exec (il1_to_il2 e) (0, stk, s) (&LENGTH (il1_to_il2 e), stk', s'))``,
 
 rw []
 THEN `!c.bs_il1_c c (e, s) NONE` by metis_tac [lem1, lem3]
@@ -193,11 +198,11 @@ THEN imp_res_tac dud_diverge_thm
 
 THEN CCONTR_TAC THEN fs []
 
-THEN imp_res_tac (GSYM CLOCKED_IL1_EQUIV_BIMP)
+THEN imp_res_tac CLOCKED_IL1_EQUIV_BIMP
 
 THEN metis_tac [lem2]);
 
-val divergence_thm = prove(``!e s.(~?v s'. bs_il1 (e, s) v s') <=> (!stk.~?stk' s'.exec (il1_to_il2 e) (0, stk, s) (&LENGTH (il1_to_il2 e), stk', s'))``,
+val divergence_thm = prove(``!e s g g' t.il1_type e g t g' /\ g' ⊆ FDOM s ==> ((~?v s'. bs_il1 (e, s) v s') <=> (!stk.~?stk' s'.exec (il1_to_il2 e) (0, stk, s) (&LENGTH (il1_to_il2 e), stk', s')))``,
 metis_tac [EQ_IMP_THM, cor_oneway, CORRECTNESS_THM]);
 
 val _ = export_theory ();
