@@ -1,4 +1,4 @@
-open HolKernel boolLib bossLib listTheory Parse IndDefLib finite_mapTheory relationTheory arithmeticTheory ast_il1Theory bigstep_il1Theory pred_setTheory pairTheory lcsymtacs prim_recTheory integerTheory store_equivalenceTheory l1_to_il1_compilerTheory l1_il1_totalTheory il1_backTheory il1_determinacyTheory comp_locationTheory bigstep_l1Theory bigstep_il1_clockedTheory optionTheory;
+open HolKernel boolLib bossLib listTheory Parse IndDefLib finite_mapTheory relationTheory arithmeticTheory ast_il1Theory bigstep_il1Theory pred_setTheory pairTheory lcsymtacs prim_recTheory integerTheory store_equivalenceTheory l1_to_il1_compilerTheory l1_il1_totalTheory il1_backTheory il1_determinacyTheory comp_locationTheory bigstep_l1Theory bigstep_il1_clockedTheory optionTheory bigstep_l1_clockedTheory;
 
 val _ = new_theory "l1_il1_correctness"
 
@@ -139,13 +139,16 @@ THEN metis_tac []);
 val total = metis_tac [L1_TO_IL1_TOTAL_THM];
 
 val L1_TO_IL1_CORRECTNESS_LEMMA = store_thm("L1_TO_IL1_CORRECTNESS_LEMMA",
-``!p v s'.bs_l1 p v s' ==> !lc1 st ex lc1'.((st, ex, lc1') = l1_to_il1_pair lc1 (FST p)) ==> !fs.equiv (con_store (SND p)) fs ==> ?fs'.bs_il1 (st, fs) IL1_ESkip fs' /\ bs_il1_expr (ex, fs') (l1_il1_val v) /\ equiv (con_store s') fs'``,
-ho_match_mp_tac bs_l1_strongind THEN rw [FST, SND]
+``!c p r.bs_l1_c c p r ==> !lc1 st ex lc1'.((st, ex, lc1') = l1_to_il1_pair lc1 (FST p)) ==> !fs.equiv (con_store (SND p)) fs ==> (?x.(r = SOME x) /\ ?fs'.bs_il1_c c (st, fs) (SOME (IL1_ESkip, fs', (SND (SND x)))) /\ bs_il1_expr (ex, fs') (l1_il1_val (FST x)) /\ equiv (con_store (FST (SND x))) fs') \/ ((r = NONE) /\ bs_il1_c c (st, fs) NONE)``,
+ho_match_mp_tac bs_l1_c_strongind THEN rw [FST, SND]
+
+(* Null case *)
+THEN1 fs [Once bs_il1_c_cases]
 
 (* Begin unit case *)
 
 THEN1 (Cases_on `v` THEN rw [l1_il1_val_def] THEN fs [l1_to_il1_pair_def] THEN rw []
-THEN rw [Once bs_il1_cases, Once bs_il1_expr_cases] THEN rw [Once bs_il1_cases, Once bs_il1_expr_cases])
+THEN rw [Once bs_il1_c_cases, Once bs_il1_expr_cases] THEN rw [Once bs_il1_c_cases, Once bs_il1_expr_cases])
 
 (* End unit cases *)
 
