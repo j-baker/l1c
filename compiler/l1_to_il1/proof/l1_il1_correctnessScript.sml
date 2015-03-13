@@ -136,14 +136,6 @@ THEN rw [Once bs_il1_expr_cases]
 THEN metis_tac []);
 (* End plus case *)
 
-val IL1_SEQ_FOR_THM = store_thm("IL1_SEQ_FOR_THM",
-``!e1 e2 s s' s'' v.bs_il1 (e1, s) IL1_ESkip s' /\ bs_il1 (e2, s') v s'' ==> bs_il1 (IL1_Seq e1 e2, s) v s''``,
-metis_tac [bs_il1_cases]);
-
-val IL1_EXPR_FOR_THM = store_thm("IL1_EXPR_FOR_THM",
-``!e s v.bs_il1_expr (e, s) v ==> bs_il1 (IL1_Expr e, s) v s``,
-metis_tac [bs_il1_cases]);
-
 val total = metis_tac [L1_TO_IL1_TOTAL_THM];
 
 val L1_TO_IL1_CORRECTNESS_LEMMA = store_thm("L1_TO_IL1_CORRECTNESS_LEMMA",
