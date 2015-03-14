@@ -224,6 +224,13 @@ THEN rw [Once bs_il1_c_cases]
 THEN metis_tac [con_store_def])
 (* End assign case *)
 
+THEN1 (fs [l1_to_il1_pair_def, l1_il1_val_def] THEN rw []
+THEN `?st1 ex1 lc1''.l1_to_il1_pair lc1 e = (st1, ex1, lc1'')` by total
+THEN fs [LET_DEF] THEN rw []
+
+THEN rw [Once bs_il1_expr_cases]
+THEN `bs_il1_c c (st1, fs) NONE` by metis_tac [] THEN rw [Once bs_il1_c_cases] THEN metis_tac [])
+
 THEN fs [l1_to_il1_pair_def, l1_il1_val_def]
 THEN `?st1 ex1 lc1''.l1_to_il1_pair lc1 e1 = (st1, ex1, lc1'')` by total
 THEN `?st2 ex2 lc2''.l1_to_il1_pair lc1'' e2 = (st2, ex2, lc2'')` by total
@@ -232,31 +239,44 @@ THEN res_tac
 THEN fs [LET_DEF] THEN rw []
 
 (* Begin seq case *)
-THEN1 (rw [Once bs_il1_cases]
-THEN rw [Once bs_il1_cases]
+THEN1 (rw [Once bs_il1_c_cases]
+THEN rw [Once bs_il1_c_cases]
 
 THEN imp_res_tac EQ_SYM
 
 THEN res_tac
 
-THEN `bs_il1 (IL1_Expr ex1, fs'') (IL1_ESkip) fs''` by (rw [Once bs_il1_cases])
+THEN `bs_il1_c c' (IL1_Expr ex1, fs'') (SOME (IL1_ESkip, fs'', c'))` by (rw [Once bs_il1_c_cases])
 THEN metis_tac [])
 (* End seq case *)
+
+THEN1 (rw [Once bs_il1_c_cases]
+THEN rw [Once bs_il1_c_cases] THEN metis_tac [])
+
+THEN1 (rw [Once bs_il1_c_cases]
+THEN rw [Once bs_il1_c_cases]
+THEN DISJ2_TAC
+THEN rw [Once bs_il1_c_cases]
+THEN imp_res_tac EQ_SYM
+
+THEN res_tac
+THEN `bs_il1_c c' (IL1_Expr ex1, fs'') (SOME (IL1_ESkip, fs'', c'))` by (rw [Once bs_il1_c_cases])
+THEN metis_tac [])
 
 (* Start if true case *)
 
 THEN1 (
-rw [Once bs_il1_cases]
-THEN rw [Once bs_il1_cases]
+rw [Once bs_il1_c_cases]
+THEN rw [Once bs_il1_c_cases]
 
 
-THEN `?fs'.bs_il1 (st1, fs) IL1_ESkip fs' /\ bs_il1_expr (ex1, fs') (IL1_Boolean T) /\ equiv (con_store s') fs'` by metis_tac []
+THEN `?fs'.bs_il1_c c (st1, fs) (SOME (IL1_ESkip, fs', c')) /\ bs_il1_expr (ex1, fs') (IL1_Boolean T) /\ equiv (con_store s') fs'` by metis_tac []
 
 
-THEN   `bs_il1
+THEN   `bs_il1_c c'
           (IL1_Assign (Compiler lc3'')
              (IL1_EIf ex1 (IL1_Value (IL1_Integer 1))
-                (IL1_Value (IL1_Integer 0))),fs') IL1_ESkip (fs' |+ (Compiler lc3'', 1))` by (rw [Once bs_il1_cases]
+                (IL1_Value (IL1_Integer 0))),fs') (SOME (IL1_ESkip, (fs' |+ (Compiler lc3'', 1)), c'))` by (rw [Once bs_il1_c_cases]
 THEN rw [Once bs_il1_expr_cases]
 THEN rw [Once bs_il1_expr_cases]
 THEN metis_tac [])
@@ -264,13 +284,14 @@ THEN metis_tac [])
 THEN `equiv fs' (fs' |+ (Compiler lc3'', 1))` by (rw [equiv_def] THEN `Compiler lc3'' <> User k` by rw [] THEN metis_tac [FAPPLY_FUPDATE_THM])
 THEN `equiv (con_store s') (fs' |+ (Compiler lc3'', 1))` by metis_tac [EQUIV_TRANS_THM]
 
-THEN `?fs''.bs_il1 (st2, fs' |+ (Compiler lc3'', 1)) IL1_ESkip fs'' /\ bs_il1_expr (ex2, fs'') (l1_il1_val v) /\ equiv (con_store s'') fs''` by metis_tac []
+THEN rw []
+
+THEN `?fs''.bs_il1_c c' (st2, fs' |+ (Compiler lc3'', 1)) (SOME (IL1_ESkip, fs'', cl'')) /\ bs_il1_expr (ex2, fs'') (l1_il1_val v) /\ equiv (con_store s'') fs''` by metis_tac []
+
+THEN `bs_il1_c c' (IL1_SIf ex1 st2 st3, fs' |+ (Compiler lc3'', 1)) (SOME (IL1_ESkip, fs'', cl''))` by (rw [Once bs_il1_c_cases]
 
 
-THEN `bs_il1 (IL1_SIf ex1 st2 st3, fs' |+ (Compiler lc3'', 1)) IL1_ESkip fs''` by (rw [Once bs_il1_cases]
-
-
-THEN `~contains (Compiler lc3'') (l1_to_il1 e1 lc1)` by (CCONTR_TAC THEN fs [] THEN imp_res_tac ALL_CO_LOCS_IN_RANGE THEN imp_res_tac COMP_LOC_INCREASING_THM THEN decide_tac)
+THEN `~contains (Compiler lc3'') (l1_to_il1 e1 lc1)` by (CCONTR_TAC THEN rfs [] THEN imp_res_tac ALL_CO_LOCS_IN_RANGE THEN imp_res_tac COMP_LOC_INCREASING_THM THEN decide_tac)
 
 THEN fs [contains_def, l1_to_il1_def] THEN rw []
 THEN `~contains (Compiler lc3'') (let (s, te, lc) = (st1, ex1, lc1'') in IL1_Seq s (IL1_Expr te))` by metis_tac []
@@ -308,17 +329,17 @@ THEN metis_tac [])
 
 (* Start if false case *)
 
-THEN1 (rw [Once bs_il1_cases]
-THEN rw [Once bs_il1_cases]
+THEN1 (rw [Once bs_il1_c_cases]
+THEN rw [Once bs_il1_c_cases]
 
 
-THEN `?fs'.bs_il1 (st1, fs) IL1_ESkip fs' /\ bs_il1_expr (ex1, fs') (IL1_Boolean F) /\ equiv (con_store s') fs'` by metis_tac []
+THEN `?fs'.bs_il1_c c (st1, fs) (SOME (IL1_ESkip, fs', c')) /\ bs_il1_expr (ex1, fs') (IL1_Boolean F) /\ equiv (con_store s') fs'` by metis_tac []
 
 
-THEN   `bs_il1
+THEN   `bs_il1_c c'
           (IL1_Assign (Compiler lc3'')
              (IL1_EIf ex1 (IL1_Value (IL1_Integer 1))
-                (IL1_Value (IL1_Integer 0))),fs') IL1_ESkip (fs' |+ (Compiler lc3'', 0))` by (rw [Once bs_il1_cases]
+                (IL1_Value (IL1_Integer 0))),fs') (SOME (IL1_ESkip, (fs' |+ (Compiler lc3'', 0)), c'))` by (rw [Once bs_il1_c_cases]
 THEN rw [Once bs_il1_expr_cases]
 THEN `bs_il1_expr (IL1_Value (IL1_Integer 0), fs') (IL1_Integer 0)` by (rw [Once bs_il1_expr_cases] THEN metis_tac [])
 THEN metis_tac [])
@@ -326,10 +347,10 @@ THEN metis_tac [])
 THEN `equiv fs' (fs' |+ (Compiler lc3'', 0))` by (rw [equiv_def] THEN `Compiler lc3'' <> User k` by rw [] THEN metis_tac [FAPPLY_FUPDATE_THM])
 THEN `equiv (con_store s') (fs' |+ (Compiler lc3'', 0))` by metis_tac [EQUIV_TRANS_THM]
 
-THEN `?fs''.bs_il1 (st3, fs' |+ (Compiler lc3'', 0)) IL1_ESkip fs'' /\ bs_il1_expr (ex3, fs'') (l1_il1_val v) /\ equiv (con_store s'') fs''` by metis_tac []
+THEN `?fs''.bs_il1_c c' (st3, fs' |+ (Compiler lc3'', 0)) (SOME (IL1_ESkip, fs'', cl'')) /\ bs_il1_expr (ex3, fs'') (l1_il1_val v) /\ equiv (con_store s'') fs''` by metis_tac []
 
 
-THEN `bs_il1 (IL1_SIf ex1 st2 st3, fs' |+ (Compiler lc3'', 0)) IL1_ESkip fs''` by (rw [Once bs_il1_cases]
+THEN `bs_il1_c c' (IL1_SIf ex1 st2 st3, fs' |+ (Compiler lc3'', 0)) (SOME (IL1_ESkip, fs'', cl''))` by (rw [Once bs_il1_c_cases]
 
 
 THEN `~contains (Compiler lc3'') (l1_to_il1 e1 lc1)` by (CCONTR_TAC THEN fs [] THEN imp_res_tac ALL_CO_LOCS_IN_RANGE THEN imp_res_tac COMP_LOC_INCREASING_THM THEN decide_tac)
@@ -368,6 +389,63 @@ THEN rw [Once bs_il1_expr_cases])
 THEN metis_tac [])
 
 (* end if false case *)
+
+THEN1 (imp_res_tac EQ_SYM THEN res_tac
+THEN rw [Once bs_il1_c_cases] THEN rw [Once bs_il1_c_cases])
+THEN1 (
+imp_res_tac EQ_SYM THEN res_tac
+THEN rw [Once bs_il1_c_cases] THEN rw [Once bs_il1_c_cases]
+THEN DISJ2_TAC
+THEN Q.LIST_EXISTS_TAC [`c'`, `fs'' |+ (Compiler lc3'', 1)`]
+
+THEN rw []
+THEN1 (
+rw [Once bs_il1_c_cases] THEN Q.LIST_EXISTS_TAC [`c'`, `fs''`] THEN rw []
+THEN rw [Once bs_il1_c_cases] THEN Q.EXISTS_TAC `1` THEN rw [] THEN (rw [Once bs_il1_expr_cases] THEN metis_tac [bs_il1_expr_cases])
+)
+THEN (rw [Once bs_il1_c_cases]
+
+THEN `equiv fs'' (fs'' |+ (Compiler lc3'', 1))` by (rw [equiv_def] THEN `Compiler lc3'' <> User k` by rw [] THEN metis_tac [FAPPLY_FUPDATE_THM])
+THEN `equiv (con_store s') (fs'' |+ (Compiler lc3'', 1))` by metis_tac [EQUIV_TRANS_THM]
+
+THEN rw []
+
+
+THEN `~contains (Compiler lc3'') (l1_to_il1 e1 lc1)` by (CCONTR_TAC THEN rfs [] THEN imp_res_tac ALL_CO_LOCS_IN_RANGE THEN imp_res_tac COMP_LOC_INCREASING_THM THEN decide_tac)
+
+THEN fs [contains_def, l1_to_il1_def] THEN rw []
+THEN `~contains (Compiler lc3'') (let (s, te, lc) = (st1, ex1, lc1'') in IL1_Seq s (IL1_Expr te))` by metis_tac []
+THEN fs [LET_DEF] THEN rw []
+THEN fs [contains_def]
+THEN metis_tac [USELESS_LOC_EXPR_THM]))
+
+THEN1 (
+imp_res_tac EQ_SYM THEN res_tac
+THEN rw [Once bs_il1_c_cases] THEN rw [Once bs_il1_c_cases]
+THEN DISJ2_TAC
+THEN Q.LIST_EXISTS_TAC [`c'`, `fs'' |+ (Compiler lc3'', 0)`]
+
+THEN rw []
+THEN1 (
+rw [Once bs_il1_c_cases] THEN Q.LIST_EXISTS_TAC [`c'`, `fs''`] THEN rw []
+THEN rw [Once bs_il1_c_cases] THEN Q.EXISTS_TAC `0` THEN rw [] THEN (rw [Once bs_il1_expr_cases] THEN metis_tac [bs_il1_expr_cases])
+)
+THEN (rw [Once bs_il1_c_cases]
+
+THEN `equiv fs'' (fs'' |+ (Compiler lc3'', 0))` by (rw [equiv_def] THEN `Compiler lc3'' <> User k` by rw [] THEN metis_tac [FAPPLY_FUPDATE_THM])
+THEN `equiv (con_store s') (fs'' |+ (Compiler lc3'', 0))` by metis_tac [EQUIV_TRANS_THM]
+
+THEN rw []
+
+
+THEN `~contains (Compiler lc3'') (l1_to_il1 e1 lc1)` by (CCONTR_TAC THEN rfs [] THEN imp_res_tac ALL_CO_LOCS_IN_RANGE THEN imp_res_tac COMP_LOC_INCREASING_THM THEN decide_tac)
+
+THEN fs [contains_def, l1_to_il1_def] THEN rw []
+THEN `~contains (Compiler lc3'') (let (s, te, lc) = (st1, ex1, lc1'') in IL1_Seq s (IL1_Expr te))` by metis_tac []
+THEN fs [LET_DEF] THEN rw []
+THEN fs [contains_def]
+THEN metis_tac [USELESS_LOC_EXPR_THM]))
+
 
 (* Begin while true case *)
 THEN1 (
