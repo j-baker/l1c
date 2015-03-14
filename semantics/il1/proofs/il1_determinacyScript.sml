@@ -38,6 +38,6 @@ THEN (NTAC 2 (res_tac THEN fs [] THEN  (TRY (`IL1_Boolean T = IL1_Boolean F` by 
 val IL1_DETERMINACY_THM = store_thm("IL1_DETERMINACY_THM",
 ``!c p r.bs_il1_c c p r ==> !r'.bs_il1_c c p r' ==> (r = r')``,
 ho_match_mp_tac bs_il1_c_strongind THEN rw []
-THENL [t2, t2, t2, t2, t1, t1, t1, t1, t1, t1, t1, t3, t3, t3, t3]);
+THENL [t2, t2, t2, t1, t1, t1, t1, t1, t1, t1, t3, t3, t3, t3, t2]);
 
 val _ = export_theory ();
