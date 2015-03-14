@@ -117,18 +117,15 @@ THEN fs [LET_DEF] THEN rw []
 THEN rw [Once bs_il1_c_cases]
 THEN rw [Once bs_il1_c_cases]
 
+THEN `?fs'.bs_il1_c c (st1, fs) (SOME (IL1_ESkip, fs', c')) /\ bs_il1_expr (ex1, fs') (IL1_Integer n1) /\ equiv (con_store s') fs'` by metis_tac []
 
-THEN `?fs'.bs_il1_c (SUC cl) (st1, fs) (SOME (IL1_ESkip, fs', c)) /\ bs_il1_expr (ex1, fs') (IL1_Integer n1) /\ equiv (con_store s') fs'` by metis_tac []
-
-THEN (Cases_on `c` THEN1 fs [Once bs_l1_c_cases])
-
-THEN `bs_il1_c (SUC n) (IL1_Assign (Compiler lc2'') ex1, fs') (SOME (IL1_ESkip, (fs' |+ (Compiler lc2'', n1)), SUC n))` by (rw [Once bs_il1_c_cases] THEN metis_tac [])
+THEN `bs_il1_c c' (IL1_Assign (Compiler lc2'') ex1, fs') (SOME (IL1_ESkip, (fs' |+ (Compiler lc2'', n1)), c'))` by (rw [Once bs_il1_c_cases] THEN metis_tac [])
 
 THEN `equiv fs' (fs' |+ (Compiler lc2'', n1))` by (rw [equiv_def] THEN `Compiler lc2'' <> User k` by rw [] THEN metis_tac [FAPPLY_FUPDATE_THM])
 THEN `equiv (con_store s') (fs' |+ (Compiler lc2'', n1))` by metis_tac [EQUIV_TRANS_THM]
 
 
-THEN `?fs''.bs_il1_c (SUC n) (st2, fs' |+ (Compiler lc2'', n1)) (SOME (IL1_ESkip, fs'', cl'')) /\ bs_il1_expr (ex2, fs'') (IL1_Integer n2) /\ equiv (con_store s'') fs''` by metis_tac []
+THEN `?fs''.bs_il1_c c' (st2, fs' |+ (Compiler lc2'', n1)) (SOME (IL1_ESkip, fs'', cl'')) /\ bs_il1_expr (ex2, fs'') (IL1_Integer n2) /\ equiv (con_store s'') fs''` by metis_tac []
 
 THEN `(fs' |+ (Compiler lc2'',n1)) ' (Compiler lc2'') = fs'' ' (Compiler lc2'')` by (`~contains_a (Compiler lc2'') st2` by (CCONTR_TAC THEN fs[] THEN imp_res_tac UNCHANGED_LOC_SIMP_THM THEN decide_tac) THEN metis_tac [NOT_CONTAINS_MEANS_UNCHANGED_THM])
 
@@ -148,23 +145,18 @@ THEN fs [LET_DEF] THEN rw []
 THEN rw [Once bs_il1_c_cases]
 THEN rw [Once bs_il1_c_cases]
 
-THEN `?fs'.bs_il1_c (SUC cl) (st1, fs) (SOME (IL1_ESkip, fs', c)) /\ bs_il1_expr (ex1, fs') (IL1_Integer n1) /\ equiv (con_store s') fs'` by metis_tac []
+THEN `?fs'.bs_il1_c c (st1, fs) (SOME (IL1_ESkip, fs', c')) /\ bs_il1_expr (ex1, fs') (IL1_Integer n1) /\ equiv (con_store s') fs'` by metis_tac []
 
-THEN (Cases_on `c`
-
-THEN1 (`bs_il1_c 0 (IL1_Assign (Compiler lc2'') ex1, fs') NONE` by (rw [Once bs_il1_c_cases] THEN metis_tac []) THEN metis_tac []))
-
-
-THEN `bs_il1_c (SUC n) (IL1_Assign (Compiler lc2'') ex1, fs') (SOME (IL1_ESkip, (fs' |+ (Compiler lc2'', n1)), SUC n))` by (rw [Once bs_il1_c_cases] THEN metis_tac [])
+THEN `bs_il1_c c' (IL1_Assign (Compiler lc2'') ex1, fs') (SOME (IL1_ESkip, (fs' |+ (Compiler lc2'', n1)), c'))` by (rw [Once bs_il1_c_cases] THEN metis_tac [])
 
 THEN `equiv fs' (fs' |+ (Compiler lc2'', n1))` by (rw [equiv_def] THEN `Compiler lc2'' <> User k` by rw [] THEN metis_tac [FAPPLY_FUPDATE_THM])
 THEN `equiv (con_store s') (fs' |+ (Compiler lc2'', n1))` by metis_tac [EQUIV_TRANS_THM]
 
 
-THEN `?fs''.bs_il1_c (SUC n) (st2, fs' |+ (Compiler lc2'', n1)) NONE` by metis_tac []
+THEN `?fs''.bs_il1_c c' (st2, fs' |+ (Compiler lc2'', n1)) NONE` by metis_tac []
 
 THEN DISJ2_TAC
-THEN Q.LIST_EXISTS_TAC [`SUC n`, `fs' |+ (Compiler lc2'', n1)`]
+THEN Q.LIST_EXISTS_TAC [`c'`, `fs' |+ (Compiler lc2'', n1)`]
 THEN rw []
 THEN rw [Once bs_il1_c_cases]
 
@@ -181,16 +173,13 @@ THEN fs [LET_DEF] THEN rw []
 THEN rw [Once bs_il1_c_cases]
 THEN rw [Once bs_il1_c_cases]
 
-THEN `bs_il1_c (SUC cl) (st1, fs) NONE` by metis_tac [] THEN metis_tac []);
+THEN `bs_il1_c c (st1, fs) NONE` by metis_tac [] THEN metis_tac []);
 
 val total = metis_tac [L1_TO_IL1_TOTAL_THM];
 
 val L1_TO_IL1_CORRECTNESS_LEMMA = store_thm("L1_TO_IL1_CORRECTNESS_LEMMA",
 ``!c p r.bs_l1_c c p r ==> !lc1 st ex lc1'.((st, ex, lc1') = l1_to_il1_pair lc1 (FST p)) ==> !fs.equiv (con_store (SND p)) fs ==> (?x.(r = SOME x) /\ ?fs'.bs_il1_c c (st, fs) (SOME (IL1_ESkip, fs', (SND (SND x)))) /\ bs_il1_expr (ex, fs') (l1_il1_val (FST x)) /\ equiv (con_store (FST (SND x))) fs') \/ ((r = NONE) /\ bs_il1_c c (st, fs) NONE)``,
 ho_match_mp_tac bs_l1_c_strongind THEN rw [FST, SND]
-
-(* Null case *)
-THEN1 fs [Once bs_il1_c_cases]
 
 (* Begin unit case *)
 
@@ -220,9 +209,10 @@ THEN `?st1 ex1 lc1''.l1_to_il1_pair lc1 e = (st1, ex1, lc1'')` by total
 THEN fs [LET_DEF] THEN rw []
 
 THEN rw [Once bs_il1_expr_cases]
-THEN `?fs'.bs_il1 (st1,fs) IL1_ESkip fs' /\ bs_il1_expr (ex1, fs') (IL1_Integer n) /\ equiv (con_store s') fs'` by metis_tac []
+THEN `?fs'.bs_il1_c c (st1,fs) (SOME (IL1_ESkip, fs', cl')) /\ bs_il1_expr (ex1, fs') (IL1_Integer n) /\ equiv (con_store s') fs'` by metis_tac []
 
-THEN `bs_il1 (IL1_Assign (User l) ex1, fs') IL1_ESkip (fs' |+ (User l, n))` by (rw [Once bs_il1_cases] THEN
+THEN `bs_il1_c cl' (IL1_Assign (User l) ex1, fs') (SOME (IL1_ESkip, (fs' |+ (User l, n)), cl'))` by (rw [Once bs_il1_c_cases] THEN
+
 `User l ∈ FDOM (con_store s)` by rw [FDOM_DEF, con_store_def, MAP_KEYS_def] THEN
 `User l ∈ FDOM fs` by metis_tac [equiv_def] THEN
 metis_tac [SUBSET_DEF, DOMS_SUBSET_THM])
@@ -230,7 +220,7 @@ metis_tac [SUBSET_DEF, DOMS_SUBSET_THM])
 THEN rw [con_store_def]
 
 THEN `equiv (MAP_KEYS User (s' |+ (l, n))) (fs' |+ (User l, n))` by (fs [con_store_def] THEN `equiv (MAP_KEYS User s' |+ (User l, n)) (fs' |+ (User l, n))` by metis_tac [EQUIV_APPEND_THM] THEN metis_tac [con_store_def, MAP_APPEND_EQUIV_THM, EQUIV_APPEND_THM])
-THEN rw [Once bs_il1_cases]
+THEN rw [Once bs_il1_c_cases]
 THEN metis_tac [con_store_def])
 (* End assign case *)
 
