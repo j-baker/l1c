@@ -62,7 +62,7 @@ val NOT_CONTAINS_MEANS_UNCHANGED_LEMMA = prove(
 ho_match_mp_tac bs_il1_c_strongind THEN rw [] THEN fs [FST, SND] THEN fs [contains_a_def] THEN metis_tac [FAPPLY_FUPDATE_THM]);
 
 val NOT_CONTAINS_MEANS_UNCHANGED_THM = store_thm("NOT_CONTAINS_MEANS_UNCHANGED_THM",
-``!c c' e s v s'.bs_il1_c (SUC c) (e, s) (SOME (v, s', c')) ==> !l.~contains_a l e ==> (s ' l = s' ' l)``,
+``!c c' e s v s'.bs_il1_c c (e, s) (SOME (v, s', c')) ==> !l.~contains_a l e ==> (s ' l = s' ' l)``,
 metis_tac [NOT_CONTAINS_MEANS_UNCHANGED_LEMMA, FST, SND]);
 
 
