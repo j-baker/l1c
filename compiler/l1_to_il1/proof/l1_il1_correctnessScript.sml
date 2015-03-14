@@ -115,18 +115,21 @@ THEN `?st1 ex1 lc1''.l1_to_il1_pair lc1 e1 = (st1, ex1, lc1'')` by metis_tac [L1
 THEN `?st2 ex2 lc2''.l1_to_il1_pair lc1'' e2 = (st2, ex2, lc2'')` by metis_tac [L1_TO_IL1_TOTAL_THM]
 THEN fs [LET_DEF] THEN rw []
 
-THEN rw [Once bs_il1_cases]
-THEN rw [Once bs_il1_cases]
+THEN rw [Once bs_il1_c_cases]
+THEN rw [Once bs_il1_c_cases]
 
 
-THEN `?fs'.bs_il1 (st1, fs) IL1_ESkip fs' /\ bs_il1_expr (ex1, fs') (IL1_Integer n1) /\ equiv (con_store s') fs'` by metis_tac []
-THEN `bs_il1 (IL1_Assign (Compiler lc2'') ex1, fs') IL1_ESkip (fs' |+ (Compiler lc2'', n1))` by (rw [Once bs_il1_cases] THEN metis_tac [])
+THEN `?fs'.bs_il1_c (SUC cl) (st1, fs) (SOME (IL1_ESkip, fs', c)) /\ bs_il1_expr (ex1, fs') (IL1_Integer n1) /\ equiv (con_store s') fs'` by metis_tac []
+
+THEN (Cases_on `c` THEN1 fs [Once bs_l1_c_cases])
+
+THEN `bs_il1_c (SUC n) (IL1_Assign (Compiler lc2'') ex1, fs') (SOME (IL1_ESkip, (fs' |+ (Compiler lc2'', n1)), SUC n))` by (rw [Once bs_il1_c_cases] THEN metis_tac [])
 
 THEN `equiv fs' (fs' |+ (Compiler lc2'', n1))` by (rw [equiv_def] THEN `Compiler lc2'' <> User k` by rw [] THEN metis_tac [FAPPLY_FUPDATE_THM])
 THEN `equiv (con_store s') (fs' |+ (Compiler lc2'', n1))` by metis_tac [EQUIV_TRANS_THM]
 
 
-THEN `?fs''.bs_il1 (st2, fs' |+ (Compiler lc2'', n1)) IL1_ESkip fs'' /\ bs_il1_expr (ex2, fs'') (IL1_Integer n2) /\ equiv (con_store s'') fs''` by metis_tac []
+THEN `?fs''.bs_il1_c (SUC n) (st2, fs' |+ (Compiler lc2'', n1)) (SOME (IL1_ESkip, fs'', cl'')) /\ bs_il1_expr (ex2, fs'') (IL1_Integer n2) /\ equiv (con_store s'') fs''` by metis_tac []
 
 THEN `(fs' |+ (Compiler lc2'',n1)) ' (Compiler lc2'') = fs'' ' (Compiler lc2'')` by (`~contains_a (Compiler lc2'') st2` by (CCONTR_TAC THEN fs[] THEN imp_res_tac UNCHANGED_LOC_SIMP_THM THEN decide_tac) THEN metis_tac [NOT_CONTAINS_MEANS_UNCHANGED_THM])
 
@@ -135,6 +138,51 @@ THEN `bs_il1_expr (IL1_Deref (Compiler lc2''), fs'') (IL1_Integer n1)` by (rw [O
 THEN rw [Once bs_il1_expr_cases]
 THEN metis_tac []);
 (* End plus case *)
+
+val plus_fail1_case = (* Begin plus case *)
+(fs [l1_to_il1_pair_def, l1_il1_val_def]
+
+THEN `?st1 ex1 lc1''.l1_to_il1_pair lc1 e1 = (st1, ex1, lc1'')` by metis_tac [L1_TO_IL1_TOTAL_THM]
+THEN `?st2 ex2 lc2''.l1_to_il1_pair lc1'' e2 = (st2, ex2, lc2'')` by metis_tac [L1_TO_IL1_TOTAL_THM]
+THEN fs [LET_DEF] THEN rw []
+
+THEN rw [Once bs_il1_c_cases]
+THEN rw [Once bs_il1_c_cases]
+
+THEN `?fs'.bs_il1_c (SUC cl) (st1, fs) (SOME (IL1_ESkip, fs', c)) /\ bs_il1_expr (ex1, fs') (IL1_Integer n1) /\ equiv (con_store s') fs'` by metis_tac []
+
+THEN (Cases_on `c`
+
+THEN1 (`bs_il1_c 0 (IL1_Assign (Compiler lc2'') ex1, fs') NONE` by (rw [Once bs_il1_c_cases] THEN metis_tac []) THEN metis_tac []))
+
+
+THEN `bs_il1_c (SUC n) (IL1_Assign (Compiler lc2'') ex1, fs') (SOME (IL1_ESkip, (fs' |+ (Compiler lc2'', n1)), SUC n))` by (rw [Once bs_il1_c_cases] THEN metis_tac [])
+
+THEN `equiv fs' (fs' |+ (Compiler lc2'', n1))` by (rw [equiv_def] THEN `Compiler lc2'' <> User k` by rw [] THEN metis_tac [FAPPLY_FUPDATE_THM])
+THEN `equiv (con_store s') (fs' |+ (Compiler lc2'', n1))` by metis_tac [EQUIV_TRANS_THM]
+
+
+THEN `?fs''.bs_il1_c (SUC n) (st2, fs' |+ (Compiler lc2'', n1)) NONE` by metis_tac []
+
+THEN DISJ2_TAC
+THEN Q.LIST_EXISTS_TAC [`SUC n`, `fs' |+ (Compiler lc2'', n1)`]
+THEN rw []
+THEN rw [Once bs_il1_c_cases]
+
+THEN metis_tac []
+);
+
+val plus_fail2_case = (* Begin plus case *)
+(fs [l1_to_il1_pair_def, l1_il1_val_def]
+
+THEN `?st1 ex1 lc1''.l1_to_il1_pair lc1 e1 = (st1, ex1, lc1'')` by metis_tac [L1_TO_IL1_TOTAL_THM]
+THEN `?st2 ex2 lc2''.l1_to_il1_pair lc1'' e2 = (st2, ex2, lc2'')` by metis_tac [L1_TO_IL1_TOTAL_THM]
+THEN fs [LET_DEF] THEN rw []
+
+THEN rw [Once bs_il1_c_cases]
+THEN rw [Once bs_il1_c_cases]
+
+THEN `bs_il1_c (SUC cl) (st1, fs) NONE` by metis_tac [] THEN metis_tac []);
 
 val total = metis_tac [L1_TO_IL1_TOTAL_THM];
 
@@ -153,10 +201,15 @@ THEN rw [Once bs_il1_c_cases, Once bs_il1_expr_cases] THEN rw [Once bs_il1_c_cas
 (* End unit cases *)
 
 THEN1 plus_case
+THEN1 plus_fail1_case
+THEN1 plus_fail2_case
+
 THEN1 plus_case
+THEN1 plus_fail1_case
+THEN1 plus_fail2_case
 
 (* Dereference case *)
-THEN1 (fs [l1_to_il1_pair_def, l1_il1_val_def] THEN rw [Once bs_il1_cases]
+THEN1 (fs [l1_to_il1_pair_def, l1_il1_val_def] THEN rw [Once bs_il1_c_cases]
 
 THEN1 metis_tac [SKIP_TO_SKIP_THM]
 THEN fs [Once bs_il1_expr_cases, equiv_def, con_store_def, MAP_KEYS_def, STORE_L1_IL1_INJ])
