@@ -7,8 +7,7 @@ val WHILE_UNWIND_ONCE_THM = store_thm("WHILE_UNWIND_ONCE_THM",
 rw [EQ_IMP_THM] THEN1
 (imp_res_tac IL1_WHILE_BACK_THM THEN rw []
 THEN1 (imp_res_tac BS_IL1_EXPR_DETERMINACY THEN rw [])
-THEN1 (rw [Once bs_il1_c_cases] THEN
-Cases_on `c` THEN1 (fs [Once bs_il1_c_cases])
+THEN1 (rw [Once bs_il1_c_cases]
 THEN metis_tac []))
 THEN1 (rw [Once bs_il1_c_cases] THEN imp_res_tac IL1_SEQ_BACK_THM THEN metis_tac [IL1_SEQ_BACK_THM]));
 
@@ -93,8 +92,8 @@ val IL1_SEQ_ASSOC_THM = store_thm("IL1_SEQ_ASSOC_THM",
 ``!e1 e2 e3 s v s' c c'.bs_il1_c c (IL1_Seq e1 (IL1_Seq e2 e3), s) (SOME (v, s', c')) <=> bs_il1_c c (IL1_Seq (IL1_Seq e1 e2) e3, s) (SOME (v, s', c'))``,
 rw [EQ_IMP_THM]
 THEN1 (fs [Once bs_il1_c_cases] THEN rw [Once bs_il1_c_cases] THEN metis_tac [IL1_SEQ_BACK_THM])
-THEN rw [Once bs_il1_c_cases] THEN (NTAC 2 (imp_res_tac IL1_SEQ_BACK_THM THEN imp_res_tac IL1_SEQ_BACK_THM THEN imp_res_tac IL1_SEQ_BACK_THM THEN imp_res_tac IL1_DETERMINACY_THM THEN rw [])) THEN Cases_on `c` THEN1 fs [Once bs_il1_c_cases] THEN rw [] THEN Q.LIST_EXISTS_TAC [`cl''`, `s'''`] THEN rw [] THEN rw [Once bs_il1_c_cases]
-THEN Cases_on `cl''` THEN1 fs [Once bs_il1_c_cases] THEN metis_tac []);
+THEN rw [Once bs_il1_c_cases] THEN (NTAC 2 (imp_res_tac IL1_SEQ_BACK_THM THEN imp_res_tac IL1_SEQ_BACK_THM THEN imp_res_tac IL1_SEQ_BACK_THM THEN imp_res_tac IL1_DETERMINACY_THM THEN rw [])) THEN rw [] THEN Q.LIST_EXISTS_TAC [`cl''`, `s'''`] THEN rw [] THEN rw [Once bs_il1_c_cases]
+THEN metis_tac []);
 
 val EXPR_PURE_THM = store_thm("EXPR_DOES_NOTHING_THM",
 ``!st es s s' v c c'.bs_il1_c c (IL1_Seq st (IL1_Expr es), s) (SOME (v, s', c')) ==> bs_il1_c c (st, s) (SOME (IL1_ESkip, s', c'))``,
