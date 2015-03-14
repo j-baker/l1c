@@ -1,4 +1,4 @@
-open HolKernel boolLib bossLib listTheory Parse IndDefLib finite_mapTheory relationTheory arithmeticTheory ast_il1Theory bigstep_il1Theory pred_setTheory pairTheory lcsymtacs prim_recTheory integerTheory;
+open HolKernel boolLib bossLib listTheory Parse IndDefLib finite_mapTheory relationTheory arithmeticTheory ast_il1Theory bigstep_il1_clockedTheory pred_setTheory pairTheory lcsymtacs prim_recTheory integerTheory;
 
 val _ = new_theory "store_equivalence";
 
@@ -58,11 +58,11 @@ THEN `INJ User (FDOM s) UNIV` by rw [INJ_DEF] THEN metis_tac [MAP_KEYS_def]);
 val con_store_def = Define `con_store s = MAP_KEYS User s`;
 
 val NOT_CONTAINS_MEANS_UNCHANGED_LEMMA = prove(
-``!p v s'.bs_il1 p v s' ==> !l.~contains_a l (FST p) ==> (((SND p) ' l) = (s' ' l))``,
-ho_match_mp_tac bs_il1_strongind THEN rw [FST, SND] THEN fs [contains_a_def] THEN metis_tac [FAPPLY_FUPDATE_THM]);
+``!c p r.bs_il1_c c p r ==> !x.(r = SOME x) ==> !l.~contains_a l (FST p) ==> (((SND p) ' l) = ((FST (SND x)) ' l))``,
+ho_match_mp_tac bs_il1_c_strongind THEN rw [] THEN fs [FST, SND] THEN fs [contains_a_def] THEN metis_tac [FAPPLY_FUPDATE_THM]);
 
 val NOT_CONTAINS_MEANS_UNCHANGED_THM = store_thm("NOT_CONTAINS_MEANS_UNCHANGED_THM",
-``!e s v s'.bs_il1 (e, s) v s' ==> !l.~contains_a l e ==> (s ' l = s' ' l)``,
+``!c c' e s v s'.bs_il1_c (SUC c) (e, s) (SOME (v, s', c')) ==> !l.~contains_a l e ==> (s ' l = s' ' l)``,
 metis_tac [NOT_CONTAINS_MEANS_UNCHANGED_LEMMA, FST, SND]);
 
 
