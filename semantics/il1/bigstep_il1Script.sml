@@ -76,6 +76,10 @@ val (bs_il1_rules, bs_il1_ind, bs_il1_cases) = Hol_reln `
 
     (!e1 e2 s.
        (bs_il1_expr (e1, s) (IL1_Boolean F))
-    ==> bs_il1 (IL1_While e1 e2, s) IL1_ESkip s)`;
+    ==> bs_il1 (IL1_While e1 e2, s) IL1_ESkip s) /\
+
+    (!e s v s'.
+        bs_il1 (e, s) v s' ==> bs_il1 (IL1_Tick e, s) v s')
+`;
 
 val _ = export_theory ();

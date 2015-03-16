@@ -94,35 +94,35 @@ val (bs_l1_c_rules, bs_l1_c_ind, bs_l1_c_cases) = Hol_reln `
      ==> bs_l1_c cl (L1_If e1 e2 e3, s) NONE) /\
 
     (* While *)
-    (!cl cl' cl'' cl''' e1 e2 s s' s'' s'''.
+    (!cl e1 e2 s.
+         bs_l1_c cl (e1, s) NONE
+     ==> bs_l1_c cl (L1_While e1 e2, s) NONE) /\
+
+    (!cl cl' e1 e2 s s'.
         (bs_l1_c cl (e1, s) (SOME (L1_Bool T, s', cl')) /\
-   bs_l1_c cl' (e2, s') (SOME (L1_Skip, s'', cl'')) /\
-   bs_l1_c cl'' (L1_While e1 e2, s'') (SOME (L1_Skip, s''', cl''')))
-     ==> bs_l1_c (SUC cl) (L1_While e1 e2, s) (SOME (L1_Skip, s''', cl'''))) /\
+         bs_l1_c cl' (e2, s') NONE)
+     ==> bs_l1_c cl (L1_While e1 e2, s) NONE) /\
 
     (!cl cl' e1 e2 s s'.
          bs_l1_c cl (e1, s) (SOME (L1_Bool F, s', cl'))
-     ==> bs_l1_c (SUC cl) (L1_While e1 e2, s) (SOME (L1_Skip, s', cl'))) /\
+     ==> bs_l1_c cl (L1_While e1 e2, s) (SOME (L1_Skip, s', cl'))) /\
 
-    (!cl e1 e2 s.
-         bs_l1_c cl (e1, s) NONE
-     ==> bs_l1_c (SUC cl) (L1_While e1 e2, s) NONE) /\
-
-    (!cl cl' e1 e2 s s'.
+    (!cl cl' e1 e2 s s' s''.
         (bs_l1_c cl (e1, s) (SOME (L1_Bool T, s', cl')) /\
-   bs_l1_c cl' (e2, s') NONE)
-     ==> bs_l1_c (SUC cl) (L1_While e1 e2, s) NONE) /\
+         bs_l1_c cl' (e2, s') (SOME (L1_Skip, s'', 0)))
+     ==> bs_l1_c cl (L1_While e1 e2, s) NONE) /\
 
     (!cl cl' cl'' e1 e2 s s' s''.
         (bs_l1_c cl (e1, s) (SOME (L1_Bool T, s', cl')) /\
-   bs_l1_c cl' (e2, s') (SOME (L1_Skip, s'', cl'')) /\
-   bs_l1_c cl'' (L1_While e1 e2, s'') NONE)
-     ==> bs_l1_c (SUC cl) (L1_While e1 e2, s) NONE) /\
+         bs_l1_c cl' (e2, s') (SOME (L1_Skip, s'', SUC cl'')) /\
+         bs_l1_c cl'' (L1_While e1 e2, s'') NONE)
+     ==> bs_l1_c cl (L1_While e1 e2, s) NONE) /\
 
-    (!e1 e2 s.
-         bs_l1_c 0 (L1_While e1 e2, s) NONE)
-
-   
+    (!cl cl' cl'' cl''' e1 e2 s s' s'' s'''.
+        (bs_l1_c cl (e1, s) (SOME (L1_Bool T, s', cl')) /\
+         bs_l1_c cl' (e2, s') (SOME (L1_Skip, s'', SUC cl'')) /\
+         bs_l1_c cl'' (L1_While e1 e2, s'') (SOME (L1_Skip, s''', cl''')))
+     ==> bs_l1_c cl (L1_While e1 e2, s) (SOME (L1_Skip, s''', cl''')))
 `;
 
 val _ = export_theory ();
