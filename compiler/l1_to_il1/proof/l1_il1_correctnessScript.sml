@@ -2,14 +2,40 @@ open HolKernel boolLib bossLib listTheory Parse IndDefLib finite_mapTheory relat
 
 val _ = new_theory "l1_il1_correctness"
 
-val WHILE_UNWIND_ONCE_THM = store_thm("WHILE_UNWIND_ONCE_THM",
-``!e1 s e2 v s' c c'.bs_il1_expr (e1, s) (IL1_Boolean T) ==> (bs_il1_c (SUC c) (IL1_While e1 e2, s) (SOME (IL1_ESkip, s', c')) <=> bs_il1_c c (IL1_Seq e2 (IL1_While e1 e2), s) (SOME (IL1_ESkip, s', c')))``,
-rw [EQ_IMP_THM] THEN1
+val clock_dec = prove(``!c p r.bs_il1_c c p r ==> !tc v s' tc'.(c = SUC tc) /\ (r = SOME (v, s', SUC tc')) ==> bs_il1_c tc p (SOME (v, s', tc'))``,
+ho_match_mp_tac bs_il1_c_strongind THEN rw [] THEN rw [Once bs_il1_c_cases] THEN rw [] THEN (TRY (Cases_on `c'`)) THEN imp_res_tac CLOCK_DECREASES THEN fs [] THEN (TRY (Cases_on `c` THEN1 (`SUC tc' < 0` by (imp_res_tac CLOCK_DECREASES THEN fs []) THEN fs []))) THEN metis_tac [bs_il1_expr_cases]);
+
+val clock_dec2 = prove(``!c p r.bs_il1_c c p r ==> !v s' c'.(r = SOME (v, s', c')) ==> bs_il1_c (SUC c) p (SOME (v, s', SUC c'))``,
+ho_match_mp_tac bs_il1_c_strongind THEN rw [] THEN rw [Once bs_il1_c_cases] THEN rw [] THENL
+[metis_tac [bs_il1_expr_cases], metis_tac [bs_il1_expr_cases], 
+ Cases_on `c'` THEN imp_res_tac CLOCK_DECREASES THEN fs [] THEN metis_tac [], DISJ2_TAC THEN Q.LIST_EXISTS_TAC [`SUC c'`, `s'`] THEN rw []]
+);
+val st = prove(``!x y.x + SUC y = SUC (x + y)``, decide_tac);
+
+val clock_dec3 = prove(``!c p v s' c'.bs_il1_c c p (SOME (v, s', c')) ==> !n.bs_il1_c (c+n) p (SOME (v, s', c' + n))``,
+rw []
+THEN Induct_on `n` THEN rw [] THEN rw [] THEN REWRITE_TAC [st] THEN metis_tac [clock_dec2]);
+
+val clock_dec4 = prove(``!c p r.bs_il1_c c p r ==> !v s' c'.(r = SOME (v, s', 0)) /\ (c = SUC c') ==> bs_il1_c c' p NONE``,
+ho_match_mp_tac bs_il1_c_strongind THEN rw [] THEN rw [Once bs_il1_c_cases] THEN (TRY (Cases_on `c'` THEN rw [])) THEN (TRY (Cases_on `c` THEN rw [])) THEN metis_tac [clock_dec]);
+
+val clock_dec5 = prove(``!c p r.bs_il1_c c p r ==> (r = NONE) ==> bs_il1_c c (IL1_Tick (FST p), SND p) NONE``,
+ho_match_mp_tac bs_il1_c_strongind THEN rw [] THEN rw [Once bs_il1_c_cases] THEN Cases_on `c` THEN rw [] THEN fs [Q.SPECL [`A`, `IL1_Tick B, C`] bs_il1_c_cases] THEN rw [] THEN rw [Once bs_il1_c_cases] THEN (TRY (metis_tac [clock_dec4])) THEN imp_res_tac clock_dec THEN fs [] THEN rw [] THEN metis_tac []);
+
+val WHILE_UNWIND_ONCE_THM = prove(``!e1 s e2 c x.bs_il1_expr (e1, s) (IL1_Boolean T) ==> (bs_il1_c c (IL1_While e1 e2, s) x <=> bs_il1_c c (IL1_Seq e2 (IL1_While e1 e2), s) x)``,
+rw [EQ_IMP_THM]
+THEN1 (Cases_on `x` THEN1 (fs [Once bs_il1_c_cases] THEN DISJ2_TAC THEN metis_tac []) THEN 
+Cases_on `x'` THEN Cases_on `r` THEN
 (imp_res_tac IL1_WHILE_BACK_THM THEN rw []
 THEN1 (imp_res_tac BS_IL1_EXPR_DETERMINACY THEN rw [])
-THEN1 (rw [Once bs_il1_c_cases]
-THEN metis_tac []))
-THEN1 (rw [Once bs_il1_c_cases] THEN imp_res_tac IL1_SEQ_BACK_THM THEN metis_tac [IL1_SEQ_BACK_THM]));
+THEN rw [Once bs_il1_c_cases] THEN imp_res_tac clock_dec THEN fs [] THEN rw [] THEN Q.LIST_EXISTS_TAC [`cl'`, `s'`] THEN rw []))
+
+THEN
+Cases_on `x`
+THEN1 (fs [Once bs_il1_c_cases] THEN imp_res_tac IL1_SEQ_BACK_THM THEN DISJ2_TAC THEN metis_tac [])
+THEN Cases_on `x'` THEN Cases_on `r` THEN (rw [Once bs_il1_c_cases] THEN imp_res_tac IL1_SEQ_BACK_THM
+
+THEN DISJ2_TAC THEN fs [Q.SPECL [`A`, `IL1_Seq A B, C`] (Once bs_il1_c_cases)] THEN `q = IL1_ESkip` by fs [Once bs_il1_c_cases] THEN rw [] THEN Q.LIST_EXISTS_TAC [`cl''`, `s'''`] THEN rw [] THEN metis_tac [clock_dec2]));
 
 val l1_il1_val_def = Define `(l1_il1_val (L1_Int n) = IL1_Integer n) /\
 (l1_il1_val (L1_Bool b) = IL1_Boolean b) /\
@@ -89,11 +115,8 @@ val USELESS_LOC_THM = store_thm("USELESS_LOC_THM",
 METIS_TAC [FST, SND, L1_USELESS_LOC_THM]);
 
 val IL1_SEQ_ASSOC_THM = store_thm("IL1_SEQ_ASSOC_THM",
-``!e1 e2 e3 s v s' c c'.bs_il1_c c (IL1_Seq e1 (IL1_Seq e2 e3), s) (SOME (v, s', c')) <=> bs_il1_c c (IL1_Seq (IL1_Seq e1 e2) e3, s) (SOME (v, s', c'))``,
-rw [EQ_IMP_THM]
-THEN1 (fs [Once bs_il1_c_cases] THEN rw [Once bs_il1_c_cases] THEN metis_tac [IL1_SEQ_BACK_THM])
-THEN rw [Once bs_il1_c_cases] THEN (NTAC 2 (imp_res_tac IL1_SEQ_BACK_THM THEN imp_res_tac IL1_SEQ_BACK_THM THEN imp_res_tac IL1_SEQ_BACK_THM THEN imp_res_tac IL1_DETERMINACY_THM THEN rw [])) THEN rw [] THEN Q.LIST_EXISTS_TAC [`cl''`, `s'''`] THEN rw [] THEN rw [Once bs_il1_c_cases]
-THEN metis_tac []);
+``!e1 e2 e3 s c x.bs_il1_c c (IL1_Seq e1 (IL1_Seq e2 e3), s) x <=> bs_il1_c c (IL1_Seq (IL1_Seq e1 e2) e3, s) x``,
+rw [EQ_IMP_THM] THEN fs [Q.SPECL [`A`, `IL1_Seq A B, D`] bs_il1_c_cases] THEN rw [] THEN metis_tac []);
 
 val EXPR_PURE_THM = store_thm("EXPR_DOES_NOTHING_THM",
 ``!st es s s' v c c'.bs_il1_c c (IL1_Seq st (IL1_Expr es), s) (SOME (v, s', c')) ==> bs_il1_c c (st, s) (SOME (IL1_ESkip, s', c'))``,
@@ -176,6 +199,9 @@ THEN rw [Once bs_il1_c_cases]
 THEN `bs_il1_c c (st1, fs) NONE` by metis_tac [] THEN metis_tac []);
 
 val total = metis_tac [L1_TO_IL1_TOTAL_THM];
+
+val min_clock_thm = prove(``!c p r.bs_il1_c c p r ==> !v s' c'.(r = SOME (v, s', c')) ==> bs_il1_c (SUC c) p (SOME (v, s', SUC c'))``,
+ho_match_mp_tac bs_il1_c_strongind THEN rw [] THEN rw [Once bs_il1_c_cases] THEN metis_tac []);
 
 val L1_TO_IL1_CORRECTNESS_LEMMA = store_thm("L1_TO_IL1_CORRECTNESS_LEMMA",
 ``!c p r.bs_l1_c c p r ==> !lc1 st ex lc1'.((st, ex, lc1') = l1_to_il1_pair lc1 (FST p)) ==> !fs.equiv (con_store (SND p)) fs ==> (?x.(r = SOME x) /\ ?fs'.bs_il1_c c (st, fs) (SOME (IL1_ESkip, fs', (SND (SND x)))) /\ bs_il1_expr (ex, fs') (l1_il1_val (FST x)) /\ equiv (con_store (FST (SND x))) fs') \/ ((r = NONE) /\ bs_il1_c c (st, fs) NONE)``,
@@ -319,7 +345,7 @@ THEN rw [Once bs_il1_expr_cases] THEN metis_tac [SUBSET_DEF, FAPPLY_FUPDATE, MAP
 
 THEN metis_tac [])
 THEN `bs_il1_expr (IL1_Value (IL1_Integer 1), fs'') (IL1_Integer 1)` by (rw [Once bs_il1_expr_cases] THEN metis_tac [])
-THEN `1 >= 1` by metis_tac [int_ge, INT_LE_REFL]
+THEN `1:int >= 1` by metis_tac [int_ge, INT_LE_REFL]
 
 THEN metis_tac [])
 
@@ -381,7 +407,7 @@ THEN `bs_il1_expr
    fs'') (IL1_Boolean F)` by (
 rw [Once bs_il1_expr_cases]
 THEN `bs_il1_expr (IL1_Value (IL1_Integer 1), fs'') (IL1_Integer 1)` by (rw [Once bs_il1_expr_cases] THEN metis_tac [])
-THEN `~(0 >= 1)` by metis_tac [int_ge, INT_NOT_LE, INT_LT_REFL, INT_LT_01, INT_LT_ANTISYM]
+THEN `~(0:int >= 1)` by metis_tac [int_ge, INT_NOT_LE, INT_LT_REFL, INT_LT_01, INT_LT_ANTISYM]
 
 
 THEN metis_tac [])
@@ -448,77 +474,122 @@ THEN metis_tac [USELESS_LOC_EXPR_THM]))
 
 
 (* Begin while true case *)
-THEN1 (
 
-`?fs'.bs_il1 (st1,fs) IL1_ESkip fs' /\ bs_il1_expr (ex1, fs') (IL1_Boolean T) /\ equiv (con_store s') fs'` by metis_tac []
-THEN `?fs''.bs_il1 (st2,fs') IL1_ESkip fs'' /\ bs_il1_expr (ex2, fs'') IL1_ESkip /\ equiv (con_store s'') fs''` by metis_tac []
-THEN rw []
-THEN res_tac
-
-THEN fs [l1_il1_val_def]
-
-THEN `bs_il1 (IL1_Seq st2 (IL1_Seq st1 (IL1_While ex1 (IL1_Seq st2 (IL1_Seq (IL1_Expr ex2) st1)))), fs') IL1_ESkip fs'''` by (rw [Once bs_il1_cases] THEN metis_tac [])
-THEN `bs_il1 (IL1_Seq (IL1_Seq st2 st1) (IL1_While ex1 (IL1_Seq st2 (IL1_Seq (IL1_Expr ex2) st1))), fs') IL1_ESkip fs'''` by metis_tac [IL1_SEQ_ASSOC_THM]
-THEN `bs_il1 (IL1_While ex1 (IL1_Seq st2 (IL1_Seq (IL1_Expr ex2) st1)), fs') IL1_ESkip fs'''` by (
-
-rw [Once WHILE_UNWIND_ONCE_THM]
-THEN rw [GSYM IL1_SEQ_ASSOC_THM]
-THEN rw [Once bs_il1_cases]
-
-THEN ` bs_il1 (st2,fs') IL1_ESkip fs'' ∧
-  bs_il1
-    (IL1_Seq (IL1_Seq (IL1_Expr ex2) st1)
-       (IL1_While ex1 (IL1_Seq st2 (IL1_Seq (IL1_Expr ex2) st1))),fs'')
-    IL1_ESkip fs'''` by (
-
-rw []
-
-THEN rw [Once bs_il1_cases]
-THEN rw [Once bs_il1_cases]
-THEN rw [Once bs_il1_cases]
-
-THEN fs[Q.SPEC`(IL1_Seq X Y, s)`bs_il1_cases] 
-
-THEN metis_tac [])
-
-THEN metis_tac [])
-
-THEN rw [Once bs_il1_cases]
-THEN metis_tac [])
 (*End while true case *)
 
 (* Begin while false case *)
-THEN1 (rw [Once bs_il1_cases]
+THEN1 (
+(imp_res_tac EQ_SYM THEN res_tac THEN rfs [] THEN rw [])
+THEN rw [Once bs_il1_c_cases]
+THEN DISJ2_TAC
+THEN Q.LIST_EXISTS_TAC [`c'`,`fs''`] THEN rw [])
 
-THEN`?fs'.bs_il1 (st1, fs) IL1_ESkip fs' /\ bs_il1_expr (ex1, fs') (IL1_Boolean F) /\ equiv (con_store s') fs'` by metis_tac []
-
-THEN fs [l1_il1_val_def]
-
-THEN `bs_il1 (IL1_While ex1 (IL1_Seq st2 (IL1_Seq (IL1_Expr ex2) st1)), fs') IL1_ESkip fs'` by (rw [Once bs_il1_cases] THEN metis_tac [])
-THEN rw [Once bs_il1_expr_cases] THEN metis_tac [])
-(* End while false case *));
-
-val L1_TO_IL1_EXISTS_CORRECTNESS_THM = store_thm("L1_TO_IL1_EXISTS_CORRECTNESS_THM",
-``!e s v s' s''.bs_l1 (e, s) v s' ==> ?s''.bs_il1 (l1_to_il1 e 0, con_store s) (l1_il1_val v) s'' /\ equiv (con_store s') s''``,
-rw [l1_to_il1_def]
-THEN `?s''' te lc.l1_to_il1_pair 0 e = (s''', te, lc)` by total
-THEN rw []
-THEN `equiv (con_store s) (con_store s)` by metis_tac [EQUIV_REFL_THM]
-THEN rw [Once bs_il1_cases]
-THEN imp_res_tac EQ_SYM
-THEN imp_res_tac L1_TO_IL1_CORRECTNESS_LEMMA
-THEN fs [FST, SND]
+THEN1 (
+(imp_res_tac EQ_SYM THEN res_tac THEN rfs [] THEN rw [])
+THEN rw [Once bs_il1_c_cases]
+THEN DISJ2_TAC
+THEN Q.LIST_EXISTS_TAC [`c'`,`fs''`] THEN rw []
 THEN res_tac
-THEN `bs_il1 (IL1_Expr te, fs') (l1_il1_val v) fs'` by (rw [Once bs_il1_cases] THEN metis_tac [])
-THEN metis_tac []);
 
-val L1_TO_IL1_FORALL_CORRECTNESS_THM = store_thm("L1_TO_IL1_FORALL_CORRECTNESS_THM",
-``!e s v s' s''.bs_l1 (e, s) v s' ==> !s'' v'.bs_il1 (l1_to_il1 e 0, con_store s) v' s'' ==> equiv (con_store s') s'' /\ (l1_il1_val v = v')``,
-rw [l1_to_il1_def] THEN `?s te lc.l1_to_il1_pair 0 e = (s,te, lc)` by total THEN fs [LET_DEF] THEN fs [Once bs_il1_cases] THEN imp_res_tac IL1_EXPR_BACK_THM
-THEN rw [] THEN imp_res_tac L1_TO_IL1_CORRECTNESS_LEMMA THEN fs [FST, SND] THEN `equiv (con_store s) (con_store s)` by metis_tac [EQUIV_REFL_THM] THEN imp_res_tac EQ_SYM THEN res_tac THEN imp_res_tac IL1_DETERMINACY_THM THEN rw [] THEN metis_tac [BS_IL1_EXPR_DETERMINACY]);
+THEN `bs_il1_c c' (IL1_Seq (IL1_Seq (IL1_Tick st2) (IL1_Seq (IL1_Expr ex2) st1)) (IL1_While ex1 (IL1_Seq (IL1_Tick st2) (IL1_Seq (IL1_Expr ex2) st1))),
+   fs'') NONE` by (rw [Once bs_il1_c_cases]
+THEN DISJ1_TAC
+THEN rw [Once bs_il1_c_cases]
+THEN DISJ1_TAC
 
-val STORE_DOMAIN_INVERSE_THM = store_thm("STORE_DOMAIN_INVERSE_THM",
-``!l s.User l ∈ FDOM (con_store s) ==> l ∈ FDOM s``,
-rw [con_store_def, FDOM_DEF, MAP_KEYS_def]);
+THEN `!c e s.bs_il1_c c (e, s) NONE ==> bs_il1_c c (IL1_Tick e, s) NONE` by metis_tac [clock_dec5, FST, SND]
+THEN metis_tac []
+)
+
+THEN metis_tac [WHILE_UNWIND_ONCE_THM]
+
+)
+
+THEN1 (
+(imp_res_tac EQ_SYM THEN res_tac THEN rfs [] THEN rw [])
+
+THEN rw [Once bs_il1_c_cases]
+
+THEN Q.EXISTS_TAC `fs''` THEN rw []
+
+THEN1 (Q.LIST_EXISTS_TAC [`cl'`, `fs''`] THEN rw [] THEN rw [Once bs_il1_c_cases]) THEN metis_tac [bs_il1_expr_cases])
+
+THEN1(
+(imp_res_tac EQ_SYM THEN res_tac THEN rfs [] THEN rw [])
+
+THEN rw [Once bs_il1_c_cases]
+
+THEN DISJ2_TAC
+
+(*
+`?fs''.equiv (con_store s'') fs''` by metis_tac []
+`bs_il1_c c''
+           (IL1_Seq st1
+              (IL1_While ex1
+                 (IL1_Seq (IL1_Tick st2) (IL1_Seq (IL1_Expr ex2) st1))),
+            fs''') NONE` by metis_tac []
+Q.LIST_EXISTS_TAC [`c'`, `fs''`] THEN rw []
+cheat
+*)
+ THEN Q.LIST_EXISTS_TAC [`c'`, `fs''`] THEN rw []
+
+THEN rw [Once WHILE_UNWIND_ONCE_THM] (* *)
+THEN rw [Once bs_il1_c_cases]
+THEN DISJ1_TAC THEN rw [Once bs_il1_c_cases] THEN DISJ1_TAC
+
+THEN `?fs'''.bs_il1_c c' (st2, fs'') (SOME (IL1_ESkip, fs''', 0))` by metis_tac []
+
+THEN Cases_on `c'` THEN1 rw [Once bs_il1_c_cases]
+
+THEN `!c p v s'.bs_il1_c (SUC c) p (SOME (v, s', 0)) ==> bs_il1_c c p NONE` by metis_tac [clock_dec4]
+
+THEN rw [Q.SPECL [`A`, `IL1_Tick B, C`] bs_il1_c_cases ]
+
+THEN metis_tac [])
+
+THEN1(
+(imp_res_tac EQ_SYM THEN res_tac THEN rfs [] THEN rw [])
+
+THEN rw [Once bs_il1_c_cases]
+
+THEN DISJ2_TAC
+
+ THEN Q.LIST_EXISTS_TAC [`c'`, `fs''`] THEN rw []
+
+THEN rw [Once WHILE_UNWIND_ONCE_THM]
+
+THEN rw [GSYM IL1_SEQ_ASSOC_THM]
+
+THEN rw [Once bs_il1_c_cases]
+
+THEN Cases_on `c'` THEN1 (DISJ1_TAC THEN rw [Once bs_il1_c_cases]) THEN DISJ2_TAC
+
+THEN `?fs'''. bs_il1_c (SUC n) (st2,fs'') (SOME (IL1_ESkip,fs''',SUC c'')) ∧
+           bs_il1_expr (ex2,fs''') IL1_ESkip ∧ equiv (con_store s'') fs'''` by metis_tac []
+
+THEN Q.LIST_EXISTS_TAC [`c''`, `fs'''`] THEN rw []
+
+THEN1 (rw [Once bs_il1_c_cases] THEN metis_tac [clock_dec])
+
+THEN rw [GSYM IL1_SEQ_ASSOC_THM]
+
+THEN rw [Once bs_il1_c_cases] THEN DISJ2_TAC THEN Q.LIST_EXISTS_TAC [`c''`, `fs'''`] THEN rw [Once bs_il1_c_cases])
+
+THEN1 (
+
+NTAC 3 (imp_res_tac EQ_SYM THEN res_tac THEN rfs [] THEN rw [])
+THEN (NTAC 2(imp_res_tac BS_IL1_EXPR_DETERMINACY THEN imp_res_tac IL1_DETERMINACY_THM)) THEN rw[] THEN fs [] THEN rw []
+
+THEN Q.EXISTS_TAC `fs''''''''` THEN rw []
+
+THEN rw [Once bs_il1_c_cases] THEN Q.LIST_EXISTS_TAC [`c'`, `fs''`] THEN rw [] THEN rw [Once WHILE_UNWIND_ONCE_THM] THEN rw [GSYM IL1_SEQ_ASSOC_THM]
+
+THEN rw [Once bs_il1_c_cases] THEN Q.LIST_EXISTS_TAC [`c''`, `fs'''`] THEN rw [] THEN1 (
+Cases_on `c'` THEN1 (`SUC c'' <= 0` by metis_tac [CLOCK_DECREASES] THEN fs [])
+THEN rw [Once bs_il1_c_cases]
+
+THEN metis_tac [clock_dec])
+
+THEN rw [GSYM IL1_SEQ_ASSOC_THM] THEN rw [Once bs_il1_c_cases] THEN Q.LIST_EXISTS_TAC [`c''`, `fs'''`] THEN rw [Once bs_il1_c_cases]));
 
 val _ = export_theory ();
