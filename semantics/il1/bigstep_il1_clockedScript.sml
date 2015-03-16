@@ -55,29 +55,33 @@ val (bs_il1_c_rules, bs_il1_c_ind, bs_il1_c_cases) = Hol_reln `
      ==> bs_il1_c cl (IL1_SIf e1 e2 e3, s) NONE) /\
 
     (* While *)
-    (!cl cl' cl'' e1 e2 s s' s''.
-        (bs_il1_expr (e1, s) (IL1_Boolean T) /\
-         bs_il1_c cl (e2, s) (SOME (IL1_ESkip, s', cl')) /\
-         bs_il1_c cl' (IL1_While e1 e2, s') (SOME (IL1_ESkip, s'', cl'')))
-     ==> bs_il1_c (SUC cl) (IL1_While e1 e2, s) (SOME (IL1_ESkip, s'', cl''))) /\
-
-    (!cl e1 e2 s.
-        bs_il1_expr (e1, s) (IL1_Boolean F)
-    ==> bs_il1_c (SUC cl) (IL1_While e1 e2, s) (SOME (IL1_ESkip, s, SUC cl))) /\
-
     (!cl e1 e2 s.
         (bs_il1_expr (e1, s) (IL1_Boolean T) /\
          bs_il1_c cl (e2, s) NONE)
-     ==> bs_il1_c (SUC cl) (IL1_While e1 e2, s) NONE) /\
+     ==> bs_il1_c cl (IL1_While e1 e2, s) NONE) /\
+
+    (!cl e1 e2 s.
+        bs_il1_expr (e1, s) (IL1_Boolean F)
+    ==> bs_il1_c cl (IL1_While e1 e2, s) (SOME (IL1_ESkip, s, cl))) /\
 
     (!cl cl' e1 e2 s s'.
         (bs_il1_expr (e1, s) (IL1_Boolean T) /\
          bs_il1_c cl (e2, s) (SOME (IL1_ESkip, s', cl')) /\
          bs_il1_c cl' (IL1_While e1 e2, s') NONE)
-     ==> bs_il1_c (SUC cl) (IL1_While e1 e2, s) NONE) /\
+     ==> bs_il1_c cl (IL1_While e1 e2, s) NONE) /\
 
-    (!e1 e2 s.
-         bs_il1_c 0 (IL1_While e1 e2, s) NONE)
+    (!cl cl' cl'' e1 e2 s s' s''.
+        (bs_il1_expr (e1, s) (IL1_Boolean T) /\
+         bs_il1_c cl (e2, s) (SOME (IL1_ESkip, s', cl')) /\
+         bs_il1_c cl' (IL1_While e1 e2, s') (SOME (IL1_ESkip, s'', cl'')))
+     ==> bs_il1_c cl (IL1_While e1 e2, s) (SOME (IL1_ESkip, s'', cl''))) /\
+
+    (!e s.
+       bs_il1_c 0 (IL1_Tick e, s) NONE) /\
+
+    (!e s cl r.
+       bs_il1_c cl (e, s) r
+   ==> bs_il1_c (SUC cl) (IL1_Tick e, s) r)
 `;
 
 val _ = export_theory ();
