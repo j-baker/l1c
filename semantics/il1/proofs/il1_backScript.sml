@@ -39,7 +39,7 @@ val IL1_SIF_BACK_THM = store_thm("IL1_SIF_BACK_THM",
 rw [Once bs_il1_c_cases] THEN metis_tac []);
 
 val IL1_WHILE_BACK_THM = store_thm("IL1_WHILE_BACK_THM",
-``!e1 e2 s s'' v cl cl''.bs_il1_c cl (IL1_While e1 e2, s) (SOME (v, s'', cl'')) ==> (v = IL1_ESkip) /\ ((bs_il1_expr (e1, s) (IL1_Boolean F) /\ (s = s'')) \/ (bs_il1_expr (e1, s) (IL1_Boolean T) /\ ?s' c cl'.(cl = SUC c) /\ bs_il1_c c (e2, s) (SOME (IL1_ESkip, s', cl')) /\ bs_il1_c cl' (IL1_While e1 e2, s') (SOME (IL1_ESkip, s'', cl''))))``,
+``!e1 e2 s s'' v cl cl''.bs_il1_c cl (IL1_While e1 e2, s) (SOME (v, s'', cl'')) ==> (v = IL1_ESkip) /\ ((bs_il1_expr (e1, s) (IL1_Boolean F) /\ (s = s'')) \/ (bs_il1_expr (e1, s) (IL1_Boolean T) /\ ?s' cl'.bs_il1_c cl (e2, s) (SOME (IL1_ESkip, s', cl')) /\ bs_il1_c cl' (IL1_While e1 e2, s') (SOME (IL1_ESkip, s'', cl''))))``,
 rw [Once bs_il1_c_cases] THEN metis_tac []);
 
 val _ = export_theory ();
