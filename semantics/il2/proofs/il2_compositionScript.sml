@@ -1,4 +1,4 @@
-open HolKernel boolLib bossLib listTheory Parse IndDefLib finite_mapTheory relationTheory arithmeticTheory pred_setTheory pairTheory lcsymtacs integerTheory ast_il2Theory smallstep_il2Theory;
+open HolKernel boolLib bossLib listTheory Parse IndDefLib finite_mapTheory relationTheory arithmeticTheory pred_setTheory pairTheory lcsymtacs integerTheory ast_il2Theory smallstep_il2Theory smallstep_il2_clockedTheory;
 
 val _ = new_theory "il2_composition";
 
@@ -42,14 +42,14 @@ val FETCH_RANGE_THM = store_thm("FETCH_RANGE_THM",
 rw []);
 
 val APPEND_TRACE_SAME_THM = store_thm("APPEND_TRACE_SAME_THM",
-``!P c c'.exec P c c' ==> !P'.exec (P ++ P') c c'``,
-fs [exec_def] THEN strip_tac THEN ho_match_mp_tac RTC_STRONG_INDUCT_RIGHT1 THEN rw []
-THEN fs [Once exec_one_cases]
+``!P c c'.exec_clocked P c c' ==> !P'.exec_clocked (P ++ P') c c'``,
+fs [exec_clocked_def] THEN strip_tac THEN ho_match_mp_tac RTC_STRONG_INDUCT_RIGHT1 THEN rw []
+THEN fs [Once exec_clocked_one_cases]
+THEN rw []
 
-THEN `(exec_one (P ++ P'))^* c (pc, stk, st)` by metis_tac []
-THEN `exec_instr ((P ++ P') !! pc) (pc, stk, st) (pc', stk', st')` by metis_tac [fetch_append_thm, int_ge]
-THEN `(exec_one (P ++ P')) (pc, stk, st) (pc', stk', st')` by rwa [exec_one_cases]
-THEN rw [Once RTC_CASES2] THEN metis_tac []);
+THEN match_mp_tac (GEN_ALL(CONJUNCT2 (SPEC_ALL (REWRITE_RULE [EQ_IMP_THM] RTC_CASES_RTC_TWICE))))
+THEN Q.EXISTS_TAC `SOME (pc, clk, stk, st)` THEN rw []
+THEN match_mp_tac RTC_SUBSET THEN rwa [exec_clocked_one_cases] THEN rwa [fetch_append_thm]);
 
 val incr_pc_def = Define `incr_pc (i, s, stk) (i':int) = (i + i', s, stk)`;
 
