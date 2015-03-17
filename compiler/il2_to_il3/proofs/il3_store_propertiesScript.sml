@@ -106,7 +106,7 @@ THEN `i INSERT FDOM (FST (make_loc_map P)) = FDOM (FST (make_loc_map P))` by (rw
 
 THEN rw []);
 
-val ms_const_2 = store_thm("ms_const_2", ``!P pc stk st pc' stk' st'.exec_one P (pc, stk, st) (pc', stk', st') ==> ms_il2 P st ==> ms_il2 P st'``, metis_tac [ms_const, SND, exec_def, RTC_SUBSET]);
+val ms_const_2 = store_thm("ms_const_2", ``!P pc c stk st pc' c' stk' st'.exec_clocked_one P (SOME (pc, c, stk, st)) (SOME (pc', c', stk', st')) ==> ms_il2 P st ==> ms_il2 P st'``, metis_tac [ms_const, SND, exec_clocked_def, RTC_SUBSET]);
 
 
 val every_store_inc_in_map = prove(``!i P n.((n < LENGTH P) /\ ((P !! &n = IL2_Store i) \/ (P !! &n = IL2_Load i))) ==> i ∈ FDOM (FST (make_loc_map P))``,
@@ -145,12 +145,15 @@ THEN1 (fs [] THEN rw [s_uloc_def])
 THEN
 Cases_on `h` THEN fs [EL, s_uloc_def] THEN rw [] THEN fs [] THEN rw [] THEN res_tac THEN fs [FETCH_EL]);
 
-val suloc_2_thm = prove(``!P c c'.exec_il3 P c c' ==> (!l.l ∈ FDOM (SND (SND c)) <=> l < s_uloc P) ==> (!l.l ∈ FDOM (SND (SND c')) <=> l < s_uloc P)``,
-STRIP_TAC THEN fs [exec_il3_def] THEN ho_match_mp_tac RTC_STRONG_INDUCT THEN rw []
+val suloc_2_thm = prove(``!P a b.exec_il3_c P a b ==> !c c'.(a = SOME c) /\ (b = SOME c') ==> (!l.l ∈ FDOM (SND (SND (SND c))) <=> l < s_uloc P) ==> (!l.l ∈ FDOM (SND (SND (SND c'))) <=> l < s_uloc P)``,
+STRIP_TAC THEN fs [exec_il3_c_def] THEN ho_match_mp_tac RTC_STRONG_INDUCT THEN rw []
 
-THEN Cases_on `c` THEN Cases_on `c'` THEN Cases_on `c''` THEN Cases_on `r`  THEN Cases_on `r'` THEN Cases_on `r''` THEN fs [FST, SND] THEN rw []
+THEN1 metis_tac []
+THEN Cases_on `a'` THEN1 (imp_res_tac RTC_CASES1 THEN fs [exec_il3_c_one_cases]) THEN fs []
 
-THEN fs [exec_il3_one_cases] THEN Cases_on `P !! q` THEN fs [exec_il3_instr_cases] THEN rw []
+THEN Cases_on `c` THEN Cases_on `c'` THEN Cases_on `x` THEN Cases_on `r'` THEN Cases_on `r''` THEN Cases_on `r'` THEN Cases_on `r'''` THEN Cases_on `r` THEN Cases_on `r'''` THEN fs [FST, SND] THEN rw []
+
+THEN fs [exec_il3_c_one_cases] THEN Cases_on `P !! q` THEN fs [exec_il3_c_instr_cases] THEN rw []
 THEN `?nq.q = &nq` by metis_tac [NUM_POSINT_EXISTS, int_ge] THEN rw []
 THEN imp_res_tac suloc_thm
 THEN fs [int_monotonic_thm] THEN rfs []
@@ -158,7 +161,7 @@ THEN `!l. (l = n) ==> (l < s_uloc P)` by metis_tac []
 THEN `!l. l ∈ FDOM r' ⇔ l < s_uloc P` by metis_tac [EQ_IMP_THM]
 THEN metis_tac []);
 
-val suloc_21_thm = store_thm("suloc_21_thm", ``!P pc stk st pc' stk' st'.exec_il3 P (pc, stk, st) (pc', stk', st') /\ (!l.l ∈ FDOM st <=> l < s_uloc P) ==> (!l.l ∈ FDOM st' <=> l < s_uloc P)``,
+val suloc_21_thm = store_thm("suloc_21_thm", ``!P pc c stk st pc' c' stk' st'.exec_il3_c P (SOME (pc, c, stk, st)) (SOME (pc', c', stk', st')) /\ (!l.l ∈ FDOM st <=> l < s_uloc P) ==> (!l.l ∈ FDOM st' <=> l < s_uloc P)``,
 rw []
 THEN mp_tac suloc_2_thm
 THEN rw []
