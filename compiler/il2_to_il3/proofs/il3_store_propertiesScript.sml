@@ -1,8 +1,6 @@
-open HolKernel boolLib bossLib lcsymtacs il2_to_il3_compilerTheory pred_setTheory finite_mapTheory listTheory pairTheory integerTheory smallstep_il2Theory relationTheory smallstep_il3Theory arithmeticTheory smallstep_vsm0Theory;
+open HolKernel boolLib bossLib lcsymtacs il2_to_il3_compilerTheory pred_setTheory finite_mapTheory listTheory pairTheory integerTheory smallstep_il2Theory relationTheory smallstep_il3Theory arithmeticTheory smallstep_vsm0Theory smallstep_il3_clockedTheory smallstep_il2_clockedTheory;
 
 val _ = new_theory "il3_store_properties";
-
-
 
 val locs_to_map_total_thm = store_thm("locs_to_map_total_thm", ``!P.?m n.locs_to_map P = (m, n)``,
 Induct_on `P` THEN  rw [locs_to_map_def] THEN rw []);
@@ -89,14 +87,14 @@ THEN (TRY (Cases_on `i' ∈ FDOM map`)) THEN (TRY (Cases_on `i ∈ FDOM map`)) T
 val ms_il2_trans = store_thm("ms_il2_trans", ``!P r''' i v.ms_il2 P r''' /\ ms_il2 P (r''' |+ (i, v)) ==> (FDOM r''' = FDOM (r''' |+ (i, v)))``,
 metis_tac [ms_il2_def]);
 
-val ms_const = store_thm("ms_const", ``!P c c'.exec P c c' ==> ms_il2 P (SND (SND c)) ==> ms_il2 P (SND (SND c'))``,
-fs [exec_def] THEN STRIP_TAC THEN ho_match_mp_tac RTC_STRONG_INDUCT
+val ms_const = store_thm("ms_const", ``!P c c'.exec_clocked P c c' ==> !x y.(c = SOME x) /\ (c' = SOME y) ==> ms_il2 P (SND (SND (SND x))) ==> ms_il2 P (SND (SND (SND y)))``,
+fs [exec_clocked_def] THEN STRIP_TAC THEN ho_match_mp_tac RTC_STRONG_INDUCT
 
 THEN rw [ms_il2_def]
 
-THEN Cases_on `c` THEN Cases_on `c'` THEN Cases_on `c''` THEN Cases_on `r` THEN Cases_on `r'` THEN Cases_on `r''` THEN fs [FST, SND]
+THEN Cases_on `x` THEN Cases_on `r` THEN Cases_on `r'` THEN fs [FST, SND] THEN Cases_on `y` THEN Cases_on `r'` THEN Cases_on `r''` THEN fs [FST, SND] THEN rw [] THEN Cases_on `c'` THEN1 (imp_res_tac RTC_CASES1 THEN fs [exec_clocked_one_cases]) THEN Cases_on `x` THEN Cases_on `r''` THEN Cases_on `r'''` THEN fs []
 
-THEN fs [exec_one_cases] THEN Cases_on `P !! q` THEN fs [exec_instr_cases] THEN rw []
+THEN fs [exec_clocked_one_cases] THEN Cases_on `P !! q` THEN fs [exec_clocked_instr_cases] THEN rw []
 
 THEN `?nq.q = &nq` by metis_tac [int_ge, NUM_POSINT_EXISTS]
 THEN rw []
