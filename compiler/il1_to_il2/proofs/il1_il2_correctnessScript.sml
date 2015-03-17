@@ -1,4 +1,4 @@
-open HolKernel boolLib bossLib Parse IndDefLib ast_il1Theory smallstep_il2Theory listTheory integerTheory lcsymtacs il2_compositionTheory relationTheory il1_to_il2_compilerTheory pairTheory bigstep_il1Theory;
+open HolKernel boolLib bossLib Parse IndDefLib ast_il1Theory smallstep_il2Theory listTheory integerTheory lcsymtacs il2_compositionTheory relationTheory il1_to_il2_compilerTheory pairTheory bigstep_il1Theory smallstep_il2_clockedTheory;
 
 val _ = new_theory "il1_il2_correctness";
 
@@ -11,31 +11,29 @@ val il1_il2_val_def = Define `
 (il1_il2_val (IL1_Boolean T) = true_value) /\
 (il1_il2_val (IL1_Boolean F) = false_value)`;
 
-val thmtest1 = prove(``∀P P' stk st stk' st' stk'' st'' endpc.
-     exec P (0,stk,st) (&LENGTH P,stk',st') ∧
-     exec P' (0,stk',st') (&LENGTH P',stk'',st'') /\ (&LENGTH P + &LENGTH P' = endpc) ⇒
-     exec (P ++ P') (0,stk,st) (endpc,stk'',st'')``, metis_tac [EX_COM_THM]);
+val thmtest1 = prove(``∀P P' clk stk st clk' stk' st' clk'' stk'' st'' endpc.
+     exec_clocked P (SOME (0,clk, stk,st)) (SOME (&LENGTH P,clk', stk',st')) ∧
+     exec_clocked P' (SOME (0,clk', stk',st')) (SOME (&LENGTH P',clk'', stk'',st'')) /\ (&LENGTH P + &LENGTH P' = endpc) ⇒
+     exec_clocked (P ++ P') (SOME (0,clk, stk,st)) (SOME (endpc,clk'', stk'',st''))``, metis_tac [EX_COM_THM]);
 
 val thmtest2 = METIS_PROVE [EXECUTION_COMPOSE_THM]
 ``
-∀P P' stk st i' stk' st' i'' stk'' st'' t.
-     exec P (0,stk,st) (i',stk',st') ∧ &LENGTH P ≤ i' ∧
-     exec P' (i' − &LENGTH P,stk',st') (i'',stk'',st'')
+∀P P' clk stk st i' clk' stk' st' i'' clk'' stk'' st'' t.
+     exec_clocked P (SOME (0,clk,stk,st)) (SOME (i',clk',stk',st')) ∧ &LENGTH P ≤ i' ∧
+     exec_clocked P' (SOME (i' − &LENGTH P,clk',stk',st')) (SOME (i'',clk'',stk'',st''))
    /\ (t = &LENGTH P + i'')
 ⇒
-     exec (P ++ P') (0,stk,st) (t,stk'',st'')
+     exec_clocked (P ++ P') (SOME (0,clk,stk,st)) (SOME (t,clk'',stk'',st''))
 ``;
 
 val thmtest3 = METIS_PROVE [APPEND_TRACE_SAME_2_THM, incr_pc_def]
 ``
-∀P P' pc stk st pc' stk' st' pc1 pc2.
-     exec P (pc, stk, st) (pc', stk', st') /\ (pc1 = pc + &LENGTH P') /\ (pc2 = pc' + &LENGTH P') ⇒
-       exec (P' ++ P) (pc1, stk, st) (pc2, stk', st')``;
+∀P P' pc clk stk st clk' pc' stk' st' pc1 pc2.
+     exec_clocked P (SOME (pc, clk, stk, st)) (SOME (pc',clk',  stk', st')) /\ (pc1 = pc + &LENGTH P') /\ (pc2 = pc' + &LENGTH P') ⇒
+       exec_clocked (P' ++ P) (SOME (pc1, clk, stk, st)) (SOME (pc2, clk', stk', st'))``;
 
-val jz_thm = prove(``!x stk s.exec [IL2_Jz x] (0, false_value::stk, s) (1 + x, stk, s)``,
-rw [exec_def, Once RTC_CASES1, exec_one_cases, fetch_def, exec_instr_cases, false_value_def]
-THEN `(exec_one [IL2_Jz x])^* (1+x, stk, s) (1+x, stk, s)` by metis_tac [RTC_REFL]
-THEN metis_tac []);
+val jz_thm = prove(``!x clk stk s.exec_clocked [IL2_Jz x] (SOME (0, clk, false_value::stk, s)) (SOME (1 + x, clk, stk, s))``,
+rw [exec_clocked_def, Once RTC_CASES1, exec_clocked_one_cases, fetch_def, exec_clocked_instr_cases, false_value_def]);
 
 fun btotal f x = f x handle HOL_ERR _ => false;
 
@@ -77,14 +75,15 @@ Induct_on `l1` THEN rwa [LENGTH, INT]);
 
 val append_thm = prove(``!a b.a::b = [a] ++ b``, metis_tac [APPEND]);
 
-val expr_correctness_lemma = prove(``!p v.bs_il1_expr p v ==> !stk.exec (il1e_to_il2 (FST p)) (0, stk, (SND p)) (&LENGTH (il1e_to_il2 (FST p)), (il1_il2_val v)::stk, (SND p))``,
+val expr_correctness_lemma = prove(``!p v.bs_il1_expr p v ==> !clk stk.exec_clocked (il1e_to_il2 (FST p)) (SOME (0, clk, stk, (SND p))) (SOME (&LENGTH (il1e_to_il2 (FST p)), clk, (il1_il2_val v)::stk, (SND p)))``,
 ho_match_mp_tac bs_il1_expr_strongind THEN rw [FST, SND, il1_il2_val_def] THEN rw [il1e_to_il2_def]
 
-THEN1 (Cases_on `v` THEN rwa [exec_def, il1e_to_il2_def, Once RTC_CASES1, Once exec_one_cases, fetch_def, il1_il2_val_def] THEN (TRY (Cases_on `b`)) THEN rwa [il1e_to_il2_def, fetch_def, Once exec_instr_cases, Once exec_one_cases, il1_il2_val_def])
+THEN1 (Cases_on `v` THEN rwa [exec_clocked_def, il1e_to_il2_def, Once RTC_CASES1, Once exec_clocked_one_cases, fetch_def, il1_il2_val_def] THEN (TRY (Cases_on `b`)) THEN rwa [il1e_to_il2_def, fetch_def, Once exec_clocked_instr_cases, Once exec_clocked_one_cases, il1_il2_val_def])
 
 
 THEN1 (
-tac (P "stk")
+tac (P "clk")
+THEN tac (P "stk")
 THEN REWRITE_TAC [GSYM APPEND_ASSOC]
 THEN match_mp_tac thmtest1
 THEN first_assum (match_exists_tac o concl)
@@ -93,10 +92,11 @@ THEN match_mp_tac thmtest1
 THEN first_assum (match_exists_tac o concl)
 THEN rwa []
 THEN (TRY (Cases_on `n2 <= n1`)) THEN
-rwa [exec_def, Once exec_one_cases, Once exec_instr_cases, Once RTC_CASES1, fetch_def, RTC_REFL, il1_il2_val_def, int_ge])
+rwa [exec_clocked_def, Once exec_clocked_one_cases, Once exec_clocked_instr_cases, Once RTC_CASES1, fetch_def, RTC_REFL, il1_il2_val_def, int_ge])
 
 THEN1 (
-tac (P "stk")
+tac (P "clk")
+THEN tac (P "stk")
 THEN REWRITE_TAC [GSYM APPEND_ASSOC]
 THEN match_mp_tac thmtest1
 THEN first_assum (match_exists_tac o concl)
@@ -105,11 +105,11 @@ THEN match_mp_tac thmtest1
 THEN first_assum (match_exists_tac o concl)
 THEN rwa []
 THEN (TRY (Cases_on `n2 <= n1`)) THEN
-rwa [exec_def, Once exec_one_cases, Once exec_instr_cases, Once RTC_CASES1, fetch_def, RTC_REFL, il1_il2_val_def, int_ge])
+rwa [exec_clocked_def, Once exec_clocked_one_cases, Once exec_clocked_instr_cases, Once RTC_CASES1, fetch_def, RTC_REFL, il1_il2_val_def, int_ge])
 
-THEN1 rw [il1e_to_il2_def, exec_def, Once RTC_CASES1, exec_one_cases, fetch_def, exec_instr_cases, RTC_REFL]
+THEN1 rw [il1e_to_il2_def, exec_clocked_def, Once RTC_CASES1, exec_clocked_one_cases, fetch_def, exec_clocked_instr_cases, RTC_REFL]
 
-THEN1 (tac (P "stk")
+THEN1 (tac (P "clk") THEN tac (P "stk")
 THEN REWRITE_TAC [GSYM APPEND_ASSOC]
 THEN match_mp_tac thmtest1
 THEN first_assum (match_exists_tac o concl)
@@ -118,8 +118,8 @@ THEN PURE_ONCE_REWRITE_TAC [append_thm]
 
 THEN match_mp_tac thmtest2
 
-THEN `exec [IL2_Jz (&LENGTH (il1e_to_il2 e2) + 1)] (0,[true_value] ++ stk,s)
-    (1,stk,s)` by rw [il1e_to_il2_def, exec_def, Once RTC_CASES1, exec_one_cases, fetch_def, exec_instr_cases, RTC_REFL, true_value_def]
+THEN `exec_clocked [IL2_Jz (&LENGTH (il1e_to_il2 e2) + 1)] (SOME (0, clk, [true_value] ++ stk,s))
+    (SOME (1,clk,stk,s))` by rw [il1e_to_il2_def, exec_clocked_def, Once RTC_CASES1, exec_clocked_one_cases, fetch_def, exec_clocked_instr_cases, RTC_REFL, true_value_def]
 
 THEN first_assum (match_exists_tac o concl)
 THEN rwa []
@@ -136,8 +136,8 @@ THEN rwa []
 THEN PURE_ONCE_REWRITE_TAC [append_thm]
 
 THEN match_mp_tac thmtest2
-THEN `exec [IL2_Jump (&LENGTH (il1e_to_il2 e3))]
-    (0,[il1_il2_val v] ++ stk,s) (1 + &LENGTH (il1e_to_il2 e3),[il1_il2_val v] ++ stk,s)` by rw [il1e_to_il2_def, exec_def, Once RTC_CASES1, exec_one_cases, fetch_def, exec_instr_cases, RTC_REFL]
+THEN `exec_clocked [IL2_Jump (&LENGTH (il1e_to_il2 e3))]
+    (SOME (0,clk,[il1_il2_val v] ++ stk,s)) (SOME (1 + &LENGTH (il1e_to_il2 e3),clk,[il1_il2_val v] ++ stk,s))` by rw [il1e_to_il2_def, exec_clocked_def, Once RTC_CASES1, exec_clocked_one_cases, fetch_def, exec_clocked_instr_cases, RTC_REFL]
 
 THEN first_assum (match_exists_tac o concl)
 
@@ -147,66 +147,20 @@ THEN `&(1 + LENGTH (il1e_to_il2 e3)) = 1 + &LENGTH (il1e_to_il2 e3)` by rwa []
 
 THEN HINT_EXISTS_TAC
 
-THEN rwa [il1e_to_il2_def, exec_def, Once RTC_CASES1, exec_one_cases, fetch_def, exec_instr_cases, RTC_REFL])
+THEN rwa [il1e_to_il2_def, exec_clocked_def, Once RTC_CASES1, exec_clocked_one_cases, fetch_def, exec_clocked_instr_cases, RTC_REFL])
 
 THEN1 (rw [il1e_to_il2_def]
+THEN REWRITE_TAC [GSYM APPEND_ASSOC]
+THEN match_mp_tac thmtest1
+THEN Q.LIST_EXISTS_TAC [`clk`, `false_value::stk`, `s`] THEN rwa []
+THEN PURE_ONCE_REWRITE_TAC [append_thm]
+THEN match_mp_tac thmtest2 THEN Q.LIST_EXISTS_TAC [`1 + &LENGTH (il1e_to_il2 e2) + 1`, `clk`, `stk`, `s`, `&(LENGTH (il1e_to_il2 e2) + (1 + LENGTH (il1e_to_il2 e3)))`] THEN rwa []
 
-THEN `exec (il1e_to_il2 e1) (0, stk, s) (&LENGTH (il1e_to_il2 e1), false_value::stk, s)` by metis_tac []
-THEN `exec [IL2_Jz (&LENGTH (il1e_to_il2 e2) + 1)] (0, false_value::stk, s) (1 + &LENGTH (il1e_to_il2 e2) + 1, stk, s)` by (rwa [exec_def]
-THEN match_mp_tac RTC_SUBSET
-THEN rwa [exec_one_cases, fetch_def, exec_instr_cases, false_value_def])
+THEN1 (rw [exec_clocked_def] THEN match_mp_tac RTC_SUBSET THEN rwa [exec_clocked_one_cases, exec_clocked_instr_cases, fetch_def, false_value_def])
 
+THEN rwa [INT_SUB_CALCULATE, INT_ADD_RINV, GSYM INT_ADD_ASSOC]
 
-THEN `exec ([IL2_Jz (&LENGTH (il1e_to_il2 e2) + 1)] ++ il1e_to_il2 e2) (0, false_value::stk, s) (1 + &LENGTH (il1e_to_il2 e2) + 1, stk, s)` by metis_tac [APPEND_TRACE_SAME_THM]
-
-THEN `exec (il1e_to_il2 e3) (0, stk, s) (&LENGTH (il1e_to_il2 e3), (il1_il2_val v)::stk, s)` by metis_tac []
-
-THEN `exec [IL2_Jz (&LENGTH (il1e_to_il2 e2) + 1)] (&LENGTH (il1e_to_il2 e1) - &LENGTH (il1e_to_il2 e1),false_value::stk,s)
-        (1 + &LENGTH (il1e_to_il2 e2) + 1,stk,s)` by rwa []
-
-THEN `exec (il1e_to_il2 e1 ++ [IL2_Jz (&LENGTH (il1e_to_il2 e2) + 1)])
-         (0,stk,s)
-         (&LENGTH (il1e_to_il2 e1) + (1 + &LENGTH (il1e_to_il2 e2) + 1),stk,
-          s)` by (imp_res_tac EXECUTION_COMPOSE_THM THEN rwa [])
-
-THEN `exec (il1e_to_il2 e1 ++ [IL2_Jz (&LENGTH (il1e_to_il2 e2) + 1)] ++ il1e_to_il2 e2)
-         (0,stk,s)
-         (&LENGTH (il1e_to_il2 e1) + (1 + &LENGTH (il1e_to_il2 e2) + 1),stk,
-          s)` by metis_tac [APPEND_TRACE_SAME_THM]
-
-THEN `&LENGTH (il1e_to_il2 e1) + (1 + &LENGTH (il1e_to_il2 e2) + 1) = (&LENGTH (il1e_to_il2 e1 ++ [IL2_Jz (&LENGTH (il1e_to_il2 e2) + 1)] ++ il1e_to_il2 e2 ++ [IL2_Jump (&LENGTH (il1e_to_il2 e3))]))` by rwa []
-
-THEN `exec (il1e_to_il2 e1 ++ [IL2_Jz (&LENGTH (il1e_to_il2 e2) + 1)] ++ il1e_to_il2 e2)
-         (0,stk,s)
-         ((&LENGTH (il1e_to_il2 e1 ++ [IL2_Jz (&LENGTH (il1e_to_il2 e2) + 1)] ++ il1e_to_il2 e2 ++ [IL2_Jump (&LENGTH (il1e_to_il2 e3))])),stk,
-          s)` by metis_tac []
-
-THEN `exec
-         (il1e_to_il2 e1 ++ [IL2_Jz (&LENGTH (il1e_to_il2 e2) + 1)] ++
-          il1e_to_il2 e2 ++ [IL2_Jump (&LENGTH (il1e_to_il2 e3))]) (0,stk,s)
-         (&LENGTH
-             (il1e_to_il2 e1 ++ [IL2_Jz (&LENGTH (il1e_to_il2 e2) + 1)] ++
-              il1e_to_il2 e2 ++ [IL2_Jump (&LENGTH (il1e_to_il2 e3))]),
-          stk,s)` by metis_tac [APPEND_TRACE_SAME_THM]
-
-
-THEN ` exec
-         (il1e_to_il2 e1 ++ [IL2_Jz (&LENGTH (il1e_to_il2 e2) + 1)] ++
-          il1e_to_il2 e2 ++ [IL2_Jump (&LENGTH (il1e_to_il2 e3))] ++ il1e_to_il2 e3) (0,stk,s)
-         (&LENGTH
-             (il1e_to_il2 e1 ++ [IL2_Jz (&LENGTH (il1e_to_il2 e2) + 1)] ++
-              il1e_to_il2 e2 ++ [IL2_Jump (&LENGTH (il1e_to_il2 e3))]) + &LENGTH (il1e_to_il2 e3),
-          il1_il2_val v::stk,s)` by (imp_res_tac EX_COM_THM THEN rwa [])
-
-THEN `&LENGTH
-             (il1e_to_il2 e1 ++
-              [IL2_Jz (&LENGTH (il1e_to_il2 e2) + 1)] ++
-              il1e_to_il2 e2 ++ [IL2_Jump (&LENGTH (il1e_to_il2 e3))]) +
-          &LENGTH (il1e_to_il2 e3) = &(LENGTH (il1e_to_il2 e1) + 1 + LENGTH (il1e_to_il2 e2) + 1 +
-     LENGTH (il1e_to_il2 e3))` by rwa [length_thm]
-
-THEN metis_tac [])
-
+THEN match_mp_tac thmtest3 THEN Q.LIST_EXISTS_TAC [`0`, `&LENGTH (il1e_to_il2 e3)`] THEN rwa [])
 );
 
 val EXPR_CORRECTNESS_THM = store_thm("EXPR_CORRECTNESS_THM",
