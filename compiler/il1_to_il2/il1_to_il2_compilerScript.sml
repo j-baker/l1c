@@ -23,7 +23,11 @@ val il1_to_il2_def = Define `
 (il1_to_il2 (IL1_Seq e1 e2) = (il1_to_il2 e1) ++ [IL2_Pop] ++ (il1_to_il2 e2)) /\
 (il1_to_il2 (IL1_SIf e1 e2 e3) = (il1e_to_il2 e1) ++ [IL2_Jz (&LENGTH (il1_to_il2 e2) + 1)] ++ (il1_to_il2 e2) ++ [IL2_Jump (&LENGTH (il1_to_il2 e3))] ++ (il1_to_il2 e3)) /\
 
-(il1_to_il2 (IL1_While e1 e2) = (il1e_to_il2 e1) ++ [IL2_Jz (&LENGTH (il1_to_il2 e2) + 3)] ++ (il1_to_il2 e2) ++ [IL2_Pop; IL2_Tick; IL2_Jump (-&(LENGTH ((il1e_to_il2 e1) ++ [IL2_Jz (&LENGTH (il1_to_il2 e2) + 3)] ++ (il1_to_il2 e2)) + 3))] ++ [IL2_Push skip_value])`;
+(il1_to_il2 (IL1_While e1 e2) = (il1e_to_il2 e1) ++ [IL2_Jz (&LENGTH (il1_to_il2 e2) + 3)] ++ (il1_to_il2 e2) ++ [IL2_Pop; IL2_Tick; IL2_Jump (-&(LENGTH ((il1e_to_il2 e1) ++ [IL2_Jz (&LENGTH (il1_to_il2 e2) + 3)] ++ (il1_to_il2 e2)) + 3))] ++ [IL2_Push skip_value]) /\
+
+(il1_to_il2 (IL1_Tick e) = [IL2_Tick] ++ (il1_to_il2 e))
+
+`;
 
 
 val _ = export_theory ();
