@@ -97,7 +97,7 @@ mp_tac EXECUTION_COMPOSE_THM
 THEN rw []
 THEN `&LENGTH P <= &LENGTH P` by metis_tac [INT_LE_REFL]
 THEN `&LENGTH P - &LENGTH P = 0` by rwa []
-THEN metis_tac [EXECUTION_COMPOSE_THM, INT_LE_REFL]);
+THEN metis_tac [EXECUTION_COMPOSE_THM, INT_ADD_COMM, INT_LE_REFL, incr_pc_def]);
 
 val DIV_THM = store_thm("DIV_THM",
 ``!P P' clk stk st clk' stk' st'.exec_clocked P (SOME (0, clk, stk, st)) (SOME (&LENGTH P, clk', stk', st')) /\ exec_clocked P' (SOME (0, clk', stk', st')) NONE ==> exec_clocked (P ++ P') (SOME (0, clk, stk, st)) NONE``,
