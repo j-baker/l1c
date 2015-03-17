@@ -73,26 +73,28 @@ THEN fs [incr_pc_def] THEN match_mp_tac (GEN_ALL(CONJUNCT2 (SPEC_ALL (REWRITE_RU
 THEN match_mp_tac (GEN_ALL(CONJUNCT2 (SPEC_ALL (REWRITE_RULE [EQ_IMP_THM] RTC_CASES2)))) THEN rw [] THEN DISJ2_TAC THEN Q.EXISTS_TAC `SOME (pc + &LENGTH P', clk, stk, st)` THEN rwa [exec_clocked_one_cases] THEN rwa [fetch_append_thm, INT_SUB_CALCULATE, INT_ADD_RINV, GSYM INT_ADD_ASSOC, incr_pc_def] THEN Cases_on `P !! pc` THEN fsa [exec_clocked_instr_cases]);
 
 val EXECUTION_COMPOSE_THM = store_thm("EXECUTION_COMPOSE_THM",
-``!P P' stk st i' stk' st' i'' stk'' st''.exec P (0, stk, st) (i', stk', st') /\ (&LENGTH P <= i') /\ exec 
-P' (i' - &LENGTH P, stk', st') (i'', stk'', st'') ==> exec (P ++ P') (0, stk, st) (&LENGTH P + i'', stk'', st'')``,
-rw []
+``!P P' clk stk st i' clk' stk' st' i'' clk'' stk'' st''.exec_clocked P (SOME (0, clk, stk, st)) (SOME (i', clk', stk', st')) /\ (&LENGTH P <= i') /\ exec_clocked 
+P' (SOME (i' - &LENGTH P, clk', stk', st')) (SOME (i'', clk'', stk'', st'')) ==> exec_clocked (P ++ P') (SOME (0, clk, stk, st)) (SOME (&LENGTH P + i'', clk'', stk'', st''))``,
+rw [] THEN fs [exec_clocked_def]
 
-THEN `(exec (P ++ P')) (0, stk, st) (i', stk', st')` by fsa [APPEND_TRACE_SAME_THM]
+THEN match_mp_tac (GEN_ALL(CONJUNCT2 (SPEC_ALL (REWRITE_RULE [EQ_IMP_THM] RTC_CASES_RTC_TWICE))))
 
-THEN `(exec (P ++ P')) (incr_pc (i' - &LENGTH P,stk',st') (&LENGTH P)) (incr_pc (i'',stk'',st'') (&LENGTH P))` by fsa [APPEND_TRACE_SAME_2_THM]
+THEN fs [GSYM exec_clocked_def]
 
-THEN fsa [incr_pc_def]
+THEN Q.EXISTS_TAC `SOME (i', clk', stk', st')` THEN rw [] THEN1 metis_tac [APPEND_TRACE_SAME_THM]
 
-THEN fsa [exec_def, INT_ADD_COMM]
-THEN metis_tac [RTC_TRANSITIVE, transitive_def]);
+THEN fs [INT_SUB_CALCULATE, INT_ADD_RINV, GSYM INT_ADD_ASSOC]
+
+THEN imp_res_tac APPEND_TRACE_SAME_2_THM
+
+THEN fs [incr_pc_def, GSYM INT_ADD_ASSOC, INT_ADD_COMM] THEN metis_tac [INT_ADD_RINV, INT_ADD_LID, INT_ADD_COMM]);
 
 val EX_COM_THM = store_thm("EX_COM_THM",
-``!P P' stk st stk' st' stk'' st''.exec P (0, stk, st) (&LENGTH P, stk', st') /\ exec P' (0, stk', st') (&LENGTH P', stk'', st'') ==> exec (P ++ P') (0, stk, st) (&LENGTH P + &LENGTH P', stk'', st'')``,
+``!P P' clk stk st clk' stk' st' clk'' stk'' st''.exec_clocked P (SOME (0, clk, stk, st)) (SOME (&LENGTH P, clk', stk', st')) /\ exec_clocked P' (SOME (0, clk', stk', st')) (SOME (&LENGTH P', clk'', stk'', st'')) ==> exec_clocked (P ++ P') (SOME (0, clk, stk, st)) (SOME (&LENGTH P + &LENGTH P', clk'', stk'', st''))``,
 mp_tac EXECUTION_COMPOSE_THM
 THEN rw []
 THEN `&LENGTH P <= &LENGTH P` by metis_tac [INT_LE_REFL]
 THEN `&LENGTH P - &LENGTH P = 0` by rwa []
 THEN metis_tac [EXECUTION_COMPOSE_THM, INT_LE_REFL]);
-
 
 val _ = export_theory ();
