@@ -5,6 +5,7 @@ val _ = new_theory "ast_vsm0";
 val _ = type_abbrev("vsm_loc", ``:num``);
 
 val _ = Datatype `vsm_stm = VSM_Nop
+                          | VSM_Tick
                           | VSM_Push int
                           | VSM_Load vsm_loc
                           | VSM_Store vsm_loc

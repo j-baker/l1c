@@ -5,6 +5,7 @@ val _ = new_theory "smallstep_il3";
 
 val (exec_il3_instr_rules, exec_il3_instr_ind, exec_il3_instr_cases) = Hol_reln `
 (!pc stk st.exec_il3_instr VSM_Nop (pc, stk, st) (pc+1, stk, st)) /\
+(!pc stk st.exec_il3_instr VSM_Tick (pc, stk, st) (pc+1, stk, st)) /\
 (!n pc stk st.exec_il3_instr (VSM_Push n) (pc, stk, st) (pc+1, n::stk, st)) /\
 (!l pc stk st.l ∈ FDOM st ==> exec_il3_instr (VSM_Load l) (pc, stk, st) (pc+1, (st ' l)::stk, st)) /\
 (!l pc v stk st.exec_il3_instr (VSM_Store l) (pc, v::stk, st) (pc+1, stk, st |+ (l, v))) /\
