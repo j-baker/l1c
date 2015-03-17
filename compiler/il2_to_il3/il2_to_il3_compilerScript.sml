@@ -4,6 +4,7 @@ val _ = new_theory "il2_to_il3_compiler";
 
 val il2_to_il3m_def = Define `
 (il2_to_il3m m IL2_Nop = VSM_Nop) /\
+(il2_to_il3m m IL2_Tick = VSM_Tick) /\
 (il2_to_il3m m (IL2_Push x) = VSM_Push x) /\
 (il2_to_il3m m (IL2_Store x) = VSM_Store (m ' x)) /\
 (il2_to_il3m m (IL2_Load x) = VSM_Load (m ' x)) /\
