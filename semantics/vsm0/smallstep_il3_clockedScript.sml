@@ -25,6 +25,6 @@ val (exec_il3_c_one_rules, exec_il3_c_one_ind, exec_il3_c_one_cases) = Hol_reln 
     ==> exec_il3_c_one instrs (SOME (pc, clk, stk, st)) r
 `;
 
-val exec_il3_c_def = Define `exec_clocked P c c' = (exec_il3_c_one P)^* c c'`;
+val exec_il3_c_def = Define `exec_il3_c P c c' = (exec_il3_c_one P)^* c c'`;
 
 val _ = export_theory ();
