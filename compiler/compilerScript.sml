@@ -155,14 +155,14 @@ val make_stack_def = Define `make_stack e = astack (compile e)
             (MAP_KEYS (map_fun (FST (make_loc_map (compile_il2 e))))
                (create_il2_store (compile_il2 e))) []`;
 
-val total_c_lem = prove(``!e v s'.
-    bs_l1 (e, create_store e) v s' ==> 
+val total_c_lem_2 = prove(``!c e v s' c'.
+    bs_l1_c c (e, create_store e) (SOME (v, s', c')) ==> 
     ?astk.
-        vsm_exec (compile e) (0, make_stack e) (&LENGTH (compile e), (il1_il2_val (l1_il1_val v))::astk)``,
+        vsm_exec_c (compile e) (SOME (0, c, make_stack e)) (SOME (&LENGTH (compile e), c', (il1_il2_val (l1_il1_val v))::astk))``,
 
 rw [make_stack_def]
 
-THEN imp_res_tac l1_to_il2_correctness_thm
+THEN imp_res_tac l1_to_il2_correctness_2_thm
 
 THEN `equiv (con_store (create_store e)) (create_il2_store (compile_il2 e))` by metis_tac [compile_il2_def, store_equiv_gen_thm]
 
@@ -171,9 +171,9 @@ THEN `∀st lc1' ex.
         ∀fs.
           equiv (con_store (SND (e,create_store e))) fs ⇒
           ∃fs'.
-            bs_il1 (st,fs) IL1_ESkip fs' ∧
+            bs_il1_c c (st,fs) (SOME (IL1_ESkip, fs', c')) ∧
             bs_il1_expr (ex,fs') (l1_il1_val v) ∧
-            equiv (con_store s') fs'` by metis_tac [L1_TO_IL1_CORRECTNESS_LEMMA, SND]
+            equiv (con_store s') fs'` by (rw [] THEN imp_res_tac L1_TO_IL1_CORRECTNESS_LEMMA THEN fs [FST] THEN res_tac THEN metis_tac [])
 
 THEN fs [FST, SND]
 THEN `?st ex lc1.l1_to_il1_pair 0 e = (st, ex, lc1)` by metis_tac [L1_TO_IL1_TOTAL_THM]
@@ -181,18 +181,18 @@ THEN `?st ex lc1.l1_to_il1_pair 0 e = (st, ex, lc1)` by metis_tac [L1_TO_IL1_TOT
 THEN fs []
 THEN res_tac
 
-THEN `bs_il1 (l1_to_il1 e 0, create_il2_store (compile_il2 e)) (l1_il1_val v) fs'` by (rw [l1_to_il1_def, Once bs_il1_cases] THEN HINT_EXISTS_TAC THEN rw [Once bs_il1_cases])
+THEN `bs_il1_c c (l1_to_il1 e 0, create_il2_store (compile_il2 e)) (SOME (l1_il1_val v, fs', c'))` by (rw [l1_to_il1_def, Once bs_il1_c_cases] THEN Q.LIST_EXISTS_TAC [`c'`, `fs'`] THEN rw [Once bs_il1_c_cases])
 
-THEN `exec (il1_to_il2 (l1_to_il1 e 0))
-          (0,[],create_il2_store (compile_il2 e))
-          (&LENGTH (il1_to_il2 (l1_to_il1 e 0)),
-           [il1_il2_val (l1_il1_val v)],fs')` by metis_tac [CORRECTNESS_THM]
+THEN `exec_clocked (il1_to_il2 (l1_to_il1 e 0))
+          (SOME (0, c, [],create_il2_store (compile_il2 e)))
+          (SOME (&LENGTH (il1_to_il2 (l1_to_il1 e 0)), c',
+           [il1_il2_val (l1_il1_val v)],fs'))` by metis_tac [IL1_IL2_CORRECTNESS_2_THM]
 
 THEN `ms_il2 (compile_il2 e) (create_il2_store (compile_il2 e))` by metis_tac [ms_il2_st_thm]
 
 THEN fs [GSYM compile_il2_def]
 
-THEN imp_res_tac il2_vsm_correctness
+THEN imp_res_tac il2_vsm_correctness_2
 
 THEN res_tac
 
