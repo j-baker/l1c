@@ -229,11 +229,4 @@ THEN Cases_on `n' = 0` THEN fs [])
 
 THEN metis_tac [compile_def, length_prog_thm]);
 
-val L1_TO_VSM0_CORRECTNESS_THM = store_thm("L1_TO_VSM0_CORRECTNESS_THM", ``
-!e v s'.
-ss_l1^* (e, create_store e) (L1_Value v, s') ==> 
-    ?astk.
-        vsm_exec (compile e) (0, make_stack e) (&LENGTH (compile e), (il1_il2_val (l1_il1_val v))::astk)``,
-metis_tac [total_c_lem, SS_EQ_BS_THM, EQ_IMP_THM]);
-
 val _ = export_theory ();
