@@ -19,6 +19,7 @@ val _ = Datatype `il1_stm = IL1_Expr il1_expr
                           | IL1_Assign il1_loc  il1_expr
                           | IL1_Seq    il1_stm  il1_stm
                           | IL1_SIf    il1_expr il1_stm il1_stm
-                          | IL1_While  il1_expr il1_stm`;
+                          | IL1_While  il1_expr il1_stm
+                          | IL1_Tick   il1_stm`;
 
 val _ = export_theory ();
