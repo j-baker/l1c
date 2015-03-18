@@ -167,6 +167,22 @@ val make_stack_def = Define `make_stack e = astack (compile e)
             (MAP_KEYS (map_fun (FST (make_loc_map (compile_il2 e))))
                (create_il2_store (compile_il2 e))) []`;
 
+val total_c_lem_1 = prove(``!c e.bs_l1_c c (e, create_store e) NONE ==> vsm_exec_c (compile e) (SOME (0, c, make_stack e)) NONE``,
+rw [make_stack_def] THEN imp_res_tac l1_to_il2_correctness_1_thm
+
+THEN `equiv (con_store (create_store e)) (create_il2_store (compile_il2 e))` by metis_tac [compile_il2_def, store_equiv_gen_thm]
+
+THEN imp_res_tac L1_TO_IL1_CORRECTNESS_LEMMA THEN fs [FST] THEN res_tac
+
+
+THEN `?st ex lc1.l1_to_il1_pair 0 e = (st, ex, lc1)` by metis_tac [L1_TO_IL1_TOTAL_THM]
+THEN fs []
+THEN (imp_res_tac EQ_SYM THEN res_tac THEN rfs [] THEN rw [])
+THEN `ms_il2 (compile_il2 e) (create_il2_store (compile_il2 e))` by metis_tac [ms_il2_st_thm]
+
+THEN `bs_il1_c c (IL1_Seq st (IL1_Expr ex), create_il2_store (compile_il2 e)) NONE` by rw [Once bs_il1_c_cases]
+THEN imp_res_tac IL1_IL2_CORRECTNESS_1_THM THEN imp_res_tac il2_vsm_correctness_1 THEN fs[compile_def] THEN fs [compile_il2_def, l1_to_il1_def] THEN rfs [LET_DEF]);
+
 val total_c_lem_2 = prove(``!c e v s' c'.
     bs_l1_c c (e, create_store e) (SOME (v, s', c')) ==> 
     ?astk.
