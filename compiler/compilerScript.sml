@@ -1,20 +1,33 @@
-open HolKernel boolLib bossLib l1_to_il1_compilerTheory il1_to_il2_compilerTheory store_creationTheory il1_il2_correctnessTheory l1_il1_correctnessTheory lcsymtacs il2_to_il3_compilerTheory listTheory pairTheory pred_setTheory l1_il1_totalTheory bigstep_il1Theory ast_l1Theory store_equivalenceTheory finite_mapTheory il3_to_vsm0_correctnessTheory il3_store_propertiesTheory il2_il3_correctnessTheory bs_ss_equivalenceTheory;
+open HolKernel boolLib bossLib l1_to_il1_compilerTheory il1_to_il2_compilerTheory store_creationTheory il1_il2_correctnessTheory l1_il1_correctnessTheory lcsymtacs il2_to_il3_compilerTheory listTheory pairTheory pred_setTheory l1_il1_totalTheory bigstep_il1Theory ast_l1Theory store_equivalenceTheory finite_mapTheory il3_to_vsm0_correctnessTheory il3_store_propertiesTheory il2_il3_correctnessTheory bs_ss_equivalenceTheory smallstep_vsm0_clockedTheory bigstep_il1_clockedTheory;
 
 val _ = new_theory "compiler"
 
-val il2_vsm_correctness = store_thm("il2_vsm_correctness",``
-!P pc stk st pc' stk' st'.
-exec P (pc, stk, st) (pc', stk', st') /\ ms_il2 P st ==>
+val il2_vsm_correctness_1 = store_thm("il2_vsm_correctness",``
+!P pc c stk st.
+exec_clocked P (SOME (pc, c, stk, st)) NONE /\ ms_il2 P st ==>
 
-?n astk.vsm_exec (il2_to_il3 P) (pc, astack (il2_to_il3 P) (MAP_KEYS (map_fun (FST (make_loc_map P))) st) stk) (pc', astk) /\ (stk' = TAKE n astk)``,
+vsm_exec_c (il2_to_il3 P) (SOME (pc, c, astack (il2_to_il3 P) (MAP_KEYS (map_fun (FST (make_loc_map P))) st) stk)) NONE``,
 
 rw []
-THEN imp_res_tac nice_il3_eql_il2
+THEN imp_res_tac IL2_IL3_EQ_1
+THEN imp_res_tac vsm_exec_correctness_1_thm
 
 THEN `ms_il2 P st ==> (!l.l ∈ FDOM (MAP_KEYS (map_fun (FST (make_loc_map P))) st) <=> (l < s_uloc (il2_to_il3 P)))` by metis_tac [min_store_imp_all_locs_in_range]
 
-THEN imp_res_tac vsm_exec_correctness_thm
-THEN rfs []
+THEN metis_tac []);
+
+val il2_vsm_correctness_2 = store_thm("il2_vsm_correctness",``
+!P pc c stk st pc' c' stk' st'.
+exec_clocked P (SOME (pc, c, stk, st)) (SOME (pc', c', stk', st')) /\ ms_il2 P st ==>
+
+?n astk.vsm_exec_c (il2_to_il3 P) (SOME (pc, c, astack (il2_to_il3 P) (MAP_KEYS (map_fun (FST (make_loc_map P))) st) stk)) (SOME (pc', c', astk)) /\ (stk' = TAKE n astk)``,
+
+rw []
+THEN imp_res_tac IL2_IL3_EQ_2
+THEN imp_res_tac vsm_exec_correctness_2_thm
+
+THEN `ms_il2 P st ==> (!l.l ∈ FDOM (MAP_KEYS (map_fun (FST (make_loc_map P))) st) <=> (l < s_uloc (il2_to_il3 P)))` by metis_tac [min_store_imp_all_locs_in_range]
+
 THEN metis_tac []);
 
 val compile_il2_def = Define `compile_il2 e = il1_to_il2 (l1_to_il1 e 0)`;
