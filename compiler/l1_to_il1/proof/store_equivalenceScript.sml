@@ -29,7 +29,7 @@ val CONTAINS_A_SUB = store_thm("CONTAINS_A_SUB",
 ``!l e.contains_a l e ==> contains l e``,
 Induct_on `e` THEN metis_tac [contains_a_def, contains_def]);
 
-val equiv_def = Define `equiv s1 s2 = !k.(User k ∈ FDOM s1 <=> User k ∈ FDOM s2) /\ (s1 ' (User k) = s2 ' (User k))`;
+val equiv_def = Define `equiv s1 s2 = (!k.User k ∈ FDOM s1 <=> User k ∈ FDOM s2) /\ (!k.(User k ∈ FDOM s1 \/ User k ∈ FDOM s2) ==> (s1 ' (User k) = s2 ' (User k)))`;
 
 val EQUIV_REFL_THM = store_thm("EQUIV_REFL_THM",
 ``!x.equiv x x``,
