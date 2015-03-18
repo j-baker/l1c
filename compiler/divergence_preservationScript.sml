@@ -3,4 +3,8 @@ open HolKernel boolLib bossLib l1_to_il1_compilerTheory il1_to_il2_compilerTheor
 val _ = new_theory "divergence_preservation"
 
 
+val domain_constant_thm = prove(``
+!c p r.bs_l1_c c p r ==> !v s' c'.(r = SOME (v, s', c')) ==> (FDOM (SND p) = FDOM s')``,
+ho_match_mp_tac bs_l1_c_strongind THEN rw [] THEN fs [FST, SND] THEN rw [EXTENSION] THEN Cases_on `x=l` THEN rw []);
+
 val _ = export_theory ();
