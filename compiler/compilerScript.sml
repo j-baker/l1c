@@ -135,6 +135,18 @@ THEN rw [GSYM FUNION_ASSOC, FUNION_DEF, FAPPLY_FUPDATE_THM, il2_store_etc2] THEN
 
 THEN rw [DISJ_ASSOC, EQ_IMP_THM] THEN TRY (metis_tac []));
 
+
+val l1_to_il2_correctness_1_thm = prove(
+``!c e v s' c'.bs_l1_c c (e, create_store e) NONE ==> exec_clocked (compile_il2 e) (SOME (0, c, [], con_store (create_store e))) NONE``,
+rw [] THEN imp_res_tac L1_TO_IL1_CORRECTNESS_LEMMA THEN fs [FST, SND] THEN rw [compile_il2_def] THEN
+rw [l1_to_il1_def]
+THEN  `equiv (con_store (create_store e)) (con_store (create_store e))` by metis_tac [EQUIV_REFL_THM] THEN (imp_res_tac EQ_SYM THEN res_tac THEN rfs [] THEN rw [])
+
+THEN `bs_il1_c c (IL1_Seq s (IL1_Expr te), con_store (create_store e)) NONE` by rw [Once bs_il1_c_cases]
+THEN imp_res_tac IL1_IL2_CORRECTNESS_1_THM
+THEN metis_tac []);
+
+
 val l1_to_il2_correctness_2_thm = prove(
 ``!c e v s' c'.bs_l1_c c (e, create_store e) (SOME (v, s', c')) ==> ?s''.exec_clocked (compile_il2 e) (SOME (0, c, [], con_store (create_store e))) (SOME (&LENGTH (compile_il2 e), c', [(il1_il2_val (l1_il1_val v))], s''))``,
 rw [] THEN imp_res_tac L1_TO_IL1_CORRECTNESS_LEMMA THEN fs [FST, SND] THEN rw [compile_il2_def] THEN
