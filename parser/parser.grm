@@ -1,0 +1,36 @@
+open ParseTree
+%%
+%term LPAREN | RPAREN | TRUE | FALSE | PLUS | GTEQ | IF | THEN | ELSE | ASSIGN | DEREF | SKIP | SEQ | WHILE | DO | IDENT of string | INT of int | EOF
+
+%nonterm TEXP of ParseTree.a_expr | EXP of ParseTree.a_expr
+
+%pos int
+
+%left PLUS SEQ
+
+%nonassoc GTEQ
+
+%name L1_Parse
+
+%eop EOF
+
+%prefer PLUS GTEQ
+
+%noshift EOF
+
+%%
+
+TEXP : EXP EOF (EXP)
+
+EXP  : INT  (Value (Int(INT)))
+     | SKIP (Value Skip)
+     | TRUE (Value (Bool(true)))
+     | FALSE (Value (Bool(false)))
+     | EXP PLUS EXP (Plus(EXP1, EXP2))
+     | EXP GTEQ EXP (Geq(EXP1, EXP2))
+     | IF EXP THEN EXP ELSE EXP (If(EXP1, EXP2, EXP3))
+     | IDENT ASSIGN EXP (Assign(IDENT,EXP))
+     | DEREF IDENT (Deref(IDENT))
+     | EXP SEQ EXP (Seq(EXP1, EXP2))
+     | WHILE EXP DO EXP (While(EXP1, EXP2))
+     | LPAREN EXP RPAREN (EXP)
