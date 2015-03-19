@@ -1,4 +1,4 @@
-open HolKernel boolLib bossLib l1_to_il1_compilerTheory il1_to_il2_compilerTheory store_creationTheory il1_il2_correctnessTheory l1_il1_correctnessTheory lcsymtacs il2_to_il3_compilerTheory listTheory pairTheory pred_setTheory l1_il1_totalTheory bigstep_il1Theory ast_l1Theory store_equivalenceTheory finite_mapTheory il3_to_vsm0_correctnessTheory il3_store_propertiesTheory il2_il3_correctnessTheory bs_ss_equivalenceTheory smallstep_vsm0_clockedTheory bigstep_il1_clockedTheory;
+open HolKernel boolLib bossLib l1_to_il1_compilerTheory il1_to_il2_compilerTheory store_creationTheory il1_il2_correctnessTheory l1_il1_correctnessTheory lcsymtacs il2_to_il3_compilerTheory listTheory pairTheory pred_setTheory l1_il1_totalTheory bigstep_il1Theory ast_l1Theory store_equivalenceTheory finite_mapTheory il3_to_vsm0_correctnessTheory il3_store_propertiesTheory il2_il3_correctnessTheory bs_ss_equivalenceTheory smallstep_vsm0_clockedTheory bigstep_il1_clockedTheory vsm0_clocked_equivTheory clocked_equivTheory;
 
 val _ = new_theory "compiler"
 
@@ -167,7 +167,7 @@ val make_stack_def = Define `make_stack e = astack (compile e)
             (MAP_KEYS (map_fun (FST (make_loc_map (compile_il2 e))))
                (create_il2_store (compile_il2 e))) []`;
 
-val total_c_lem_1 = prove(``!c e.bs_l1_c c (e, create_store e) NONE ==> vsm_exec_c (compile e) (SOME (0, c, make_stack e)) NONE``,
+val total_c_lem_1 = store_thm("total_c_lem_1", ``!c e.bs_l1_c c (e, create_store e) NONE ==> vsm_exec_c (compile e) (SOME (0, c, make_stack e)) NONE``,
 rw [make_stack_def] THEN imp_res_tac l1_to_il2_correctness_1_thm
 
 THEN `equiv (con_store (create_store e)) (create_il2_store (compile_il2 e))` by metis_tac [compile_il2_def, store_equiv_gen_thm]
@@ -183,7 +183,7 @@ THEN `ms_il2 (compile_il2 e) (create_il2_store (compile_il2 e))` by metis_tac [m
 THEN `bs_il1_c c (IL1_Seq st (IL1_Expr ex), create_il2_store (compile_il2 e)) NONE` by rw [Once bs_il1_c_cases]
 THEN imp_res_tac IL1_IL2_CORRECTNESS_1_THM THEN imp_res_tac il2_vsm_correctness_1 THEN fs[compile_def] THEN fs [compile_il2_def, l1_to_il1_def] THEN rfs [LET_DEF]);
 
-val total_c_lem_2 = prove(``!c e v s' c'.
+val total_c_lem_2 = store_thm("total_c_lem_2", ``!c e v s' c'.
     bs_l1_c c (e, create_store e) (SOME (v, s', c')) ==> 
     ?astk.
         vsm_exec_c (compile e) (SOME (0, c, make_stack e)) (SOME (&LENGTH (compile e), c', (il1_il2_val (l1_il1_val v))::astk))``,
@@ -228,5 +228,20 @@ THEN `?atsk.astk' = (il1_il2_val (l1_il1_val v))::atsk` by (Cases_on `astk'` THE
 THEN Cases_on `n' = 0` THEN fs [])
 
 THEN metis_tac [compile_def, length_prog_thm]);
+
+val CORRECTNESS_THM = store_thm("CORRECTNESS_THM",
+``!e v s'.bs_l1 (e, create_store e) v s' ==> ?stk'.vsm_exec (compile e) (0, make_stack e) (&LENGTH (compile e), il1_il2_val (l1_il1_val v)::stk')``,
+rw []
+THEN imp_res_tac UNCLOCKED_IMP_CLOCKED THEN
+`!c'. ?c astk.vsm_exec_c (compile e) (SOME (0, SUC c, make_stack e)) (SOME (&LENGTH (compile e), SUC c', il1_il2_val (l1_il1_val v)::astk))` by metis_tac [total_c_lem_2]
+
+THEN ` ∃c astk.
+          vsm_exec_c (compile e) (SOME (0,SUC c,make_stack e))
+            (SOME
+               (&LENGTH (compile e),SUC 0,
+                il1_il2_val (l1_il1_val v)::astk))` by metis_tac []
+
+THEN imp_res_tac VSM0_CLOCKED_IMP_UNCLOCKED THEN fs [] THEN metis_tac []);
+
 
 val _ = export_theory ();
