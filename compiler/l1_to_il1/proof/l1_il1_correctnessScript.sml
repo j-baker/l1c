@@ -521,16 +521,6 @@ THEN rw [Once bs_il1_c_cases]
 
 THEN DISJ2_TAC
 
-(*
-`?fs''.equiv (con_store s'') fs''` by metis_tac []
-`bs_il1_c c''
-           (IL1_Seq st1
-              (IL1_While ex1
-                 (IL1_Seq (IL1_Tick st2) (IL1_Seq (IL1_Expr ex2) st1))),
-            fs''') NONE` by metis_tac []
-Q.LIST_EXISTS_TAC [`c'`, `fs''`] THEN rw []
-cheat
-*)
  THEN Q.LIST_EXISTS_TAC [`c'`, `fs''`] THEN rw []
 
 THEN rw [Once WHILE_UNWIND_ONCE_THM] (* *)
