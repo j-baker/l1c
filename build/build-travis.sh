@@ -8,15 +8,16 @@ HOLDIR=$(heapname | xargs dirname) || exit $?
 echo "HOL revision: $(cd $HOLDIR; git rev-parse --short HEAD)"
 echo "Machine: $(uname -nmo)"
 
-git clean -xdf
-
-if ([ "$TRAVIS_BRANCH" == "master" ] || ["$TRAVIS_BRANCH" == "develop"]) && (grep -q -R cheat compiler || grep -q -R cheat semantics)
+if ([ "$TRAVIS_BRANCH" = "master" ] || ["$TRAVIS_BRANCH" = "develop"]) && (grep -q -R cheat compiler || grep -q -R cheat semantics)
 then
   echo "FAILED: Found a cheat!"
   exit 1
 else
   echo "No cheats were found."
 fi
+
+git clean -xdf
+
 
 while read i
 do
