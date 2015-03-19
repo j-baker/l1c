@@ -10,6 +10,14 @@ echo "Machine: $(uname -nmo)"
 
 git clean -xdf
 
+if ([ "$TRAVIS_BRANCH" == "master" ] || ["$TRAVIS_BRANCH" == "develop"]) && (grep -q -R cheat compiler || grep -q -R cheat semantics)
+then
+  echo "FAILED: Found a cheat!"
+  exit 1
+else
+  echo "No cheats were found."
+fi
+
 while read i
 do
   if [ ! -d $i ]
