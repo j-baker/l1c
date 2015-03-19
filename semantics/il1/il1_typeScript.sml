@@ -44,6 +44,10 @@ val (il1_type_rules, il1_type_ind, il1_type_cases) = Hol_reln `
 (!e1 e2 g g'.
        (il1_expr_type e1 g boolL1 /\
         il1_type e2 g unitL1 g')
-    ==> il1_type (IL1_While e1 e2) g unitL1 g')`;
+    ==> il1_type (IL1_While e1 e2) g unitL1 g') /\
+
+(!e t g g'.
+        il1_type e g t g' ==> il1_type (IL1_Tick e) g t g')
+`;
 
 val _ = export_theory ();

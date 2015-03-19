@@ -1,20 +1,33 @@
-open HolKernel boolLib bossLib l1_to_il1_compilerTheory il1_to_il2_compilerTheory store_creationTheory il1_il2_correctnessTheory l1_il1_correctnessTheory lcsymtacs il2_to_il3_compilerTheory listTheory pairTheory pred_setTheory l1_il1_totalTheory bigstep_il1Theory ast_l1Theory store_equivalenceTheory finite_mapTheory il3_to_vsm0_correctnessTheory il3_store_propertiesTheory il2_il3_correctnessTheory bs_ss_equivalenceTheory;
+open HolKernel boolLib bossLib l1_to_il1_compilerTheory il1_to_il2_compilerTheory store_creationTheory il1_il2_correctnessTheory l1_il1_correctnessTheory lcsymtacs il2_to_il3_compilerTheory listTheory pairTheory pred_setTheory l1_il1_totalTheory bigstep_il1Theory ast_l1Theory store_equivalenceTheory finite_mapTheory il3_to_vsm0_correctnessTheory il3_store_propertiesTheory il2_il3_correctnessTheory bs_ss_equivalenceTheory smallstep_vsm0_clockedTheory bigstep_il1_clockedTheory vsm0_clocked_equivTheory clocked_equivTheory;
 
 val _ = new_theory "compiler"
 
-val il2_vsm_correctness = store_thm("il2_vsm_correctness",``
-!P pc stk st pc' stk' st'.
-exec P (pc, stk, st) (pc', stk', st') /\ ms_il2 P st ==>
+val il2_vsm_correctness_1 = store_thm("il2_vsm_correctness",``
+!P pc c stk st.
+exec_clocked P (SOME (pc, c, stk, st)) NONE /\ ms_il2 P st ==>
 
-?n astk.vsm_exec (il2_to_il3 P) (pc, astack (il2_to_il3 P) (MAP_KEYS (map_fun (FST (make_loc_map P))) st) stk) (pc', astk) /\ (stk' = TAKE n astk)``,
+vsm_exec_c (il2_to_il3 P) (SOME (pc, c, astack (il2_to_il3 P) (MAP_KEYS (map_fun (FST (make_loc_map P))) st) stk)) NONE``,
 
 rw []
-THEN imp_res_tac nice_il3_eql_il2
+THEN imp_res_tac IL2_IL3_EQ_1
+THEN imp_res_tac vsm_exec_correctness_1_thm
 
 THEN `ms_il2 P st ==> (!l.l ∈ FDOM (MAP_KEYS (map_fun (FST (make_loc_map P))) st) <=> (l < s_uloc (il2_to_il3 P)))` by metis_tac [min_store_imp_all_locs_in_range]
 
-THEN imp_res_tac vsm_exec_correctness_thm
-THEN rfs []
+THEN metis_tac []);
+
+val il2_vsm_correctness_2 = store_thm("il2_vsm_correctness",``
+!P pc c stk st pc' c' stk' st'.
+exec_clocked P (SOME (pc, c, stk, st)) (SOME (pc', c', stk', st')) /\ ms_il2 P st ==>
+
+?n astk.vsm_exec_c (il2_to_il3 P) (SOME (pc, c, astack (il2_to_il3 P) (MAP_KEYS (map_fun (FST (make_loc_map P))) st) stk)) (SOME (pc', c', astk)) /\ (stk' = TAKE n astk)``,
+
+rw []
+THEN imp_res_tac IL2_IL3_EQ_2
+THEN imp_res_tac vsm_exec_correctness_2_thm
+
+THEN `ms_il2 P st ==> (!l.l ∈ FDOM (MAP_KEYS (map_fun (FST (make_loc_map P))) st) <=> (l < s_uloc (il2_to_il3 P)))` by metis_tac [min_store_imp_all_locs_in_range]
+
 THEN metis_tac []);
 
 val compile_il2_def = Define `compile_il2 e = il1_to_il2 (l1_to_il1 e 0)`;
@@ -122,9 +135,31 @@ THEN rw [GSYM FUNION_ASSOC, FUNION_DEF, FAPPLY_FUPDATE_THM, il2_store_etc2] THEN
 
 THEN rw [DISJ_ASSOC, EQ_IMP_THM] THEN TRY (metis_tac []));
 
-val l1_to_il2_correctness_thm = prove(
-``!e v s'.bs_l1 (e, create_store e) v s' ==> ?s''.exec (compile_il2 e) (0, [], con_store (create_store e)) (&LENGTH (compile_il2 e), [(il1_il2_val (l1_il1_val v))], s'')``,
-metis_tac [compile_il2_def, L1_TO_IL1_EXISTS_CORRECTNESS_THM, CORRECTNESS_THM]);
+
+val l1_to_il2_correctness_1_thm = prove(
+``!c e v s' c'.bs_l1_c c (e, create_store e) NONE ==> exec_clocked (compile_il2 e) (SOME (0, c, [], con_store (create_store e))) NONE``,
+rw [] THEN imp_res_tac L1_TO_IL1_CORRECTNESS_LEMMA THEN fs [FST, SND] THEN rw [compile_il2_def] THEN
+rw [l1_to_il1_def]
+THEN  `equiv (con_store (create_store e)) (con_store (create_store e))` by metis_tac [EQUIV_REFL_THM] THEN (imp_res_tac EQ_SYM THEN res_tac THEN rfs [] THEN rw [])
+
+THEN `bs_il1_c c (IL1_Seq s (IL1_Expr te), con_store (create_store e)) NONE` by rw [Once bs_il1_c_cases]
+THEN imp_res_tac IL1_IL2_CORRECTNESS_1_THM
+THEN metis_tac []);
+
+
+val l1_to_il2_correctness_2_thm = prove(
+``!c e v s' c'.bs_l1_c c (e, create_store e) (SOME (v, s', c')) ==> ?s''.exec_clocked (compile_il2 e) (SOME (0, c, [], con_store (create_store e))) (SOME (&LENGTH (compile_il2 e), c', [(il1_il2_val (l1_il1_val v))], s''))``,
+rw [] THEN imp_res_tac L1_TO_IL1_CORRECTNESS_LEMMA THEN fs [FST, SND] THEN rw [compile_il2_def] THEN
+rw [l1_to_il1_def]
+
+THEN `?st ex lc1'.l1_to_il1_pair 0 e = (st, ex, lc1')` by metis_tac [L1_TO_IL1_TOTAL_THM]
+
+
+THEN `equiv (con_store (create_store e)) (con_store (create_store e))` by metis_tac [EQUIV_REFL_THM] THEN (imp_res_tac EQ_SYM THEN res_tac THEN rfs [] THEN rw [])
+ THEN 
+`bs_il1_c c (IL1_Seq st (IL1_Expr ex), con_store (create_store e)) (SOME (l1_il1_val v, fs', c'))` by (rw [Once bs_il1_c_cases] THEN metis_tac [bs_il1_c_cases])
+THEN imp_res_tac IL1_IL2_CORRECTNESS_2_THM
+THEN metis_tac []);
 
 val length_prog_thm = prove(``!e.LENGTH (compile e) = LENGTH (compile_il2 e)``, rw [compile_def, compile_il2_def, il2_to_il3_def]);
 
@@ -132,14 +167,30 @@ val make_stack_def = Define `make_stack e = astack (compile e)
             (MAP_KEYS (map_fun (FST (make_loc_map (compile_il2 e))))
                (create_il2_store (compile_il2 e))) []`;
 
-val total_c_lem = prove(``!e v s'.
-    bs_l1 (e, create_store e) v s' ==> 
+val total_c_lem_1 = store_thm("total_c_lem_1", ``!c e.bs_l1_c c (e, create_store e) NONE ==> vsm_exec_c (compile e) (SOME (0, c, make_stack e)) NONE``,
+rw [make_stack_def] THEN imp_res_tac l1_to_il2_correctness_1_thm
+
+THEN `equiv (con_store (create_store e)) (create_il2_store (compile_il2 e))` by metis_tac [compile_il2_def, store_equiv_gen_thm]
+
+THEN imp_res_tac L1_TO_IL1_CORRECTNESS_LEMMA THEN fs [FST] THEN res_tac
+
+
+THEN `?st ex lc1.l1_to_il1_pair 0 e = (st, ex, lc1)` by metis_tac [L1_TO_IL1_TOTAL_THM]
+THEN fs []
+THEN (imp_res_tac EQ_SYM THEN res_tac THEN rfs [] THEN rw [])
+THEN `ms_il2 (compile_il2 e) (create_il2_store (compile_il2 e))` by metis_tac [ms_il2_st_thm]
+
+THEN `bs_il1_c c (IL1_Seq st (IL1_Expr ex), create_il2_store (compile_il2 e)) NONE` by rw [Once bs_il1_c_cases]
+THEN imp_res_tac IL1_IL2_CORRECTNESS_1_THM THEN imp_res_tac il2_vsm_correctness_1 THEN fs[compile_def] THEN fs [compile_il2_def, l1_to_il1_def] THEN rfs [LET_DEF]);
+
+val total_c_lem_2 = store_thm("total_c_lem_2", ``!c e v s' c'.
+    bs_l1_c c (e, create_store e) (SOME (v, s', c')) ==> 
     ?astk.
-        vsm_exec (compile e) (0, make_stack e) (&LENGTH (compile e), (il1_il2_val (l1_il1_val v))::astk)``,
+        vsm_exec_c (compile e) (SOME (0, c, make_stack e)) (SOME (&LENGTH (compile e), c', (il1_il2_val (l1_il1_val v))::astk))``,
 
 rw [make_stack_def]
 
-THEN imp_res_tac l1_to_il2_correctness_thm
+THEN imp_res_tac l1_to_il2_correctness_2_thm
 
 THEN `equiv (con_store (create_store e)) (create_il2_store (compile_il2 e))` by metis_tac [compile_il2_def, store_equiv_gen_thm]
 
@@ -148,9 +199,9 @@ THEN `∀st lc1' ex.
         ∀fs.
           equiv (con_store (SND (e,create_store e))) fs ⇒
           ∃fs'.
-            bs_il1 (st,fs) IL1_ESkip fs' ∧
+            bs_il1_c c (st,fs) (SOME (IL1_ESkip, fs', c')) ∧
             bs_il1_expr (ex,fs') (l1_il1_val v) ∧
-            equiv (con_store s') fs'` by metis_tac [L1_TO_IL1_CORRECTNESS_LEMMA, SND]
+            equiv (con_store s') fs'` by (rw [] THEN imp_res_tac L1_TO_IL1_CORRECTNESS_LEMMA THEN fs [FST] THEN res_tac THEN metis_tac [])
 
 THEN fs [FST, SND]
 THEN `?st ex lc1.l1_to_il1_pair 0 e = (st, ex, lc1)` by metis_tac [L1_TO_IL1_TOTAL_THM]
@@ -158,18 +209,18 @@ THEN `?st ex lc1.l1_to_il1_pair 0 e = (st, ex, lc1)` by metis_tac [L1_TO_IL1_TOT
 THEN fs []
 THEN res_tac
 
-THEN `bs_il1 (l1_to_il1 e 0, create_il2_store (compile_il2 e)) (l1_il1_val v) fs'` by (rw [l1_to_il1_def, Once bs_il1_cases] THEN HINT_EXISTS_TAC THEN rw [Once bs_il1_cases])
+THEN `bs_il1_c c (l1_to_il1 e 0, create_il2_store (compile_il2 e)) (SOME (l1_il1_val v, fs', c'))` by (rw [l1_to_il1_def, Once bs_il1_c_cases] THEN Q.LIST_EXISTS_TAC [`c'`, `fs'`] THEN rw [Once bs_il1_c_cases])
 
-THEN `exec (il1_to_il2 (l1_to_il1 e 0))
-          (0,[],create_il2_store (compile_il2 e))
-          (&LENGTH (il1_to_il2 (l1_to_il1 e 0)),
-           [il1_il2_val (l1_il1_val v)],fs')` by metis_tac [CORRECTNESS_THM]
+THEN `exec_clocked (il1_to_il2 (l1_to_il1 e 0))
+          (SOME (0, c, [],create_il2_store (compile_il2 e)))
+          (SOME (&LENGTH (il1_to_il2 (l1_to_il1 e 0)), c',
+           [il1_il2_val (l1_il1_val v)],fs'))` by metis_tac [IL1_IL2_CORRECTNESS_2_THM]
 
 THEN `ms_il2 (compile_il2 e) (create_il2_store (compile_il2 e))` by metis_tac [ms_il2_st_thm]
 
 THEN fs [GSYM compile_il2_def]
 
-THEN imp_res_tac il2_vsm_correctness
+THEN imp_res_tac il2_vsm_correctness_2
 
 THEN res_tac
 
@@ -178,11 +229,19 @@ THEN Cases_on `n' = 0` THEN fs [])
 
 THEN metis_tac [compile_def, length_prog_thm]);
 
-val L1_TO_VSM0_CORRECTNESS_THM = store_thm("L1_TO_VSM0_CORRECTNESS_THM", ``
-!e v s'.
-ss_l1^* (e, create_store e) (L1_Value v, s') ==> 
-    ?astk.
-        vsm_exec (compile e) (0, make_stack e) (&LENGTH (compile e), (il1_il2_val (l1_il1_val v))::astk)``,
-metis_tac [total_c_lem, SS_EQ_BS_THM, EQ_IMP_THM]);
+val CORRECTNESS_THM = store_thm("CORRECTNESS_THM",
+``!e v s'.bs_l1 (e, create_store e) v s' ==> ?stk'.vsm_exec (compile e) (0, make_stack e) (&LENGTH (compile e), il1_il2_val (l1_il1_val v)::stk')``,
+rw []
+THEN imp_res_tac UNCLOCKED_IMP_CLOCKED THEN
+`!c'. ?c astk.vsm_exec_c (compile e) (SOME (0, SUC c, make_stack e)) (SOME (&LENGTH (compile e), SUC c', il1_il2_val (l1_il1_val v)::astk))` by metis_tac [total_c_lem_2]
+
+THEN ` ∃c astk.
+          vsm_exec_c (compile e) (SOME (0,SUC c,make_stack e))
+            (SOME
+               (&LENGTH (compile e),SUC 0,
+                il1_il2_val (l1_il1_val v)::astk))` by metis_tac []
+
+THEN imp_res_tac VSM0_CLOCKED_IMP_UNCLOCKED THEN fs [] THEN metis_tac []);
+
 
 val _ = export_theory ();

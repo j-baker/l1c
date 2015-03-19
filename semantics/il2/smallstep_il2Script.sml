@@ -16,6 +16,7 @@ val skip_value_def = Define `skip_value = 0`;
 
 val (exec_instr_rules, exec_instr_ind, exec_instr_cases) = Hol_reln `
 (!pc stk st.exec_instr IL2_Nop (pc, stk, st) (pc+1, stk, st)) /\
+(!pc stk st.exec_instr IL2_Tick (pc, stk, st) (pc+1, stk, st)) /\
 (!n pc stk st.exec_instr (IL2_Push n) (pc, stk, st) (pc+1, n::stk, st)) /\
 (!l pc stk st.l ∈ FDOM st ==> exec_instr (IL2_Load l) (pc, stk, st) (pc+1, (st ' l)::stk, st)) /\
 (!l pc v stk st.exec_instr (IL2_Store l) (pc, v::stk, st) (pc+1, stk, st |+ (l, v))) /\
@@ -35,17 +36,5 @@ val (exec_one_rules, exec_one_ind, exec_one_cases) = Hol_reln `
     ==> exec_one instrs (pc, stk, st) (pc', stk', st')`;
 
 val exec_def = Define `exec P c c' = (exec_one P)^* c c'`;
-
-val exec_strongind = store_thm("exec_strongind",
-``!PR P.
-     (∀x. P x x) ∧ (∀x y z. (exec_one PR) x y ∧ (exec_one PR)^* y z ∧ P y z ⇒ P x z) ⇒
-     !c1 c2. (exec_one PR)^* c1 c2 ⇒ P c1 c2``,
-metis_tac [RTC_STRONG_INDUCT]);
-
-val exec_strongind_right = store_thm("exec_strongind_right",
-``∀R P.
-           (∀x. P x x) ∧ (∀x y z. P x y ∧ (exec_one R)^* x y ∧ (exec_one R) y z ⇒ P x z) ⇒
-           ∀x y. (exec_one R)^* x y ⇒ P x y``,
-metis_tac [RTC_STRONG_INDUCT_RIGHT1]);
 
 val _ = export_theory ();

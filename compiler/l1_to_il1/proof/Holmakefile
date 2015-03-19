@@ -1,2 +1,2 @@
-INCLUDES = ../../../semantics/il1/ .. ../../../semantics/l1 ../../../semantics/il1/proofs
+INCLUDES = ../../../semantics/il1/ .. ../../../semantics/l1 ../../../semantics/il1/proofs ../../../semantics/l1/proofs
 OPTIONS = QUIT_ON_FAILURE

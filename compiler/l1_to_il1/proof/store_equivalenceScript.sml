@@ -1,4 +1,4 @@
-open HolKernel boolLib bossLib listTheory Parse IndDefLib finite_mapTheory relationTheory arithmeticTheory ast_il1Theory bigstep_il1Theory pred_setTheory pairTheory lcsymtacs prim_recTheory integerTheory;
+open HolKernel boolLib bossLib listTheory Parse IndDefLib finite_mapTheory relationTheory arithmeticTheory ast_il1Theory bigstep_il1_clockedTheory pred_setTheory pairTheory lcsymtacs prim_recTheory integerTheory;
 
 val _ = new_theory "store_equivalence";
 
@@ -14,20 +14,22 @@ val contains_def = Define `
     (contains l1 (IL1_Assign l2 e) = (l1 = l2) \/ contains_expr l1 e) /\
     (contains l (IL1_Seq e1 e2) = contains l e1 \/ contains l e2) /\
     (contains l (IL1_SIf e1 e2 e3) = contains_expr l e1 \/ contains l e2 \/ contains l e3) /\
-    (contains l (IL1_While e1 e2) = contains_expr l e1 \/ contains l e2)`;
+    (contains l (IL1_While e1 e2) = contains_expr l e1 \/ contains l e2) /\
+    (contains l (IL1_Tick e) = contains l e)`;
 
 val contains_a_def = Define `
     (contains_a l (IL1_Expr _) = F) /\
     (contains_a l1 (IL1_Assign l2 e) = (l1 = l2)) /\
     (contains_a l (IL1_Seq e1 e2) = contains_a l e1 \/ contains_a l e2) /\
     (contains_a l (IL1_SIf _ e2 e3) = contains_a l e2 \/ contains_a l e3) /\
-    (contains_a l (IL1_While _ e2) = contains_a l e2)`;
+    (contains_a l (IL1_While _ e2) = contains_a l e2) /\
+    (contains_a l (IL1_Tick e) = contains_a l e)`;
 
 val CONTAINS_A_SUB = store_thm("CONTAINS_A_SUB",
 ``!l e.contains_a l e ==> contains l e``,
 Induct_on `e` THEN metis_tac [contains_a_def, contains_def]);
 
-val equiv_def = Define `equiv s1 s2 = !k.(User k ∈ FDOM s1 <=> User k ∈ FDOM s2) /\ (s1 ' (User k) = s2 ' (User k))`;
+val equiv_def = Define `equiv s1 s2 = (!k.User k ∈ FDOM s1 <=> User k ∈ FDOM s2) /\ (!k.(User k ∈ FDOM s1 \/ User k ∈ FDOM s2) ==> (s1 ' (User k) = s2 ' (User k)))`;
 
 val EQUIV_REFL_THM = store_thm("EQUIV_REFL_THM",
 ``!x.equiv x x``,
@@ -58,11 +60,11 @@ THEN `INJ User (FDOM s) UNIV` by rw [INJ_DEF] THEN metis_tac [MAP_KEYS_def]);
 val con_store_def = Define `con_store s = MAP_KEYS User s`;
 
 val NOT_CONTAINS_MEANS_UNCHANGED_LEMMA = prove(
-``!p v s'.bs_il1 p v s' ==> !l.~contains_a l (FST p) ==> (((SND p) ' l) = (s' ' l))``,
-ho_match_mp_tac bs_il1_strongind THEN rw [FST, SND] THEN fs [contains_a_def] THEN metis_tac [FAPPLY_FUPDATE_THM]);
+``!c p r.bs_il1_c c p r ==> !x.(r = SOME x) ==> !l.~contains_a l (FST p) ==> (((SND p) ' l) = ((FST (SND x)) ' l))``,
+ho_match_mp_tac bs_il1_c_strongind THEN rw [] THEN fs [FST, SND] THEN fs [contains_a_def] THEN metis_tac [FAPPLY_FUPDATE_THM]);
 
 val NOT_CONTAINS_MEANS_UNCHANGED_THM = store_thm("NOT_CONTAINS_MEANS_UNCHANGED_THM",
-``!e s v s'.bs_il1 (e, s) v s' ==> !l.~contains_a l e ==> (s ' l = s' ' l)``,
+``!c c' e s v s'.bs_il1_c c (e, s) (SOME (v, s', c')) ==> !l.~contains_a l e ==> (s ' l = s' ' l)``,
 metis_tac [NOT_CONTAINS_MEANS_UNCHANGED_LEMMA, FST, SND]);
 
 

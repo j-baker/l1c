@@ -2,13 +2,13 @@ open HolKernel boolLib bossLib listTheory Parse IndDefLib finite_mapTheory relat
 
 val _ = new_theory "comp_location";
 
-
 val count_assign_def = Define `
 (count_assign (IL1_Expr _) _ = Num 0) /\
 (count_assign (IL1_SIf _ e2 e3) l = count_assign e2 l + count_assign e3 l) /\
 (count_assign (IL1_While _ e2) l = count_assign e2 l) /\
 (count_assign (IL1_Assign l1 e) l2 = if l1 = l2 then Num 1 else Num 0) /\
-(count_assign (IL1_Seq e1 e2) l = count_assign e1 l + count_assign e2 l)`;
+(count_assign (IL1_Seq e1 e2) l = count_assign e1 l + count_assign e2 l) /\
+(count_assign (IL1_Tick e) l = count_assign e l)`;
 
 val count_deref_expr_def = Define `
 (count_deref_expr (IL1_Deref l) l' = if l = l' then Num 1 else Num 0) /\
@@ -22,7 +22,8 @@ val count_deref_def = Define `
 (count_deref (IL1_SIf e1 e2 e3) l = count_deref_expr e1 l + count_deref e2 l + count_deref e3 l) /\
 (count_deref (IL1_While e1 e2) l = count_deref_expr e1 l + count_deref e2 l) /\
 (count_deref (IL1_Assign l1 e) l2 = count_deref_expr e l2) /\
-(count_deref (IL1_Seq e1 e2) l = count_deref e1 l + count_deref e2 l)`;
+(count_deref (IL1_Seq e1 e2) l = count_deref e1 l + count_deref e2 l) /\
+(count_deref (IL1_Tick e) l = count_deref e l)`;
 
 val CONTAINS_SIMPED_THM = store_thm("CONTAINS_SIMPED_THM",
 ``!n e st ex n' l.(l1_to_il1_pair n e = (st, ex, n')) ==> (contains_a l (l1_to_il1 e n) <=> contains_a l st)``, rfs [EQ_IMP_THM,l1_to_il1_def, LET_DEF, contains_a_def]);
