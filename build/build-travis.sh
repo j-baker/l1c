@@ -8,7 +8,7 @@ HOLDIR=$(heapname | xargs dirname) || exit $?
 echo "HOL revision: $(cd $HOLDIR; git rev-parse --short HEAD)"
 echo "Machine: $(uname -nmo)"
 
-if ([ "$TRAVIS_BRANCH" = "master" ] || ["$TRAVIS_BRANCH" = "develop"]) && (grep -q -R cheat compiler || grep -q -R cheat semantics)
+if ([ "$TRAVIS_BRANCH" = "master" ] || ["$TRAVIS_BRANCH" = "develop"]) && (grep -q -R cheat compiler || grep -q -R cheat semantics || grep -q -R cheat parser || grep -q -R cheat printer)
 then
   echo "FAILED: Found a cheat!"
   exit 1
