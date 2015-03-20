@@ -1,4 +1,4 @@
-structure l1 :> L1 =
+structure l1 :> l1 =
 struct
 
    structure L1_ParseLrVals = L1_ParseLrValsFun(structure Token = LrParser.Token)
