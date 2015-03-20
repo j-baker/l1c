@@ -5,4 +5,4 @@ CC = clang
 
 l1c:
 	hol < frontend.sml
-	CC -o l1c l1c.o -lpolymain -lpolyml -Wl,-v
+	$(CC) -o l1c l1c.o -lpolymain -lpolyml -Wl,-v
