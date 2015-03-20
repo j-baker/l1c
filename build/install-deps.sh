@@ -2,7 +2,7 @@
 
 set -e
 
-ulimit -Sv 2700000
+ulimit -Sv 2900000
 
 pushd $HOME
 

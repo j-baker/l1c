@@ -1,0 +1,29 @@
+INCLUDES = $(HOLDIR)/tools/mlyacc/mlyacclib ../semantics/l1
+MLYACCLIB = $(protect $(HOLDIR)/tools/mlyacc/mlyacclib/)
+MLYACCLIB_UIS = $(patsubst %,MLY_%.ui,base-sig join lrtable parser2 stream)
+
+EXTRA_CLEANS = lexer.lex.sml lexer.lex.sig parser.grm.sig parser.grm.sml parser.grm-sig.sml
+
+parsingLib.uo : parsingLib.sml l1.uo
+
+ParseTree.uo : ParseTree.sml
+	$(HOLMOSMLC) -c ParseTree.sml
+
+parser.grm.sml parser.grm-sig.sml: parser.grm ParseTree.uo
+	$(MLYACC) $<
+	$(MV) parser.grm.sig parser.grm-sig.sml
+
+parser.grm-sig.uo: parser.grm-sig.sml ParseTree.uo
+	$(HOLMOSMLC) -toplevel -c -I $(MLYACCLIB) $(MLYACCLIB_UIS) $<
+
+parser.grm.uo: parser.grm.sml parser.grm-sig.uo ParseTree.uo
+	$(HOLMOSMLC) -toplevel -c -I $(MLYACCLIB) $(MLYACCLIB_UIS) parser.grm-sig.ui $<
+
+lexer.lex.sml: lexer.lex ParseTree.uo
+	$(MLLEX) $<
+
+lexer.lex.uo: lexer.lex.sml ParseTree.uo
+	$(HOLMOSMLC) -toplevel -c ParseTree.uo parser.grm-sig.ui $<
+
+l1.uo: l1.sml parser.grm.uo lexer.lex.uo ParseTree.uo
+	$(HOLMOSMLC) -c -I $(MLYACCLIB) $(MLYACCLIB_UIS) parser.grm.ui lexer.lex.ui $<

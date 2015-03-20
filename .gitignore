@@ -1,7 +1,11 @@
 *.uo
-*.sig
+*Theory.sig
 *.ui
 .HOLMK
 *~
 *Theory.sml
 *.lex.sml
+*.grm.sml
+*.grm-sig.sml
+l1c
+l1c.o
