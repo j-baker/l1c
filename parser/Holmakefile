@@ -1,4 +1,4 @@
-INCLUDES = $(HOLDIR)/tools/mlyacc/mlyacclib
+INCLUDES = $(HOLDIR)/tools/mlyacc/mlyacclib ../semantics/l1
 MLYACCLIB = $(protect $(HOLDIR)/tools/mlyacc/mlyacclib/)
 MLYACCLIB_UIS = $(patsubst %,MLY_%.ui,base-sig join lrtable parser2 stream)
 
