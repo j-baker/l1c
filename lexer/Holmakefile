@@ -1,9 +1,0 @@
-INCLUDES = $(HOLDIR)/tools/mllex
-
-EXTRA_CLEANS = Lexer.lex.sml
-
-Lexer.lex.sml: Lexer.lex
-	$(MLLEX) $<
-
-Lexer.lex.ui Lexer.lex.uo: Lexer.lex.sml
-	$(HOLMOSMLC) -c -toplevel $<
