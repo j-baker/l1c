@@ -1,6 +1,6 @@
-open ast_vsm0Theory
+structure printerLib = struct
 
-struct printerLib = struct
+open ast_vsm0Theory Parse integerTheory
 
 datatype ops = Nop
              | Tick
@@ -29,9 +29,6 @@ fun op_to_string Nop = "nop"
 val s0 = syntax_fns "ast_vsm0" 0 HolKernel.dest_binder HolKernel.mk_monop
 val s1 = syntax_fns "ast_vsm0" 1 HolKernel.dest_monop HolKernel.mk_monop
 
-val (a, b, c, d) = s0 "VSM_Nop"
-d ``VSM_Nop``
-
 val nop_tm = prim_mk_const {Name = "VSM_Nop", Thy = "ast_vsm0"}
 val tick_tm = prim_mk_const {Name = "VSM_Tick", Thy = "ast_vsm0"}
 val push_tm = prim_mk_const {Name = "VSM_Push", Thy = "ast_vsm0"}
@@ -50,7 +47,12 @@ val dest_store = dest_monop store_tm (ERR "dest_store"      "not store")
 val dest_jump = dest_monop jump_tm (ERR "dest_jump"      "not jump")
 val dest_jz = dest_monop jz_tm (ERR "dest_jz"      "not jz")
 
-fun tm_to_int t = Arbintcore.toInt (intSyntax.int_of_term t);
+fun rhs thm = snd (dest_eq (snd (dest_thm thm)))
+
+fun ignore_unchanged conv x = conv x handle UNCHANGED => EVAL x
+
+fun int_tm_to_int t = Arbintcore.toInt (intSyntax.int_of_term t)
+fun num_tm_to_int t = Arbnumcore.toInt (numSyntax.dest_numeral t)
 
 fun get_instr x = if same_const x nop_tm then Nop
 else if same_const x tick_tm then Tick
@@ -58,11 +60,11 @@ else if same_const x pop_tm then Pop
 else if same_const x plus_tm then Plus
 else if same_const x geq_tm then Geq
 else if same_const x halt_tm then Halt
-else if can dest_push x then (Push (tm_to_int (dest_push x)))
-else if can dest_load x then (Load (tm_to_int (dest_load x)))
-else if can dest_store x then (Store (tm_to_int (dest_store x)))
-else if can dest_jump x then (Jump (tm_to_int (dest_jump x)))
-else (Jz (tm_to_int (dest_jz x)))
+else if can dest_push x then (Push (int_tm_to_int (dest_push x)))
+else if can dest_load x then (Load (num_tm_to_int (dest_load x)))
+else if can dest_store x then (Store (num_tm_to_int (dest_store x)))
+else if can dest_jump x then (Jump (int_tm_to_int (dest_jump x)))
+else (Jz (int_tm_to_int (dest_jz x)))
 
 fun fst (a, b) = a
 
