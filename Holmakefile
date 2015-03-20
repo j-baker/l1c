@@ -4,4 +4,4 @@ EXTRA_CLEANS = l1c.o l1c
 
 l1c:
 	hol < frontend.sml
-	gcc -o l1c l1c.o -lpolymain -lpolyml -Xlinker --verbose
+	cc -o l1c l1c.o -lpolymain -lpolyml
