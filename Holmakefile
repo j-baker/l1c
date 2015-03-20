@@ -1,8 +1,7 @@
 INCLUDES=compiler parser printer
 
 EXTRA_CLEANS = l1c.o l1c
-CC = clang
 
 l1c:
 	hol < frontend.sml
-	$(CC) -o l1c l1c.o -lpolymain -lpolyml -Wl,-v
+	gcc -o l1c l1c.o -lpolymain -lpolyml -Xlinker --verbose
