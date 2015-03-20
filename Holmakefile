@@ -1,0 +1,5 @@
+INCLUDES=compiler parser printer
+
+l1c:
+	hol < frontend.sml
+	cc -o l1c l1c.o -lpolymain -lpolyml

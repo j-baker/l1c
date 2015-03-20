@@ -7,3 +7,5 @@
 *.lex.sml
 *.grm.sml
 *.grm-sig.sml
+l1c
+l1c.o
