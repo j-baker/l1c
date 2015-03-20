@@ -25,5 +25,5 @@ lexer.lex.sml: lexer.lex ParseTree.uo
 lexer.lex.uo: lexer.lex.sml ParseTree.uo
 	$(HOLMOSMLC) -toplevel -c ParseTree.uo parser.grm-sig.ui $<
 
-l1.uo: l1.sml L1.ui parser.grm.uo lexer.lex.uo ParseTree.uo
+l1.uo: l1.sml parser.grm.uo lexer.lex.uo ParseTree.uo
 	$(HOLMOSMLC) -c -I $(MLYACCLIB) $(MLYACCLIB_UIS) parser.grm.ui lexer.lex.ui $<
