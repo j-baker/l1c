@@ -1,0 +1,1 @@
+while !x >= 3 + !y do (z := !z + 1);while !y >= 3 + !z do a := !a + -1

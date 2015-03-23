@@ -1,4 +1,4 @@
-open HolKernel boolLib bossLib l1_to_il1_compilerTheory il1_to_il2_compilerTheory store_creationTheory il1_il2_correctnessTheory l1_il1_correctnessTheory lcsymtacs il2_to_il3_compilerTheory listTheory pairTheory pred_setTheory l1_il1_totalTheory bigstep_il1Theory ast_l1Theory store_equivalenceTheory finite_mapTheory il3_to_vsm0_correctnessTheory il3_store_propertiesTheory il2_il3_correctnessTheory bs_ss_equivalenceTheory smallstep_vsm0_clockedTheory bigstep_il1_clockedTheory bigstep_l1_clockedTheory l1_typeTheory clocked_equivTheory compilerTheory relationTheory integerTheory vsm0_clocked_equivTheory;
+open HolKernel boolLib bossLib l1_to_il1_compilerTheory il1_to_il2_compilerTheory store_creationTheory il1_il2_correctnessTheory l1_il1_correctnessTheory lcsymtacs il2_to_il3_compilerTheory listTheory pairTheory pred_setTheory l1_il1_totalTheory bigstep_il1Theory ast_l1Theory store_equivalenceTheory finite_mapTheory il3_to_vsm0_correctnessTheory il3_store_propertiesTheory il2_il3_correctnessTheory bs_ss_equivalenceTheory smallstep_vsm0_clockedTheory bigstep_il1_clockedTheory bigstep_l1_clockedTheory l1_typeTheory clocked_equivTheory compilerTheory relationTheory integerTheory vsm0_clocked_equivTheory bigstep_determinacyTheory;
 
 val _ = new_theory "divergence_preservation"
 
@@ -6,18 +6,6 @@ val domain_constant_thm = prove(``
 !c p r.bs_l1_c c p r ==> !v s' c'.(r = SOME (v, s', c')) ==> (FDOM (SND p) = FDOM s')``,
 ho_match_mp_tac bs_l1_c_strongind THEN rw [] THEN fs [FST, SND] THEN rw [EXTENSION] THEN Cases_on `x=l` THEN rw []);
 
-val while_back_thm = prove(``!e1 e2 s s''' v cl cl'''.bs_l1_c cl (L1_While e1 e2, s) (SOME (v, s''', cl''')) ==> (v = L1_Skip) /\ ((bs_l1_c cl (e1, s) (SOME (L1_Bool F, s''', cl'''))) \/ (?cl' s' s'' cl''.bs_l1_c cl (e1, s) (SOME (L1_Bool T, s', cl')) /\ bs_l1_c cl' (e2, s') (SOME (L1_Skip, s'', SUC cl'')) /\ bs_l1_c cl'' (L1_While e1 e2, s'') (SOME (L1_Skip, s''', cl'''))))``,
-rw [Once bs_l1_c_cases] THEN metis_tac []);
-
-val l1_deterministic = prove(``!c p r.bs_l1_c c p r ==> !r'. bs_l1_c c p r' ==> (r = r')``,
-ho_match_mp_tac bs_l1_c_strongind THEN rw []
-THEN1 (Cases_on `v` THEN fs [Once bs_l1_c_cases])
-THEN fs [Q.SPECL [`A`, `L1_Plus B C, D`] bs_l1_c_cases, Q.SPECL [`A`, `L1_Geq B C, D`] bs_l1_c_cases, Q.SPECL [`A`, `L1_Deref B, D`] bs_l1_c_cases, Q.SPECL [`A`, `L1_Assign B C, D`] bs_l1_c_cases, Q.SPECL [`A`, `L1_Seq B C, D`] bs_l1_c_cases, Q.SPECL [`A`, `L1_If A B C, D`] bs_l1_c_cases] THEN (NTAC 3 (res_tac THEN fs [] THEN rw [])) THEN 
-(NTAC 3 (res_tac THEN fs [] THEN rw []))
-
-THEN Cases_on `r'` THEN fs [Once (Q.SPECL [`A`, `L1_While B C, D`, `NONE`] bs_l1_c_cases)] THEN (TRY (Cases_on `x` THEN Cases_on `r`))
-
-THEN imp_res_tac while_back_thm THEN (NTAC 3 (res_tac THEN fs [] THEN rw [])));
 
 val type_means_value_type = prove(``
 !c p r.bs_l1_c c p r ==> !v s' c'.(r = SOME (v, s', c')) ==> !g t.l1_type (FST p) g t ==> !s.(g ⊆ FDOM (SND p)) ==> ((t = intL1) /\ (?n.v = L1_Int n)) \/ ((t = boolL1) /\ (?b.v = L1_Bool b)) \/ ((t = unitL1) /\ (v = L1_Skip))``,
@@ -39,8 +27,8 @@ val type_means_reduces = prove(``
 ho_match_mp_tac l1_type_strongind THEN rw []
 
 THEN1 rw [Once bs_l1_c_cases]
-THEN1 rw [Once bs_l1_c_cases] 
-THEN1 rw [Once bs_l1_c_cases]  
+THEN1 rw [Once bs_l1_c_cases]
+THEN1 rw [Once bs_l1_c_cases]
 
 THEN1 (
 rw [Once bs_l1_c_cases] THEN
@@ -157,7 +145,7 @@ THEN imp_res_tac UNCLOCKED_IMP_CLOCKED
 THEN `∃cl. bs_l1_c (SUC cl) (e,s) (SOME (v,s',SUC 0))` by metis_tac []
 THEN `bs_l1_c (SUC cl) (e,s) NONE` by metis_tac []
 
-THEN imp_res_tac l1_deterministic
+THEN imp_res_tac L1_DETERMINISTIC
 THEN fs []);
 
 val cor_oneway = prove(``

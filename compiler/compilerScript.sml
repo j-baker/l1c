@@ -1,4 +1,4 @@
-open HolKernel boolLib bossLib l1_to_il1_compilerTheory il1_to_il2_compilerTheory store_creationTheory il1_il2_correctnessTheory l1_il1_correctnessTheory lcsymtacs il2_to_il3_compilerTheory listTheory pairTheory pred_setTheory l1_il1_totalTheory bigstep_il1Theory ast_l1Theory store_equivalenceTheory finite_mapTheory il3_to_vsm0_correctnessTheory il3_store_propertiesTheory il2_il3_correctnessTheory bs_ss_equivalenceTheory smallstep_vsm0_clockedTheory bigstep_il1_clockedTheory vsm0_clocked_equivTheory clocked_equivTheory;
+open HolKernel boolLib bossLib l1_to_il1_compilerTheory il1_to_il2_compilerTheory store_creationTheory il1_il2_correctnessTheory l1_il1_correctnessTheory lcsymtacs il2_to_il3_compilerTheory listTheory pairTheory pred_setTheory l1_il1_totalTheory bigstep_il1Theory ast_l1Theory store_equivalenceTheory finite_mapTheory il3_to_vsm0_correctnessTheory il3_store_propertiesTheory il2_il3_correctnessTheory bs_ss_equivalenceTheory smallstep_vsm0_clockedTheory bigstep_il1_clockedTheory vsm0_clocked_equivTheory clocked_equivTheory constant_foldingTheory;
 
 val _ = new_theory "compiler"
 
@@ -30,7 +30,7 @@ THEN `ms_il2 P st ==> (!l.l ∈ FDOM (MAP_KEYS (map_fun (FST (make_loc_map P))) 
 
 THEN metis_tac []);
 
-val compile_il2_def = Define `compile_il2 e = il1_to_il2 (l1_to_il1 e 0)`;
+val compile_il2_def = Define `compile_il2 e = il1_to_il2 (l1_to_il1 (cfold e) 0)`;
 
 val compile_def = Define `compile e = il2_to_il3 (compile_il2 e)`;
 
@@ -89,6 +89,8 @@ val il2_store_etc2 = prove(``!l e.l ∈ FDOM (create_il2_store e) ==> ((create_i
 Induct_on `e`
 THEN rw [create_il2_store_def, FDOM_FEMPTY] THEN Cases_on `h` THEN fs [create_il2_store_def] THEN rw [] THEN Cases_on `i = l` THEN rw [FAPPLY_FUPDATE_THM]);
 
+bs_l1_c c (e, create_store e) r ==> bs_l1_c c (cfold e, create_store (cfold e))
+
 
 val store_equiv_gen_thm = prove(``!e n.equiv (con_store (create_store e)) (create_il2_store (il1_to_il2 (l1_to_il1 e n)))``,
 
@@ -138,7 +140,7 @@ THEN rw [DISJ_ASSOC, EQ_IMP_THM] THEN TRY (metis_tac []));
 
 val l1_to_il2_correctness_1_thm = prove(
 ``!c e v s' c'.bs_l1_c c (e, create_store e) NONE ==> exec_clocked (compile_il2 e) (SOME (0, c, [], con_store (create_store e))) NONE``,
-rw [] THEN imp_res_tac L1_TO_IL1_CORRECTNESS_LEMMA THEN fs [FST, SND] THEN rw [compile_il2_def] THEN
+rw [] THEN imp_res_tac CFOLD_SAFE THEN fs [FST, SND ] THEN imp_res_tac L1_TO_IL1_CORRECTNESS_LEMMA THEN fs [FST, SND] THEN rw [compile_il2_def] THEN
 rw [l1_to_il1_def]
 THEN  `equiv (con_store (create_store e)) (con_store (create_store e))` by metis_tac [EQUIV_REFL_THM] THEN (imp_res_tac EQ_SYM THEN res_tac THEN rfs [] THEN rw [])
 
@@ -149,10 +151,10 @@ THEN metis_tac []);
 
 val l1_to_il2_correctness_2_thm = prove(
 ``!c e v s' c'.bs_l1_c c (e, create_store e) (SOME (v, s', c')) ==> ?s''.exec_clocked (compile_il2 e) (SOME (0, c, [], con_store (create_store e))) (SOME (&LENGTH (compile_il2 e), c', [(il1_il2_val (l1_il1_val v))], s''))``,
-rw [] THEN imp_res_tac L1_TO_IL1_CORRECTNESS_LEMMA THEN fs [FST, SND] THEN rw [compile_il2_def] THEN
+rw [] THEN imp_res_tac CFOLD_SAFE THEN fs [FST, SND] THEN imp_res_tac L1_TO_IL1_CORRECTNESS_LEMMA THEN fs [FST, SND] THEN rw [compile_il2_def] THEN
 rw [l1_to_il1_def]
 
-THEN `?st ex lc1'.l1_to_il1_pair 0 e = (st, ex, lc1')` by metis_tac [L1_TO_IL1_TOTAL_THM]
+THEN `?st ex lc1'.l1_to_il1_pair 0 (cfold e) = (st, ex, lc1')` by metis_tac [L1_TO_IL1_TOTAL_THM]
 
 
 THEN `equiv (con_store (create_store e)) (con_store (create_store e))` by metis_tac [EQUIV_REFL_THM] THEN (imp_res_tac EQ_SYM THEN res_tac THEN rfs [] THEN rw [])
@@ -167,15 +169,22 @@ val make_stack_def = Define `make_stack e = astack (compile e)
             (MAP_KEYS (map_fun (FST (make_loc_map (compile_il2 e))))
                (create_il2_store (compile_il2 e))) []`;
 
-val total_c_lem_1 = store_thm("total_c_lem_1", ``!c e.bs_l1_c c (e, create_store e) NONE ==> vsm_exec_c (compile e) (SOME (0, c, make_stack e)) NONE``,
-rw [make_stack_def] THEN imp_res_tac l1_to_il2_correctness_1_thm
+!e.create_store (cfold e) = create_store e
+Induct_on `e` THEN rw []
 
-THEN `equiv (con_store (create_store e)) (create_il2_store (compile_il2 e))` by metis_tac [compile_il2_def, store_equiv_gen_thm]
+THEN1 (Cases_on `l` THEN fs [cfold_def, create_store_def])
+
+THEN fs [cfold_def, create_store_def] THEN rw [] THEN (TRY (Cases_on `f1`)) THEN (TRY (Cases_on `f2` )) THEN (TRY (Cases_on `cfold e`)) THEN rw [] THEN (TRY (Cases_on `l`)) THEN (TRY (Cases_on `l'`)) THEN rw [] THEN fs [create_store_def] THEN rfs [] THEN rw []
+
+val total_c_lem_1 = store_thm("total_c_lem_1", ``!c e.bs_l1_c c (e, create_store (cfold e)) NONE ==> vsm_exec_c (compile e) (SOME (0, c, make_stack e)) NONE``,
+rw [make_stack_def] THEN imp_res_tac CFOLD_SAFE THEN fs [FST, SND] THEN imp_res_tac l1_to_il2_correctness_1_thm 
+
+THEN `equiv (con_store (create_store (cfold e))) (create_il2_store (compile_il2 e))` by metis_tac [compile_il2_def, store_equiv_gen_thm]
 
 THEN imp_res_tac L1_TO_IL1_CORRECTNESS_LEMMA THEN fs [FST] THEN res_tac
 
 
-THEN `?st ex lc1.l1_to_il1_pair 0 e = (st, ex, lc1)` by metis_tac [L1_TO_IL1_TOTAL_THM]
+THEN `?st ex lc1.l1_to_il1_pair 0 (cfold e) = (st, ex, lc1)` by metis_tac [L1_TO_IL1_TOTAL_THM]
 THEN fs []
 THEN (imp_res_tac EQ_SYM THEN res_tac THEN rfs [] THEN rw [])
 THEN `ms_il2 (compile_il2 e) (create_il2_store (compile_il2 e))` by metis_tac [ms_il2_st_thm]
