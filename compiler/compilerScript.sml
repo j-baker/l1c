@@ -96,7 +96,6 @@ THEN rw [create_il2_store_def, FDOM_FEMPTY] THEN Cases_on `h` THEN fs [create_il
 
 val store_equiv_gen_thm = prove(``!e n.equiv (con_store (create_store e)) (create_il2_store (il1_to_il2 (l1_to_il1 e n)))``,
 
-
 Induct_on `e` THEN fs [compile_il2_def, il1_to_il2_def, il1e_to_il2_def, l1_to_il1_def, l1_to_il1_pair_def] THEN rw []
 
 THEN1 (
@@ -138,7 +137,6 @@ THEN rw []
 THEN rw [GSYM FUNION_ASSOC, FUNION_DEF, FAPPLY_FUPDATE_THM, il2_store_etc2] THEN (TRY (metis_tac [il2_store_etc2])) THEN Cases_on `n=k` THEN rw [] THEN fs [con_store_def, GSYM MAP_APPEND_EQUIV_THM, MAP_KEYS_FEMPTY, FAPPLY_FUPDATE_THM] THEN rw [il2_store_etc2]
 
 THEN rw [DISJ_ASSOC, EQ_IMP_THM] THEN TRY (metis_tac []));
-
 
 val l1_to_il2_correctness_1_thm = prove(
 ``!c e v s' c'.bs_l1_c c (e, create_store e) NONE ==> exec_clocked (compile_il2 e) (SOME (0, c, [], con_store (create_store e))) NONE``,
@@ -214,7 +212,7 @@ THEN `x ∈
              (map_fun (FST (make_loc_map (compile_il2 e))))
              (create_il2_store (compile_il2 e)))` by metis_tac [compile_def, compile_il2_def, ms_il2_st_thm, EQ_IMP_THM, min_store_imp_all_locs_in_range]
 
-THEN imp_res_tac map_deref_thm THEN fs [MAP_KEYS_def] THEN res_tac THEN fs [] THEN metis_tac [il2_store_etc2]);
+THEN imp_res_tac map_deref_thm THEN fs [MAP_KEYS_def] THEN res_tac THEN fs [] THEN metis_tac [il2_store_etc2])
 
 
 val push3_thm = prove(``!e c.vsm_exec_c (push_zeroes (s_uloc (compile e))) (SOME (0, c, [])) (SOME (&LENGTH (push_zeroes (s_uloc (compile e))), c, make_stack e))``,
@@ -243,7 +241,7 @@ THEN Q.EXISTS_TAC `(SOME (&LENGTH (push_zeroes (s_uloc (compile e))), c, make_st
  THEN rw [] THEN1 (match_mp_tac APPEND_TRACE_SAME_VSM0_THM THEN metis_tac [push3_thm])
 
 THEN REWRITE_TAC [Once (GSYM INT_ADD_LID)]
-THEN REWRITE_TAC [Once (CONJUNCT2 (SPEC_ALL (Q.SPEC `&LENGTH (push_zeroes (s_uloc (compile e)))` (GSYM incr_pc_vsm0_def))))]
+THEN REWRITE_TAC [Once (CONJUNCT2 (SPEC_ALL (Q.SPEC `&LENGTH (push_zeroes (s_uloc (compile e)))` (GEN_ALL (GSYM incr_pc_vsm0_def)))))]
 THEN rw [GSYM incr_pc_vsm0_def]
 
 THEN match_mp_tac APPEND_TRACE_SAME_2_VSM0_THM THEN rw [])
