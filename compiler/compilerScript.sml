@@ -232,7 +232,21 @@ THEN fs [GSYM vsm_exec_c_def]
 THEN rw [GSYM incr_pc_vsm0_def]
 THEN Q.EXISTS_TAC `(SOME (&LENGTH P, c', stk'))` THEN rw [] THENL [all_tac, REWRITE_TAC [Once (GSYM INT_ADD_LID)] THEN rw [GSYM incr_pc_vsm0_def]] THEN metis_tac [APPEND_TRACE_SAME_VSM0_THM, APPEND_TRACE_SAME_2_VSM0_THM])
 
-val init_stack_1_thm = prove(``!e c.vsm_exec_c (compile e) (SOME (0, c, make_stack e)) NONE ==> vsm_exec_c (full_compile e) (SOME (0, c, [])) NONE``, cheat);
+val init_stack_1_thm = prove(``!e c.vsm_exec_c (compile e) (SOME (0, c, make_stack e)) NONE ==> vsm_exec_c (full_compile e) (SOME (0, c, [])) NONE``,
+
+rw [full_compile_def, vsm_exec_c_def]
+THEN
+match_mp_tac (GEN_ALL(CONJUNCT2 (SPEC_ALL (REWRITE_RULE [EQ_IMP_THM] RTC_CASES_RTC_TWICE)))) 
+THEN fs [GSYM vsm_exec_c_def]
+
+THEN Q.EXISTS_TAC `(SOME (&LENGTH (push_zeroes (s_uloc (compile e))), c, make_stack e))`
+ THEN rw [] THEN1 (match_mp_tac APPEND_TRACE_SAME_VSM0_THM THEN metis_tac [push3_thm])
+
+THEN REWRITE_TAC [Once (GSYM INT_ADD_LID)]
+THEN REWRITE_TAC [Once (CONJUNCT2 (SPEC_ALL (Q.SPEC `&LENGTH (push_zeroes (s_uloc (compile e)))` (GSYM incr_pc_vsm0_def))))]
+THEN rw [GSYM incr_pc_vsm0_def]
+
+THEN match_mp_tac APPEND_TRACE_SAME_2_VSM0_THM THEN rw [])
 
 val init_stack_2_thm = prove(``!e c astk c'.vsm_exec_c (compile e) (SOME (0, c, make_stack e)) (SOME (&LENGTH (compile e), c', astk)) ==>
 vsm_exec_c (full_compile e) (SOME (0, c, [])) (SOME (&LENGTH (full_compile e), c', astk))``,
