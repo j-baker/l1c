@@ -171,8 +171,19 @@ val make_stack_def = Define `make_stack e = astack (compile e)
             (MAP_KEYS (map_fun (FST (make_loc_map (compile_il2 e))))
                (create_il2_store (compile_il2 e))) []`;
 
-val push_thm = prove(``!n c.vsm_exec_c (push_zeroes n) (SOME (0, c, [])) (SOME (&LENGTH (push_zeroes n), c, GENLIST_AUX (\x.0) n []))``, cheat);
+val push_thm = prove(``!n c.vsm_exec_c (push_zeroes n) (SOME (0, c, [])) (SOME (&LENGTH (push_zeroes n), c, GENLIST_AUX (\x.0) n []))``,
 
+rw [] THEN Induct_on `n` THEN1 fs [push_zeroes_def, GENLIST_AUX, vsm_exec_c_def, RTC_REFL]
+
+THEN fs [vsm_exec_c_def]
+
+THEN rw [Once RTC_CASES2] THEN DISJ2_TAC
+
+THEN Q.EXISTS_TAC `(SOME (&LENGTH (push_zeroes n), c, GENLIST_AUX (\x.0) n []))`
+
+THEN rw []
+
+THEN cheat (* composition theorems will sort this *));
 
 val constant_list_reverse = prove(``!x xs.(!n.(n < LENGTH xs) ==> (EL n xs = x)) ==> (REVERSE xs = xs)``,
 rw [] THEN match_mp_tac LIST_EQ THEN rw [EL_REVERSE] THEN `PRE (LENGTH xs - x') < LENGTH xs` by decide_tac THEN metis_tac []);
