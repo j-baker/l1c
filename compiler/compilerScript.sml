@@ -222,8 +222,15 @@ rw []
 THEN `make_stack e = GENLIST_AUX (\x.0) (s_uloc (compile e)) []` by (fs [push2_thm, GSYM GENLIST_GENLIST_AUX] THEN
 match_mp_tac LIST_EQ THEN rw [] THEN rw [EL_REVERSE] THEN `PRE (s_uloc (compile e) - x) < s_uloc (compile e)` by decide_tac THEN rw []) THEN metis_tac [push_thm]);
 
-val thmtest1 = prove(``!P P' c c' stk stk' c'' stk'' endpc.vsm_exec_c P (SOME (0, c, stk)) (SOME (&LENGTH P, c', stk')) /\ vsm_exec_c P' (SOME (0, c', stk')) (SOME (&LENGTH P', c'', stk'')) /\ (&LENGTH P + &LENGTH P' = endpc) ==>
-vsm_exec_c (P ++ P') (SOME (0, c, stk)) (SOME (endpc, c'', stk''))``, cheat)
+val thmtest1 = prove(``!P P' c c' stk stk' c'' stk'' endpc.vsm_exec_c P (SOME (0, c, stk)) (SOME (&LENGTH P, c', stk')) /\ vsm_exec_c P' (SOME (0, c', stk')) (SOME (&LENGTH P', c'', stk'')) /\ (&LENGTH P' + &LENGTH P = endpc) ==>
+vsm_exec_c (P ++ P') (SOME (0, c, stk)) (SOME (endpc, c'', stk''))``,
+rw [vsm_exec_c_def]
+THEN
+match_mp_tac (GEN_ALL(CONJUNCT2 (SPEC_ALL (REWRITE_RULE [EQ_IMP_THM] RTC_CASES_RTC_TWICE)))) 
+THEN fs [GSYM vsm_exec_c_def]
+
+THEN rw [GSYM incr_pc_vsm0_def]
+THEN Q.EXISTS_TAC `(SOME (&LENGTH P, c', stk'))` THEN rw [] THENL [all_tac, REWRITE_TAC [Once (GSYM INT_ADD_LID)] THEN rw [GSYM incr_pc_vsm0_def]] THEN metis_tac [APPEND_TRACE_SAME_VSM0_THM, APPEND_TRACE_SAME_2_VSM0_THM])
 
 val init_stack_1_thm = prove(``!e c.vsm_exec_c (compile e) (SOME (0, c, make_stack e)) NONE ==> vsm_exec_c (full_compile e) (SOME (0, c, [])) NONE``, cheat);
 
