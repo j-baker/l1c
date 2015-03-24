@@ -161,12 +161,12 @@ THEN imp_res_tac l1_deterministic
 THEN fs []);
 
 val cor_oneway = prove(``
-!e g t.l1_type e g t /\ g ⊆ FDOM (create_store e) ==> (~?v s'.bs_l1 (e, create_store e) v s') ==> ~?stk' s'.vsm_exec (compile e) (0, make_stack e) (&LENGTH (compile e), stk')``,
+!e g t.l1_type e g t /\ g ⊆ FDOM (create_store e) ==> (~?v s'.bs_l1 (e, create_store e) v s') ==> ~?stk' s'.vsm_exec (full_compile e) (0, []) (&LENGTH (full_compile e), stk')``,
 rw []
 
 THEN `!c.bs_l1_c c (e, create_store e) NONE` by metis_tac [lem1, lem3]
 
-THEN `!c.vsm_exec_c (compile e) (SOME (0,c,make_stack e)) NONE` by metis_tac [total_c_lem_1]
+THEN `!c.vsm_exec_c (full_compile e) (SOME (0,c,[])) NONE` by metis_tac [total_c_lem_1]
 
 THEN CCONTR_TAC THEN fs []
 
@@ -176,7 +176,7 @@ THEN fs [FST, SND]
 
 THEN metis_tac [lem2]);
 
-val DIVERGENCE_PRESERVATION = store_thm("DIVERGENCE_PRESERVATION", ``!e g t.l1_type e g t /\ g ⊆ FDOM (create_store e) ==> ((~?v s'. bs_l1 (e, create_store e) v s') <=> (~?stk' s'.vsm_exec (compile e) (0, make_stack e) (&LENGTH (compile e), stk')))``,
+val DIVERGENCE_PRESERVATION = store_thm("DIVERGENCE_PRESERVATION", ``!e g t.l1_type e g t /\ g ⊆ FDOM (create_store e) ==> ((~?v s'. bs_l1 (e, create_store e) v s') <=> (~?stk' s'.vsm_exec (full_compile e) (0, []) (&LENGTH (full_compile e), stk')))``,
 metis_tac [EQ_IMP_THM, cor_oneway, CORRECTNESS_THM]);
 
 val _ = export_theory ();
