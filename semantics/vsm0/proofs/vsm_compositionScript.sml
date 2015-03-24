@@ -1,4 +1,4 @@
-open HolKernel boolLib bossLib smallstep_vsm0_clockedTheory ast_vsm0Theory relationTheory lcsymtacs il2_compositionTheory integerTheory
+open HolKernel boolLib bossLib smallstep_vsm0_clockedTheory ast_vsm0Theory relationTheory lcsymtacs il2_compositionTheory integerTheory smallstep_il2Theory
 
 val _ = new_theory "vsm_composition"
 
