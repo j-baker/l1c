@@ -19,7 +19,7 @@ fun main () = let val args = CommandLine.arguments()
                            val file_contents = TextIO.inputAll file
                            val _ = TextIO.closeIn file
                            val parsed = parsingLib.parse file_contents
-                           val compiled = snd (dest_eq (snd (dest_thm (SIMP_RULE intSimps.int_ss [] (EVAL ``compile ^parsed``)))))
+                           val compiled = snd (dest_eq (snd (dest_thm (SIMP_RULE intSimps.int_ss [] (EVAL ``full_compile ^parsed``)))))
                in (printerLib.print_prog (printerLib.get_instructions compiled); OS.Process.exit(OS.Process.success)) end) end;
 
 PolyML.export("l1c", main);
