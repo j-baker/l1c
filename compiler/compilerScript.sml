@@ -1,4 +1,4 @@
-open HolKernel boolLib bossLib l1_to_il1_compilerTheory il1_to_il2_compilerTheory store_creationTheory il1_il2_correctnessTheory l1_il1_correctnessTheory lcsymtacs il2_to_il3_compilerTheory listTheory pairTheory pred_setTheory l1_il1_totalTheory bigstep_il1Theory ast_l1Theory store_equivalenceTheory finite_mapTheory il3_to_vsm0_correctnessTheory il3_store_propertiesTheory il2_il3_correctnessTheory bs_ss_equivalenceTheory smallstep_vsm0_clockedTheory bigstep_il1_clockedTheory vsm0_clocked_equivTheory clocked_equivTheory;
+open HolKernel boolLib bossLib l1_to_il1_compilerTheory il1_to_il2_compilerTheory store_creationTheory il1_il2_correctnessTheory l1_il1_correctnessTheory lcsymtacs il2_to_il3_compilerTheory listTheory pairTheory pred_setTheory l1_il1_totalTheory bigstep_il1Theory ast_l1Theory store_equivalenceTheory finite_mapTheory il3_to_vsm0_correctnessTheory il3_store_propertiesTheory il2_il3_correctnessTheory bs_ss_equivalenceTheory smallstep_vsm0_clockedTheory bigstep_il1_clockedTheory vsm0_clocked_equivTheory clocked_equivTheory relationTheory smallstep_il2Theory vsm_compositionTheory;
 
 val _ = new_theory "compiler"
 
@@ -34,7 +34,7 @@ val compile_il2_def = Define `compile_il2 e = il1_to_il2 (l1_to_il1 e 0)`;
 
 val compile_def = Define `compile e = il2_to_il3 (compile_il2 e)`;
 
-val push_zeroes_def = Define `(push_zeroes 0 = []) /\ (push_zeroes (SUC n) = (VSM_Push 0)::push_zeroes n)`;
+val push_zeroes_def = Define `(push_zeroes 0 = []) /\ (push_zeroes (SUC n) = SNOC (VSM_Push 0) (push_zeroes n))`;
 
 val full_compile_def = Define `full_compile e = (push_zeroes (s_uloc (compile e))) ++ compile e`;
 
@@ -181,9 +181,15 @@ THEN rw [Once RTC_CASES2] THEN DISJ2_TAC
 
 THEN Q.EXISTS_TAC `(SOME (&LENGTH (push_zeroes n), c, GENLIST_AUX (\x.0) n []))`
 
-THEN rw []
+THEN rw [push_zeroes_def]
 
-THEN cheat (* composition theorems will sort this *));
+THEN fs [GSYM vsm_exec_c_def]
+
+THEN rw [SNOC_APPEND]
+
+THEN1 (match_mp_tac APPEND_TRACE_SAME_VSM0_THM THEN rw [])
+
+THEN rw_tac (srw_ss () ++ intSimps.INT_ARITH_ss) [vsm_exec_c_one_cases, vsm_exec_c_instr_cases, fetch_append_thm, fetch_def] THEN (WEAKEN_TAC (fn x => true)) THEN fs [GSYM GENLIST_GENLIST_AUX, GENLIST_CONS] THEN rw [GENLIST_FUN_EQ])
 
 val constant_list_reverse = prove(``!x xs.(!n.(n < LENGTH xs) ==> (EL n xs = x)) ==> (REVERSE xs = xs)``,
 rw [] THEN match_mp_tac LIST_EQ THEN rw [EL_REVERSE] THEN `PRE (LENGTH xs - x') < LENGTH xs` by decide_tac THEN metis_tac []);
