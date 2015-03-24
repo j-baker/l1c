@@ -191,7 +191,25 @@ rw [] THEN match_mp_tac LIST_EQ THEN rw [EL_REVERSE] THEN `PRE (LENGTH xs - x') 
 val genlist_thm = prove(``!n'.(!n.(n < LENGTH (GENLIST (\l.0) n')) ==> (EL n (GENLIST (\l.0) n') = 0))``,
 rw []);
 
-val push2_thm = prove(``!e.make_stack e = REVERSE (GENLIST (\l.0) (s_uloc (compile e)))``, cheat)
+val create_il2_store_zero = prove(``!p x. x ∈ FDOM (create_il2_store p) ==> (create_il2_store p ' x = 0)``,
+Induct_on `p` THEN rw [] THEN fs [create_il2_store_def] THEN Cases_on `h` THEN fs [create_il2_store_def] THEN metis_tac [FAPPLY_FUPDATE_THM]);
+
+val push2_thm = prove(``!e.make_stack e = REVERSE (GENLIST (\l.0) (s_uloc (compile e)))``,
+
+rw [make_stack_def, astack_def]
+
+THEN match_mp_tac LIST_EQ THEN rw []
+
+THEN `ms_il2 (compile_il2 e) (create_il2_store (compile_il2 e))` by metis_tac [ms_il2_st_thm]
+
+THEN `x ∈
+        FDOM
+          (MAP_KEYS
+             (map_fun (FST (make_loc_map (compile_il2 e))))
+             (create_il2_store (compile_il2 e)))` by metis_tac [compile_def, compile_il2_def, ms_il2_st_thm, EQ_IMP_THM, min_store_imp_all_locs_in_range]
+
+THEN imp_res_tac map_deref_thm THEN fs [MAP_KEYS_def] THEN res_tac THEN fs [] THEN metis_tac [il2_store_etc2]);
+
 
 val push3_thm = prove(``!e c.vsm_exec_c (push_zeroes (s_uloc (compile e))) (SOME (0, c, [])) (SOME (&LENGTH (push_zeroes (s_uloc (compile e))), c, make_stack e))``,
 rw []
