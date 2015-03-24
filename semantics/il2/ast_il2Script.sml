@@ -1,6 +1,6 @@
-open HolKernel Parse bossLib ast_il1Theory integerTheory;
+open HolKernel Parse bossLib ast_il1Theory integerTheory
 
-val _ = new_theory "ast_il2";
+val _ = new_theory "ast_il2"
 
 val _ = Datatype `il2_stm = IL2_Nop
                           | IL2_Tick
@@ -12,8 +12,8 @@ val _ = Datatype `il2_stm = IL2_Nop
                           | IL2_Geq 
                           | IL2_Halt
                           | IL2_Jump  int
-                          | IL2_Jz    int`;
+                          | IL2_Jz    int`
 
-val _ = type_abbrev("il2_prog", ``:(il2_stm list)``);
+val _ = type_abbrev("il2_prog", ``:(il2_stm list)``)
 
-val _ = export_theory ();
+val _ = export_theory ()

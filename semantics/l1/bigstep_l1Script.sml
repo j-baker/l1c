@@ -1,6 +1,6 @@
-open HolKernel Parse boolLib bossLib integerTheory finite_mapTheory ast_l1Theory;
+open HolKernel Parse boolLib bossLib integerTheory finite_mapTheory ast_l1Theory
 
-val _ = new_theory "bigstep_l1";
+val _ = new_theory "bigstep_l1"
 
 val (bs_l1_rules, bs_l1_induction, bs_l1_ecases) = Hol_reln `
     (* Values *)
@@ -55,6 +55,6 @@ val (bs_l1_rules, bs_l1_induction, bs_l1_ecases) = Hol_reln `
 
     (!e1 e2 s s'.
          bs_l1 (e1, s) (L1_Bool F) s'
-     ==> bs_l1 (L1_While e1 e2, s) L1_Skip s')`;
+     ==> bs_l1 (L1_While e1 e2, s) L1_Skip s')`
 
-val _ = export_theory ();
+val _ = export_theory ()

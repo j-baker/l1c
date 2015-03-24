@@ -1,6 +1,6 @@
-open HolKernel boolLib bossLib listTheory Parse IndDefLib finite_mapTheory relationTheory arithmeticTheory ast_l1Theory ast_il1Theory bigstep_l1Theory bigstep_il1Theory pred_setTheory pairTheory lcsymtacs prim_recTheory integerTheory;
+open HolKernel boolLib bossLib listTheory Parse IndDefLib finite_mapTheory relationTheory arithmeticTheory ast_l1Theory ast_il1Theory bigstep_l1Theory bigstep_il1Theory pred_setTheory pairTheory lcsymtacs prim_recTheory integerTheory
 
-val _ = new_theory "l1_to_il1_compiler";
+val _ = new_theory "l1_to_il1_compiler"
 
 val l1_to_il1_pair_def = Define `
     (l1_to_il1_pair lc (L1_Value (L1_Int n)) = (IL1_Expr (IL1_Value IL1_ESkip), IL1_Value (IL1_Integer n), lc)) /\
@@ -47,8 +47,8 @@ val l1_to_il1_pair_def = Define `
         let (sl2, e2', lc3) = l1_to_il1_pair lc2 e2
         in
             (IL1_Seq (IL1_Seq sl1 (IL1_Assign (Compiler lc3) e1')) sl2, IL1_Geq (IL1_Deref (Compiler lc3)) e2', lc3 + 1))
-`;
+`
 
-val l1_to_il1_def = Define `l1_to_il1 e n = let (s, te, lc) = l1_to_il1_pair n e in IL1_Seq s (IL1_Expr te)`;
+val l1_to_il1_def = Define `l1_to_il1 e n = let (s, te, lc) = l1_to_il1_pair n e in IL1_Seq s (IL1_Expr te)`
 
-val _ = export_theory ();
+val _ = export_theory ()
