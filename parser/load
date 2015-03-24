@@ -1,0 +1,3 @@
+load "l1";
+open l1;
+parse();

@@ -1,6 +1,6 @@
-open HolKernel boolLib bossLib listTheory Parse IndDefLib finite_mapTheory relationTheory arithmeticTheory ast_l1Theory bigstep_l1Theory pred_setTheory pairTheory lcsymtacs integerTheory ast_il1Theory;
+open HolKernel boolLib bossLib listTheory Parse IndDefLib finite_mapTheory relationTheory arithmeticTheory ast_l1Theory bigstep_l1Theory pred_setTheory pairTheory lcsymtacs integerTheory ast_il1Theory
 
-val _ = new_theory "bigstep_il1";
+val _ = new_theory "bigstep_il1"
 
 val (bs_il1_expr_rules, bs_il1_expr_ind, bs_il1_expr_cases) = Hol_reln `
     (* Values *)
@@ -32,7 +32,7 @@ val (bs_il1_expr_rules, bs_il1_expr_ind, bs_il1_expr_cases) = Hol_reln `
     (!e1 e2 e3 s v.
         (bs_il1_expr (e1, s) (IL1_Boolean F) /\
          bs_il1_expr (e3, s) v)
-     ==> bs_il1_expr (IL1_EIf e1 e2 e3, s) v)`;
+     ==> bs_il1_expr (IL1_EIf e1 e2 e3, s) v)`
 
 val (bs_il1_rules, bs_il1_ind, bs_il1_cases) = Hol_reln `
     (*  Expressions *)
@@ -80,6 +80,6 @@ val (bs_il1_rules, bs_il1_ind, bs_il1_cases) = Hol_reln `
 
     (!e s v s'.
         bs_il1 (e, s) v s' ==> bs_il1 (IL1_Tick e, s) v s')
-`;
+`
 
-val _ = export_theory ();
+val _ = export_theory ()

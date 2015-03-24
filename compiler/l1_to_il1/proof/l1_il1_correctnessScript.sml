@@ -1,26 +1,26 @@
-open HolKernel boolLib bossLib listTheory Parse IndDefLib finite_mapTheory relationTheory arithmeticTheory ast_il1Theory bigstep_il1Theory pred_setTheory pairTheory lcsymtacs prim_recTheory integerTheory store_equivalenceTheory l1_to_il1_compilerTheory l1_il1_totalTheory il1_backTheory il1_determinacyTheory comp_locationTheory bigstep_l1Theory bigstep_il1_clockedTheory optionTheory bigstep_l1_clockedTheory;
+open HolKernel boolLib bossLib listTheory Parse IndDefLib finite_mapTheory relationTheory arithmeticTheory ast_il1Theory bigstep_il1Theory pred_setTheory pairTheory lcsymtacs prim_recTheory integerTheory store_equivalenceTheory l1_to_il1_compilerTheory l1_il1_totalTheory il1_backTheory il1_determinacyTheory comp_locationTheory bigstep_l1Theory bigstep_il1_clockedTheory optionTheory bigstep_l1_clockedTheory
 
 val _ = new_theory "l1_il1_correctness"
 
 val clock_dec = prove(``!c p r.bs_il1_c c p r ==> !tc v s' tc'.(c = SUC tc) /\ (r = SOME (v, s', SUC tc')) ==> bs_il1_c tc p (SOME (v, s', tc'))``,
-ho_match_mp_tac bs_il1_c_strongind THEN rw [] THEN rw [Once bs_il1_c_cases] THEN rw [] THEN (TRY (Cases_on `c'`)) THEN imp_res_tac CLOCK_DECREASES THEN fs [] THEN (TRY (Cases_on `c` THEN1 (`SUC tc' < 0` by (imp_res_tac CLOCK_DECREASES THEN fs []) THEN fs []))) THEN metis_tac [bs_il1_expr_cases]);
+ho_match_mp_tac bs_il1_c_strongind THEN rw [] THEN rw [Once bs_il1_c_cases] THEN rw [] THEN (TRY (Cases_on `c'`)) THEN imp_res_tac CLOCK_DECREASES THEN fs [] THEN (TRY (Cases_on `c` THEN1 (`SUC tc' < 0` by (imp_res_tac CLOCK_DECREASES THEN fs []) THEN fs []))) THEN metis_tac [bs_il1_expr_cases])
 
 val clock_dec2 = prove(``!c p r.bs_il1_c c p r ==> !v s' c'.(r = SOME (v, s', c')) ==> bs_il1_c (SUC c) p (SOME (v, s', SUC c'))``,
 ho_match_mp_tac bs_il1_c_strongind THEN rw [] THEN rw [Once bs_il1_c_cases] THEN rw [] THENL
 [metis_tac [bs_il1_expr_cases], metis_tac [bs_il1_expr_cases], 
  Cases_on `c'` THEN imp_res_tac CLOCK_DECREASES THEN fs [] THEN metis_tac [], DISJ2_TAC THEN Q.LIST_EXISTS_TAC [`SUC c'`, `s'`] THEN rw []]
-);
-val st = prove(``!x y.x + SUC y = SUC (x + y)``, decide_tac);
+)
+val st = prove(``!x y.x + SUC y = SUC (x + y)``, decide_tac)
 
 val clock_dec3 = prove(``!c p v s' c'.bs_il1_c c p (SOME (v, s', c')) ==> !n.bs_il1_c (c+n) p (SOME (v, s', c' + n))``,
 rw []
-THEN Induct_on `n` THEN rw [] THEN rw [] THEN REWRITE_TAC [st] THEN metis_tac [clock_dec2]);
+THEN Induct_on `n` THEN rw [] THEN rw [] THEN REWRITE_TAC [st] THEN metis_tac [clock_dec2])
 
 val clock_dec4 = prove(``!c p r.bs_il1_c c p r ==> !v s' c'.(r = SOME (v, s', 0)) /\ (c = SUC c') ==> bs_il1_c c' p NONE``,
-ho_match_mp_tac bs_il1_c_strongind THEN rw [] THEN rw [Once bs_il1_c_cases] THEN (TRY (Cases_on `c'` THEN rw [])) THEN (TRY (Cases_on `c` THEN rw [])) THEN metis_tac [clock_dec]);
+ho_match_mp_tac bs_il1_c_strongind THEN rw [] THEN rw [Once bs_il1_c_cases] THEN (TRY (Cases_on `c'` THEN rw [])) THEN (TRY (Cases_on `c` THEN rw [])) THEN metis_tac [clock_dec])
 
 val clock_dec5 = prove(``!c p r.bs_il1_c c p r ==> (r = NONE) ==> bs_il1_c c (IL1_Tick (FST p), SND p) NONE``,
-ho_match_mp_tac bs_il1_c_strongind THEN rw [] THEN rw [Once bs_il1_c_cases] THEN Cases_on `c` THEN rw [] THEN fs [Q.SPECL [`A`, `IL1_Tick B, C`] bs_il1_c_cases] THEN rw [] THEN rw [Once bs_il1_c_cases] THEN (TRY (metis_tac [clock_dec4])) THEN imp_res_tac clock_dec THEN fs [] THEN rw [] THEN metis_tac []);
+ho_match_mp_tac bs_il1_c_strongind THEN rw [] THEN rw [Once bs_il1_c_cases] THEN Cases_on `c` THEN rw [] THEN fs [Q.SPECL [`A`, `IL1_Tick B, C`] bs_il1_c_cases] THEN rw [] THEN rw [Once bs_il1_c_cases] THEN (TRY (metis_tac [clock_dec4])) THEN imp_res_tac clock_dec THEN fs [] THEN rw [] THEN metis_tac [])
 
 val WHILE_UNWIND_ONCE_THM = prove(``!e1 s e2 c x.bs_il1_expr (e1, s) (IL1_Boolean T) ==> (bs_il1_c c (IL1_While e1 e2, s) x <=> bs_il1_c c (IL1_Seq e2 (IL1_While e1 e2), s) x)``,
 rw [EQ_IMP_THM]
@@ -35,60 +35,60 @@ Cases_on `x`
 THEN1 (fs [Once bs_il1_c_cases] THEN imp_res_tac IL1_SEQ_BACK_THM THEN DISJ2_TAC THEN metis_tac [])
 THEN Cases_on `x'` THEN Cases_on `r` THEN (rw [Once bs_il1_c_cases] THEN imp_res_tac IL1_SEQ_BACK_THM
 
-THEN DISJ2_TAC THEN fs [Q.SPECL [`A`, `IL1_Seq A B, C`] (Once bs_il1_c_cases)] THEN `q = IL1_ESkip` by fs [Once bs_il1_c_cases] THEN rw [] THEN Q.LIST_EXISTS_TAC [`cl''`, `s'''`] THEN rw [] THEN metis_tac [clock_dec2]));
+THEN DISJ2_TAC THEN fs [Q.SPECL [`A`, `IL1_Seq A B, C`] (Once bs_il1_c_cases)] THEN `q = IL1_ESkip` by fs [Once bs_il1_c_cases] THEN rw [] THEN Q.LIST_EXISTS_TAC [`cl''`, `s'''`] THEN rw [] THEN metis_tac [clock_dec2]))
 
 val l1_il1_val_def = Define `(l1_il1_val (L1_Int n) = IL1_Integer n) /\
 (l1_il1_val (L1_Bool b) = IL1_Boolean b) /\
-(l1_il1_val (L1_Skip) = IL1_ESkip)`;
+(l1_il1_val (L1_Skip) = IL1_ESkip)`
 
 val il1_l1_val_def = Define `(il1_l1_val (IL1_Integer n) = L1_Int n) /\
 (il1_l1_val (IL1_Boolean b) = L1_Bool b) /\
-(il1_l1_val IL1_ESkip = L1_Skip)`;
+(il1_l1_val IL1_ESkip = L1_Skip)`
 
 val BS_VALUE_THM = store_thm("BS_VALUE_THM",
 ``!v v' s.bs_il1_expr (IL1_Value v, s) v' ==> (v = v') /\ !s'.bs_il1_expr (IL1_Value v, s') v'``,
-Cases_on `v` THEN REPEAT (rw [Once bs_il1_expr_cases]));
+Cases_on `v` THEN REPEAT (rw [Once bs_il1_expr_cases]))
 
 val MAP_FDOM_AFTER_INSERT = store_thm("MAP_FDOM_AFTER_INSERT",
 ``!f a b.a ∈ FDOM (f |+ (a, b))``,
-rw [FDOM_DEF]);
+rw [FDOM_DEF])
 
 val ASSIGN_ENSURES_IN_DOM_THM = store_thm("ASSIGN_ENSURES_IN_DOM_THM",
 ``!l c c' e s s'.bs_il1_c c (IL1_Assign l e, s) (SOME (IL1_ESkip, s', c')) ==> l ∈ FDOM s'``,
-rw [Once bs_il1_c_cases] THEN rw [FDOM_DEF]);
+rw [Once bs_il1_c_cases] THEN rw [FDOM_DEF])
 
 val DOMS_SUBSET_THM_1 = prove(
 ``!c p r.bs_il1_c c p r ==> !x.(r = SOME x) ==> FDOM (SND p) ⊆ FDOM (FST (SND x))``,
-ho_match_mp_tac bs_il1_c_strongind THEN rw [FST, SND, SUBSET_DEF]);
+ho_match_mp_tac bs_il1_c_strongind THEN rw [FST, SND, SUBSET_DEF])
 
 val DOMS_SUBSET_THM = store_thm("DOMS_SUBSET_THM",
 ``!e s v s' c c'.bs_il1_c c (e, s) (SOME (v, s', c')) ==> FDOM s ⊆ FDOM s'``,
-metis_tac [FST, SND, DOMS_SUBSET_THM_1]);
+metis_tac [FST, SND, DOMS_SUBSET_THM_1])
 
 val NO_INTERMEDIATE_WRITES_SAME_VALUE = store_thm("NO_INTERMEDIATE_WRITES_SAME_VALUE",
 ``!p v.bs_il1_expr p v ==> !c c' s' s'' l.l ∈ FDOM s'' ==> bs_il1_c c (IL1_Assign l (FST p), (SND p)) (SOME (IL1_ESkip, s', c')) ==> ((s' ' l) = (s'' ' l)) ==> bs_il1_expr (IL1_Deref l, s'') v``,
 Cases_on `p` THEN rw [FST, SND]
 THEN fs [Once bs_il1_c_cases]
 THEN rw [Once bs_il1_expr_cases]
-THEN metis_tac [BS_IL1_EXPR_DETERMINACY, FAPPLY_FUPDATE]);
+THEN metis_tac [BS_IL1_EXPR_DETERMINACY, FAPPLY_FUPDATE])
 
 val SKIP_TO_SKIP_THM = store_thm("SKIP_TO_SKIP",
 ``!s.bs_il1_expr (IL1_Value IL1_ESkip, s) IL1_ESkip``,
-rw [Once bs_il1_expr_cases] THEN metis_tac []);
+rw [Once bs_il1_expr_cases] THEN metis_tac [])
 
 val SKIP_TO_SKIP_2_THM = store_thm("SKIP_TO_SKIP_2_THM",
 ``!c s.bs_il1_c (SUC c) (IL1_Expr (IL1_Value IL1_ESkip), s) (SOME (IL1_ESkip, s, (SUC c)))``,
-rw [Once bs_il1_c_cases, Once bs_il1_expr_cases] THEN metis_tac []);
+rw [Once bs_il1_c_cases, Once bs_il1_expr_cases] THEN metis_tac [])
 
 val ASSIGN_IMPLIES_SKIP_THM = store_thm("ASSIGN_IMPLIES_SKIP_THM",
 ``!e lc s st ex l lc'.(l1_to_il1_pair lc (L1_Assign l e) = (st, ex, lc')) ==> (ex = IL1_Value (IL1_ESkip))``,
 rw [l1_to_il1_pair_def]
 THEN `?sl1 e1' lc2'.l1_to_il1_pair lc e = (sl1, e1', lc2')` by metis_tac [L1_TO_IL1_TOTAL_THM] 
-THEN fs [LET_DEF]);
+THEN fs [LET_DEF])
 
 val CONTAINS_CONVERT_THM = store_thm("CONTAINS_CONVERT_THM",
 ``!e n l.contains l (l1_to_il1 e n) <=> ?st ex n'.(l1_to_il1_pair n e = (st, ex, n')) /\ (contains l st \/ contains_expr l ex)``,
-rw [EQ_IMP_THM] THEN1 (`?st ex n'.l1_to_il1_pair n e = (st, ex, n')` by metis_tac [L1_TO_IL1_TOTAL_THM] THEN fs [l1_to_il1_def, LET_DEF, contains_def]) THEN rw [l1_to_il1_def, LET_DEF, contains_def]);
+rw [EQ_IMP_THM] THEN1 (`?st ex n'.l1_to_il1_pair n e = (st, ex, n')` by metis_tac [L1_TO_IL1_TOTAL_THM] THEN fs [l1_to_il1_def, LET_DEF, contains_def]) THEN rw [l1_to_il1_def, LET_DEF, contains_def])
 
 val L1_USELESS_LOC_EXPR_THM = prove(
 ``!p r.bs_il1_expr p r ==> !k.~contains_expr k (FST p) ==> !v.bs_il1_expr (FST p, SND p |+ (k, v)) r``,
@@ -97,26 +97,26 @@ THEN1 (Cases_on `r` THEN fs [Once bs_il1_expr_cases]) THEN TRY (
 rw [Once bs_il1_expr_cases]
 THEN fs [contains_expr_def] THEN metis_tac [])
 THEN fs [contains_expr_def]
-THEN rw [Once bs_il1_expr_cases, NOT_EQ_FAPPLY]);
+THEN rw [Once bs_il1_expr_cases, NOT_EQ_FAPPLY])
 
 val USELESS_LOC_EXPR_THM = store_thm("USELESS_LOC_EXPR_THM",
 ``!e s r.bs_il1_expr (e, s) r ==> !k.~contains_expr k e ==> !v.bs_il1_expr (e, s |+ (k, v)) r``,
-METIS_TAC [L1_USELESS_LOC_EXPR_THM, FST, SND]);
+METIS_TAC [L1_USELESS_LOC_EXPR_THM, FST, SND])
 
 
 val L1_USELESS_LOC_THM = prove(
 ``!c p r.bs_il1_c c p r ==> !x.(r = SOME x) ==> !k.~contains k (FST p) ==> !v.bs_il1_c c (FST p, SND p |+ (k, v)) (SOME (FST x, FST (SND x) |+ (k, v), SND (SND x)))``,
 HO_MATCH_MP_TAC bs_il1_c_strongind THEN rw []
 THEN1 (fs [Once bs_il1_c_cases, contains_def] THEN METIS_TAC [USELESS_LOC_EXPR_THM])
-THEN rw [Once bs_il1_c_cases] THEN fs [contains_def, FUPDATE_COMMUTES] THEN METIS_TAC [USELESS_LOC_EXPR_THM]);
+THEN rw [Once bs_il1_c_cases] THEN fs [contains_def, FUPDATE_COMMUTES] THEN METIS_TAC [USELESS_LOC_EXPR_THM])
 
 val USELESS_LOC_THM = store_thm("USELESS_LOC_THM",
 ``!e s r s' c c'.bs_il1_c c (e, s) (SOME (r, s', c')) ==> !k.~contains k e ==> !v.bs_il1_c c (e, s |+ (k, v)) (SOME (r, s' |+ (k, v), c'))``,
-METIS_TAC [FST, SND, L1_USELESS_LOC_THM]);
+METIS_TAC [FST, SND, L1_USELESS_LOC_THM])
 
 val IL1_SEQ_ASSOC_THM = store_thm("IL1_SEQ_ASSOC_THM",
 ``!e1 e2 e3 s c x.bs_il1_c c (IL1_Seq e1 (IL1_Seq e2 e3), s) x <=> bs_il1_c c (IL1_Seq (IL1_Seq e1 e2) e3, s) x``,
-rw [EQ_IMP_THM] THEN fs [Q.SPECL [`A`, `IL1_Seq A B, D`] bs_il1_c_cases] THEN rw [] THEN metis_tac []);
+rw [EQ_IMP_THM] THEN fs [Q.SPECL [`A`, `IL1_Seq A B, D`] bs_il1_c_cases] THEN rw [] THEN metis_tac [])
 
 val EXPR_PURE_THM = store_thm("EXPR_DOES_NOTHING_THM",
 ``!st es s s' v c c'.bs_il1_c c (IL1_Seq st (IL1_Expr es), s) (SOME (v, s', c')) ==> bs_il1_c c (st, s) (SOME (IL1_ESkip, s', c'))``,
@@ -124,11 +124,11 @@ rw [] THEN
 `bs_il1_c c (st, s) (SOME (IL1_ESkip, s', c')) /\ bs_il1_c c' (IL1_Expr es, s') (SOME (v, s', c'))` by ALL_TAC THEN
 IMP_RES_TAC IL1_SEQ_BACK_THM THEN imp_res_tac IL1_DETERMINACY_THM THEN rw [] THEN
 `(s'' = s') /\ (c' = cl')` by fs [Once bs_il1_c_cases] THEN
-metis_tac []);
+metis_tac [])
 
 val EXPR_PURE_2_THM = store_thm("EXPR_PURE_2_THM",
 ``!e s v s' c c'.bs_il1_c c (IL1_Expr e, s) (SOME (v, s', c')) ==> (s = s') /\ (c = c')``,
-rw [Once bs_il1_c_cases]);
+rw [Once bs_il1_c_cases])
 
 val plus_case = (* Begin plus case *)
 (fs [l1_to_il1_pair_def, l1_il1_val_def]
@@ -155,7 +155,7 @@ THEN `(fs' |+ (Compiler lc2'',n1)) ' (Compiler lc2'') = fs'' ' (Compiler lc2'')`
 THEN `bs_il1_expr (IL1_Deref (Compiler lc2''), fs'') (IL1_Integer n1)` by (rw [Once bs_il1_expr_cases] THEN metis_tac [SUBSET_DEF, FAPPLY_FUPDATE, MAP_FDOM_AFTER_INSERT, DOMS_SUBSET_THM])
 
 THEN rw [Once bs_il1_expr_cases]
-THEN metis_tac []);
+THEN metis_tac [])
 (* End plus case *)
 
 val plus_fail1_case = (* Begin plus case *)
@@ -184,7 +184,7 @@ THEN rw []
 THEN rw [Once bs_il1_c_cases]
 
 THEN metis_tac []
-);
+)
 
 val plus_fail2_case = (* Begin plus case *)
 (fs [l1_to_il1_pair_def, l1_il1_val_def]
@@ -196,12 +196,12 @@ THEN fs [LET_DEF] THEN rw []
 THEN rw [Once bs_il1_c_cases]
 THEN rw [Once bs_il1_c_cases]
 
-THEN `bs_il1_c c (st1, fs) NONE` by metis_tac [] THEN metis_tac []);
+THEN `bs_il1_c c (st1, fs) NONE` by metis_tac [] THEN metis_tac [])
 
-val total = metis_tac [L1_TO_IL1_TOTAL_THM];
+val total = metis_tac [L1_TO_IL1_TOTAL_THM]
 
 val min_clock_thm = prove(``!c p r.bs_il1_c c p r ==> !v s' c'.(r = SOME (v, s', c')) ==> bs_il1_c (SUC c) p (SOME (v, s', SUC c'))``,
-ho_match_mp_tac bs_il1_c_strongind THEN rw [] THEN rw [Once bs_il1_c_cases] THEN metis_tac []);
+ho_match_mp_tac bs_il1_c_strongind THEN rw [] THEN rw [Once bs_il1_c_cases] THEN metis_tac [])
 
 val L1_TO_IL1_CORRECTNESS_LEMMA = store_thm("L1_TO_IL1_CORRECTNESS_LEMMA",
 ``!c p r.bs_l1_c c p r ==> !lc1 st ex lc1'.((st, ex, lc1') = l1_to_il1_pair lc1 (FST p)) ==> !fs.equiv (con_store (SND p)) fs ==> (?x.(r = SOME x) /\ ?fs'.bs_il1_c c (st, fs) (SOME (IL1_ESkip, fs', (SND (SND x)))) /\ bs_il1_expr (ex, fs') (l1_il1_val (FST x)) /\ equiv (con_store (FST (SND x))) fs') \/ ((r = NONE) /\ bs_il1_c c (st, fs) NONE)``,
@@ -580,6 +580,6 @@ THEN rw [Once bs_il1_c_cases]
 
 THEN metis_tac [clock_dec])
 
-THEN rw [GSYM IL1_SEQ_ASSOC_THM] THEN rw [Once bs_il1_c_cases] THEN Q.LIST_EXISTS_TAC [`c''`, `fs'''`] THEN rw [Once bs_il1_c_cases]));
+THEN rw [GSYM IL1_SEQ_ASSOC_THM] THEN rw [Once bs_il1_c_cases] THEN Q.LIST_EXISTS_TAC [`c''`, `fs'''`] THEN rw [Once bs_il1_c_cases]))
 
-val _ = export_theory ();
+val _ = export_theory ()
