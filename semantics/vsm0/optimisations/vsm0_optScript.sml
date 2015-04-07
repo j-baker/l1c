@@ -1,4 +1,4 @@
-open HolKernel bossLib boolLib lcsymtacs listTheory ast_vsm0Theory relationTheory smallstep_vsm0_clockedTheory integerTheory arithmeticTheory smallstep_il2Theory
+open HolKernel bossLib boolLib lcsymtacs listTheory ast_vsm0Theory relationTheory smallstep_vsm0_clockedTheory integerTheory arithmeticTheory smallstep_il2Theory pred_setTheory
 
 val _ = new_theory "vsm0_opt"
 
@@ -76,7 +76,7 @@ val nj_def = Define `(nj x m (VSM_Jump n) = (&x <> (&m+n+1))) /\ (nj x m (VSM_Jz
 val no_jumps_def = Define `no_jumps l P = EVERYi (nj l) P`
 
 val elim_pushpop_def = Define `
-elim_pushpop P l = if (SUC l < LENGTH P) /\ (no_jumps (SUC l) P) /\ (?x.EL l P = VSM_Push x) /\ (EL (SUC l) P = VSM_Pop) then LUPDATE VSM_Nop l (LUPDATE VSM_Nop (SUC l) P) else P
+elim_pushpop P l = if (SUC l < LENGTH P) /\ (no_jumps (SUC l) P) /\ (case EL l P of VSM_Push x => T | _ => F) /\ (EL (SUC l) P = VSM_Pop) then LUPDATE VSM_Nop l (LUPDATE VSM_Nop (SUC l) P) else P
 `
 
 val el_pp_bs_set_def = Define `
@@ -137,13 +137,13 @@ imp_res_tac everyi_thm THEN rfs [nj_def] THEN fsa []))
 
 val pushpop_safe_1 = prove(``!P clk stk l.vsm_exec_c P (SOME (0, clk, stk)) NONE ==> vsm_exec_c (elim_pushpop P l) (SOME (0, clk, stk)) NONE``,
 rw []
-THEN Cases_on `(SUC l < LENGTH P) /\ (no_jumps (SUC l) P) /\ (?x.EL l P = VSM_Push x) /\ (EL (SUC l) P = VSM_Pop)` THEN fs []
-THEN1 (imp_res_tac plus_sound_thm THEN fs [el_pp_bs_set_def] THEN `l < LENGTH P` by decide_tac THEN fs []) THEN rw [elim_pushpop_def])
+THEN Cases_on `(SUC l < LENGTH P) /\ (no_jumps (SUC l) P) /\ (case EL l P of VSM_Push x => T | _ => F) /\ (EL (SUC l) P = VSM_Pop)` THEN fs []
+THEN1 (Cases_on `EL l P` THEN fs [] THEN imp_res_tac plus_sound_thm THEN fs [el_pp_bs_set_def] THEN `l < LENGTH P` by decide_tac THEN fs []) THEN rw [elim_pushpop_def])
 
 val pushpop_safe_2 = prove(``!P clk stk l clk' stk'.vsm_exec_c P (SOME (0, clk, stk)) (SOME (&LENGTH P, clk', stk')) ==> vsm_exec_c (elim_pushpop P l) (SOME (0, clk, stk)) (SOME (&LENGTH (elim_pushpop P l), clk', stk'))``,
 rw []
-THEN Cases_on `(SUC l < LENGTH P) /\ (no_jumps (SUC l) P) /\ (?x.EL l P = VSM_Push x) /\ (EL (SUC l) P = VSM_Pop)` THEN fs []
-THEN1 (imp_res_tac plus_sound_thm THEN fs [el_pp_bs_set_def] THEN `l < LENGTH P` by decide_tac THEN fs [] THEN Cases_on `LENGTH P <> SUC l` THEN fs [] THEN fs [elim_pushpop_def] THEN rfs []) THEN rw [elim_pushpop_def])
+THEN Cases_on `(SUC l < LENGTH P) /\ (no_jumps (SUC l) P) /\ (case EL l P of VSM_Push x => T | _ => F) /\ (EL (SUC l) P = VSM_Pop)` THEN fs []
+THEN1 (Cases_on `EL l P` THEN fs [] THEN imp_res_tac plus_sound_thm THEN fs [el_pp_bs_set_def] THEN `l < LENGTH P` by decide_tac THEN fs [] THEN Cases_on `LENGTH P <> SUC l` THEN fs [] THEN fs [elim_pushpop_def] THEN rfs []) THEN rw [elim_pushpop_def])
 
 val c_pp_def = Define `(c_pp P 0 = elim_pushpop P 0) /\ (c_pp P (SUC n) = elim_pushpop (c_pp P n) (SUC n))`
 
