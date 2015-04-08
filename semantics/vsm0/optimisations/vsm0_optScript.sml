@@ -10,13 +10,13 @@ val MAPi_def = Define `(MAPi P [] = []) /\ (MAPi P (x::xs) = (P 0 x)::MAPi (P o 
 val EL_MAPi_thm = prove(``!P l n.n < LENGTH l ==> (EL n (MAPi P l) = P n (EL n l))``, Induct_on `l` THEN rw [] THEN rw [MAPi_def] THEN Cases_on `n` THEN rw [EL] THEN fs [])
 
 
-val rw_for_def = Define `(rw_for len pc (VSM_Jump n) = if len <= &pc + n + 1 then (VSM_Jump (n - 2)) else VSM_Jump n)
-/\ (rw_for len pc (VSM_Jz n) = if len <= &pc + n + 1 then (VSM_Jz (n - 2)) else VSM_Jump n)
+val rw_for_def = Define `(rw_for len pc (VSM_Jump n) = if len < &pc + n + 1 then (VSM_Jump (n - 1)) else VSM_Jump n)
+/\ (rw_for len pc (VSM_Jz n) = if len < &pc + n + 1 then (VSM_Jz (n - 1)) else VSM_Jump n)
 /\ (rw_for len pc x = x)
 `
 
-val rw_ba_def = Define `(rw_ba pc (VSM_Jump n) = if &pc + n + 1 < 0 then (VSM_Jump (n + 2)) else VSM_Jump n)
-/\ (rw_ba pc (VSM_Jz n) = if &pc + n + 1 < 0 then (VSM_Jz (n + 2)) else VSM_Jump n)
+val rw_ba_def = Define `(rw_ba pc (VSM_Jump n) = if &pc + n + 1 < 0 then (VSM_Jump (n + 1)) else VSM_Jump n)
+/\ (rw_ba pc (VSM_Jz n) = if &pc + n + 1 < 0 then (VSM_Jz (n + 1)) else VSM_Jump n)
 /\ (rw_ba pc x = x)
 `
 
@@ -47,7 +47,7 @@ Induct_on `l` THEN rw [MAPi_def])
 
 val nop_elim_def = Define `
 nop_elim P l = if (EL l P <> VSM_Nop)  \/ (LENGTH P <= l) then P else
-(MAPi (rw_for &LENGTH P) (TAKE l P)) ++ (MAPi rw_ba (DROP (SUC l) P))`
+(MAPi (rw_for &l) (TAKE l P)) ++ (MAPi rw_ba (DROP (SUC l) P))`
 
 val nop_elim_length = prove(``
 !P l.(LENGTH (nop_elim P l) = LENGTH P) \/ (SUC (LENGTH (nop_elim P l)) = LENGTH P)
@@ -84,6 +84,26 @@ el_pp_bs_set P l = if (l < LENGTH P) then {(x, x) | (?pc clk stk.(x = SOME (pc, 
 {(x, y) | ?clk stk e.(x = SOME (&(SUC l), clk, e::stk)) /\ (y = SOME (&(SUC l), clk, stk))}
 
 else {(x, x) | T}`
+
+val epbs_compute_def = Define `
+(epbs_compute P l (NONE, NONE) = T) /\
+(epbs_compute P l (SOME(pc1, clk1, stk1), SOME(pc2, clk2, stk2)) = if l < LENGTH P then
+(if pc1 <> &SUC l then SOME(pc1, clk1, stk1) = SOME(pc2, clk2, stk2) else
+(case stk1 of [] => F 
+	   | (h::t) => SOME(pc1, clk1, stk1) = SOME(pc2, clk2, h::stk2)))
+else SOME(pc1, clk1, stk1) = SOME(pc2, clk2, stk2)) /\
+(epbs_compute _ _ _ = F)`
+
+val compute_equiv = prove(``!P l.epbs_compute P l = el_pp_bs_set P l``,
+
+rw [epbs_compute_def, el_pp_bs_set_def, EXTENSION, SPECIFICATION, EQ_IMP_THM]
+
+THEN1 (Cases_on `x` THEN Cases_on `q` THEN Cases_on `r` THEN fs [epbs_compute_def] THEN Cases_on `x` THEN Cases_on `x'`
+THEN Cases_on `r` THEN Cases_on `r'` THEN fs [epbs_compute_def] THEN rfs [] THEN Cases_on `q <> &SUC l` THEN fs [] THEN Cases_on `r''` THEN fs [] THEN rw [])
+
+THEN (TRY (EVAL_TAC THEN fs [] THEN Cases_on `x` THEN Cases_on `q` THEN Cases_on `r` THEN fs [epbs_compute_def] THEN Cases_on `x` THEN Cases_on `x'` THEN Cases_on `r` THEN Cases_on `r'` THEN fs [epbs_compute_def] THEN rfs []))
+
+THEN Cases_on `x'` THEN fs [epbs_compute_def] THEN Cases_on `x` THEN Cases_on `r` THEN fs [epbs_compute_def])
 
 val everyi_thm = prove(``
 !L P l.(l < LENGTH L) /\ EVERYi P L ==> P l (EL l L)``,
@@ -167,4 +187,187 @@ val comp_pp_2_thm = store_thm("comp_pp_2_thm", ``
 !P clk stk clk' stk'.vsm_exec_c P (SOME (0, clk, stk)) (SOME (&LENGTH P, clk', stk')) ==> vsm_exec_c (comp_pp P) (SOME (0, clk, stk)) (SOME (&LENGTH (comp_pp P), clk', stk'))
 ``, metis_tac [comp_pp_def, c_pp_2_thm])
 
+
+val cast_sub = prove(``!l n.(l <= n) ==> (&(n-l) = &n - &l)``,
+Induct_on `n` THEN rw []
+THEN Cases_on `l = SUC n`
+THEN rwa []
+
+THEN `SUC n - l = SUC (n-l)` by decide_tac
+THEN rw [INT]
+THEN `l <= n` by decide_tac
+THEN res_tac
+THEN rwa [])
+
+val length_nop_elim = prove(``
+!l P n.(SUC n < LENGTH P) ==> (n < LENGTH (nop_elim P l))
+``,
+rw [] THEN rw [nop_elim_def] THEN fs [GSYM mapi_length_thm, NOT_LESS_EQUAL] THEN (TRY decide_tac) THEN `l <= LENGTH P` by decide_tac THEN fs [LENGTH_TAKE] THEN decide_tac)
+
+val nop_elim_fetch = prove(``
+!P l n.(SUC n < LENGTH P) /\ (l < LENGTH P) ==> (nop_elim P l !! &n = EL n (nop_elim P l))
+``,
+rw [] THEN `n < LENGTH P` by decide_tac THEN rw [nop_elim_def, FETCH_EL]
+THEN match_mp_tac FETCH_EL THEN rw [GSYM mapi_length_thm, LENGTH_TAKE] THEN `l <= LENGTH P` by decide_tac THEN fs [LENGTH_TAKE] THEN decide_tac)
+
+
+
+val remove_nop_sound = prove(``
+!P l c c'.vsm_exec_c P c c' ==> !d d''.(c, d) ∈ (bisim_set P l) ==> (c', d'') ∈ (bisim_set P l) ==> vsm_exec_c (nop_elim P l) d d''
+``,
+(NTAC 2 STRIP_TAC) THEN fs [vsm_exec_c_def] THEN ho_match_mp_tac RTC_STRONG_INDUCT THEN rw []
+THEN1 metis_tac [RTC_REFL, bisim_set_fun]
+
+THEN fsa [vsm_exec_c_one_cases, int_ge] THEN rw []
+
+THEN rfs [bisim_set_fun]
+
+THEN Cases_on `EL l P <> VSM_Nop` THEN1 (fs [nop_elim_def, bisim_set_def] THEN rw [Once RTC_CASES1] THEN DISJ2_TAC THEN Q.EXISTS_TAC `c'` THEN rwa [vsm_exec_c_one_cases]) THEN fs []
+
+THEN fs [bisim_set_def] THEN Cases_on `~(l < LENGTH P)` THEN1 (fs [] THEN fs [nop_elim_def, NOT_LESS] THEN rw [Once RTC_CASES1] THEN DISJ2_TAC THEN Q.EXISTS_TAC `c'` THEN rwa [vsm_exec_c_one_cases])
+
+THEN fs [] THEN rw []
+
+THEN Cases_on `c'` THEN1 (Cases_on `P !! pc` THEN fs [vsm_exec_c_instr_cases] THEN `c'' = NONE` by (imp_res_tac RTC_CASES1 THEN fs [vsm_exec_c_one_cases]) THEN rw [] THEN fs [make_pair_def])
+
+THEN Cases_on `x` THEN Cases_on `r`
+
+THEN Cases_on `d` THEN1 fs [make_pair_def] THEN Cases_on `x` THEN Cases_on `r` THEN rw []
+
+THEN Cases_on `c''` THEN1 fs [make_pair_def] THEN Cases_on `x` THEN Cases_on `r`
+THEN Cases_on `d''` THEN1 fs [make_pair_def] THEN Cases_on `x` THEN Cases_on `r`
+
+THEN `(pc'' = q'''') /\ (clk'' = q''''') /\ (stk'' = r''')` by fs [make_pair_def] THEN rw []
+THEN `(pc' = pc) /\ (clk' = clk) /\ (stk' = stk)` by fs [make_pair_def] THEN rw []
+THEN `(q''''''' = clk'') /\ (r''' = r'''')` by fs [make_pair_def] THEN rw []
+THEN `(clk = q''') /\ (stk = r'')` by fs [make_pair_def] THEN rw []
+
+THEN Cases_on `pc = &l`
+
+         THEN1( `EL l P = P !! &l` by cheat THEN rw [] THEN fs [vsm_exec_c_instr_cases] THEN rw []
+ THEN fs [make_pair_def] THEN rw []
+          THEN `&l + 1 - 1 = &l` by rwa []
+          THEN fs [])
+THEN rw [Once RTC_CASES1] THEN DISJ2_TAC
+THEN `?ipc.pc = &ipc` by rwa [NUM_POSINT_EXISTS] THEN rw [] THEN fs [] THEN rw []
+THEN imp_res_tac FETCH_EL THEN fs [FETCH_EL] THEN rw [] THEN rfs [FETCH_EL] THEN rw []
+
+THEN Cases_on `(!x.EL ipc P <> VSM_Jump x) /\ (!x.EL ipc P <> VSM_Jz x) /\ (EL ipc P <> VSM_Halt)`
+
+THEN1 (fs []
+THEN `q = &ipc + 1` by fs [vsm_exec_c_instr_cases] THEN rw []
+THEN Q.EXISTS_TAC `SOME (q'' + 1, q', r')` THEN rw []
+THEN1 (
+fs [make_pair_def] THEN rw [] THEN fsa [] THEN rw []
+THEN rwa [vsm_exec_c_one_cases, int_ge]
+THEN1 (rw [INT_SUB_LE] THEN decide_tac)
+THEN1 (rwa [INT_LT_SUB_RADD, GSYM INT] THEN Cases_on `LENGTH (nop_elim P l) = LENGTH P` THEN1 decide_tac THEN `SUC (LENGTH (nop_elim P l)) = LENGTH P` by metis_tac [nop_elim_length] THEN decide_tac)
+THEN1 (rw [nop_elim_def] THEN1 decide_tac
+THEN Cases_on `ipc` THEN1 decide_tac
+THEN `&SUC n - 1 = &n` by rwa [] THEN fs []
+THEN fsa [] THEN `n < LENGTH P` by decide_tac THEN
+
+`LENGTH P = SUC (LENGTH (MAPi (rw_for &l) (TAKE l P) ++
+   MAPi rw_ba (DROP (SUC l) P)))` by cheat
+
+THEN `n < (LENGTH (MAPi (rw_for (&l)) (TAKE l P) ++
+   MAPi rw_ba (DROP (SUC l) P)))` by decide_tac
+THEN imp_res_tac FETCH_EL THEN fs [FETCH_EL]
+THEN `l <= LENGTH P` by decide_tac
+THEN rw [EL_APPEND_THM] THEN fs [EL_APPEND_THM, GSYM mapi_length_thm, LENGTH_TAKE, NOT_LESS_EQUAL, NOT_LESS] THEN rw []
+THEN rfs [LENGTH_TAKE] THEN1 decide_tac THEN fs [GSYM INT] THEN `l < SUC (SUC n)` by decide_tac THEN fs []
+
+THEN `SUC l < LENGTH P` by decide_tac
+THEN `LENGTH (DROP (SUC l) P) = LENGTH P - (SUC l)` by fs [LENGTH_DROP]
+THEN `n - l < LENGTH (DROP (SUC l) P)` by decide_tac
+THEN fs [EL_MAPi_thm]
+
+THEN fs []
+
+THEN rw [] THEN FULL_SIMP_TAC (srw_ss () ++ ARITH_ss) [] THEN rw []
+
+THEN `(n-l) + (SUC l) < LENGTH P` by decide_tac
+
+THEN fs [drop_el]
+THEN `n - l + SUC l = SUC n` by decide_tac THEN fs [] THEN Cases_on `(EL (SUC n) P)` THEN fs [rw_ba_def] THEN fsa [vsm_exec_c_instr_cases])
+THEN1 (rwa [INT_LT_SUB_RADD, GSYM INT] THEN Cases_on `LENGTH (nop_elim P l) = LENGTH P` THEN1 decide_tac THEN `SUC (LENGTH (nop_elim P l)) = LENGTH P` by metis_tac [nop_elim_length] THEN decide_tac)
+THEN1 (
+fs [NOT_LESS, GSYM INT]
+THEN rw [nop_elim_def] THEN1 decide_tac
+THEN `ipc < l` by decide_tac
+THEN `~(l < SUC ipc)` by decide_tac THEN fs []
+THEN fs [NOT_LESS_EQUAL, NOT_LESS]
+THEN `LENGTH P = SUC (LENGTH (MAPi (rw_for (&l)) (TAKE l P) ++
+   MAPi rw_ba (DROP (SUC l) P)))` by cheat
+
+THEN `ipc < (LENGTH (MAPi (rw_for (&l)) (TAKE l P) ++
+   MAPi rw_ba (DROP (SUC l) P)))` by decide_tac
+
+THEN imp_res_tac FETCH_EL THEN fs [FETCH_EL] THEN `l <= LENGTH P` by decide_tac
+
+THEN rw [EL_APPEND_THM] THEN fs [GSYM mapi_length_thm, LENGTH_TAKE] THEN rfs [LENGTH_TAKE] THEN rw []
+THEN `l < LENGTH P` by decide_tac THEN fs [EL_MAPi_thm, take_el] THEN Cases_on `EL ipc P` THEN fs [rw_for_def] THEN fsa [vsm_exec_c_instr_cases]))
+THEN fs [make_pair_def] THEN rw [] THEN fsa [GSYM INT] THEN (TRY (`l < SUC ipc` by decide_tac)) THEN (TRY (`~(l < SUC ipc)` by decide_tac)) THEN fs [] THEN `&SUC ipc - 1 = &ipc` by rwa [] THEN fs [])
+
+THEN (REVERSE (rw [] THEN fs []))
+
+THEN1 (rw [] THEN fs [vsm_exec_c_instr_cases] THEN rw [] THEN `(SOME (&ipc,clk,r')) = (SOME (pc'',clk'',r'''))` by cheat THEN rw [] THEN fs [] THEN rw [] THEN Q.EXISTS_TAC `SOME (q'', clk, r')` THEN fs [RTC_REFL] THEN
+fs [make_pair_def] THEN rw []
+THEN rw [nop_elim_def] THEN fs [] THEN1 decide_tac THEN fs [NOT_LESS_EQUAL] THEN rw []
+THEN `l <= LENGTH P` by decide_tac
+THEN1 (
+Cases_on `ipc` THEN rwa []
+THEN `&SUC n - 1 = &n` by rwa [] THEN rw [] THEN rwa [vsm_exec_c_one_cases, int_ge, INT_SUB_LE, INT_SUB_LT, GSYM INT, GSYM mapi_length_thm, LENGTH_TAKE] THEN fs []
+THEN (TRY (decide_tac)) THEN rw []
+
+THEN `SUC (LENGTH (MAPi (rw_for &l) (TAKE l P) ++
+   MAPi rw_ba (DROP (SUC l) P))) = LENGTH P` by (rw [GSYM mapi_length_thm, LENGTH_TAKE] THEN decide_tac)
+
+THEN `n < LENGTH
+           (MAPi (rw_for &l) (TAKE l P) ++
+            MAPi rw_ba (DROP (SUC l) P))` by decide_tac
+
+THEN rw [FETCH_EL]
+
+THEN fs [EL_APPEND_THM] THEN rw [] THEN fs [GSYM mapi_length_thm, LENGTH_TAKE] THEN rfs [] THEN1 decide_tac
+THEN `n - l < LENGTH (DROP (SUC l) P)` by (rw [GSYM mapi_length_thm, LENGTH_DROP] THEN decide_tac)
+
+THEN fs [drop_el, EL_MAPi_thm] THEN `(n-l) + (SUC l) < LENGTH P` by decide_tac THEN rw [drop_el] THEN `n - l + SUC l = SUC n` by decide_tac THEN rw [] THEN rw [rw_ba_def, vsm_exec_c_instr_cases])
+
+THEN rwa [vsm_exec_c_one_cases, int_ge, INT_SUB_LE, INT_SUB_LT, GSYM INT, GSYM mapi_length_thm, LENGTH_TAKE] THEN fs [] THEN1 decide_tac
+
+THEN `SUC (LENGTH (MAPi (rw_for &l) (TAKE l P) ++
+   MAPi rw_ba (DROP (SUC l) P))) = LENGTH P` by (rw [GSYM mapi_length_thm, LENGTH_TAKE] THEN decide_tac)
+
+THEN `ipc < LENGTH
+           (MAPi (rw_for &l) (TAKE l P) ++
+            MAPi rw_ba (DROP (SUC l) P))` by decide_tac
+
+THEN (REVERSE (rw [FETCH_EL, EL_APPEND_THM] THEN fs [GSYM mapi_length_thm, LENGTH_TAKE] THEN rfs [])) THEN1 decide_tac
+
+THEN rw [EL_MAPi_thm, take_el, rw_for_def, vsm_exec_c_instr_cases])
+THEN1 cheat
+
+THEN rw [] THEN fs [vsm_exec_c_instr_cases] THEN rw [] THEN fs [make_pair_def] THEN rw []
+THEN fs [] THEN HINT_EXISTS_TAC THEN fsa [] THEN rw [GSYM INT] THEN 
+
+rwa [vsm_exec_c_one_cases, int_ge, INT_SUB_LE, INT_SUB_LT, GSYM INT, GSYM mapi_length_thm, LENGTH_TAKE] THEN fs [] THEN (TRY  decide_tac)
+THEN (TRY (Cases_on `ipc` THEN rwa [] THEN rw [INT_SUB_LE] THEN `&SUC n - 1 = &n` by rwa [] THEN rw [] THEN fs []
+THEN (TRY (`LENGTH P <= SUC (LENGTH (nop_elim P l))` by (`l <= LENGTH P` by decide_tac THEN rw [nop_elim_def, GSYM mapi_length_thm, LENGTH_TAKE] THEN decide_tac) THEN decide_tac)) THEN rw []
+
+
+THEN ((`n < LENGTH (nop_elim P l)`  by metis_tac [length_nop_elim] )
+THEN fs [nop_elim_fetch, nop_elim_def] THEN rw [] THEN1 decide_tac THEN res_tac THEN rfs [] THEN fs [] THEN
+
+rw [EL_APPEND_THM] THEN `l <= LENGTH P` by decide_tac THEN `(n - l) + (SUC l) < LENGTH P` by decide_tac
+THEN fs [GSYM mapi_length_thm, LENGTH_TAKE, take_el, drop_el, EL_MAPi_thm] THEN1 decide_tac
+
+THEN `(n - l) < LENGTH (DROP (SUC l) P)` by (rw [LENGTH_DROP] THEN decide_tac)
+
+THEN rw [EL_MAPi_thm] THEN rw [drop_el] THEN `n - l + SUC l = SUC n` by decide_tac THEN rw [] THEN rwa [rw_ba_def, vsm_exec_c_instr_cases]
+THEN `l <= n` by decide_tac
+THEN fs [cast_sub] THEN fs [INT_NOT_LT] THEN fsa [] THEN rw [])))
+
+
+THEN (TRY (fs [GSYM INT] THEN `ipc < l` by decide_tac
 val _ = export_theory ()
