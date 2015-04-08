@@ -439,17 +439,43 @@ THEN `
 
 THEN rfs [] THEN fs [bisim_set_def, make_pair_def] THEN rfs [])
 
-val c_nopr_def = Define `(c_nopr P 0 = nop_elim P 0) /\ (c_nopr P (SUC n) = nop_elim (c_nopr P n) (SUC n))`
+val nop_elim_length2 = prove(``
+!P l.(LENGTH P = LENGTH (nop_elim P l)) ==> (P = nop_elim P l)``,
+rw []
+THEN fs [nop_elim_def] THEN rw [] THEN fs [] THEN fs [GSYM mapi_length_thm, NOT_LESS_EQUAL] THEN `l <= LENGTH P` by decide_tac THEN fs [LENGTH_TAKE] THEN `SUC(LENGTH P) = l + (LENGTH P - SUC l)` by decide_tac THEN `SUC (LENGTH P) = LENGTH P` by decide_tac THEN `!x.SUC x <> x` by (rw [] THEN decide_tac) THEN fs [])
+
+
+val ffp_def = tDefine "ffp" `ffp P l = let newP = nop_elim P l
+                                in if P = newP then P else ffp newP l`
+(WF_REL_TAC `measure (\(P, l).LENGTH P)` THEN rw []
+THEN `(LENGTH P = LENGTH (nop_elim P l)) \/ (SUC (LENGTH (nop_elim P l)) = LENGTH P)` by metis_tac [nop_elim_length]
+THEN1 metis_tac [nop_elim_length2]
+THEN decide_tac)
+
+
+val ffp_fp = prove(``!P l.ffp P l = ffp (nop_elim P l) l``,
+recInduct (fetch "-" "ffp_ind") THEN rw [] THEN rw [Once ffp_def] THEN rw [] THEN rw [Once ffp_def] THEN rw [LET_DEF])
+
+val ffp_safe_1 = prove(``!P l clk stk.vsm_exec_c P (SOME (0, clk, stk)) NONE ==> vsm_exec_c (ffp P l) (SOME (0, clk, stk)) NONE``,
+recInduct (fetch "-" "ffp_ind") THEN rw [] THEN rw [Once ffp_def] THEN rw [] THEN fs [] THEN metis_tac [nopr_safe_1])
+
+val ffp_safe_2 = prove(``!P l clk stk clk' stk'.vsm_exec_c P (SOME (0, clk, stk)) (SOME (&LENGTH P, clk', stk')) ==> vsm_exec_c (ffp P l) (SOME (0, clk, stk)) (SOME (&LENGTH (ffp P l), clk', stk'))``,
+recInduct (fetch "-" "ffp_ind") THEN rw [] THEN rw [] THEN fs [] THEN 
+Cases_on `P <> nop_elim P l` THEN fs []
+THEN1 metis_tac [ffp_fp, nopr_safe_2]
+THEN rw [Once ffp_def] THEN rw [Once ffp_def, LET_DEF])
+
+val c_nopr_def = Define `(c_nopr P 0 = ffp P 0) /\ (c_nopr P (SUC n) = ffp (c_nopr P n) (SUC n))`
 
 val c_nopr_1_thm = prove(``
 !P clk stk n.vsm_exec_c P (SOME (0, clk, stk)) NONE ==> vsm_exec_c (c_nopr P n) (SOME (0, clk, stk)) NONE
 ``,
-Induct_on `n` THEN rw [] THEN metis_tac [nopr_safe_1, c_nopr_def])
+Induct_on `n` THEN rw [] THEN metis_tac [ffp_safe_1, c_nopr_def])
 
 val c_nopr_2_thm = prove(``
 !P clk stk n clk' stk'.vsm_exec_c P (SOME (0, clk, stk)) (SOME (&LENGTH P, clk', stk')) ==> vsm_exec_c (c_nopr P n) (SOME (0, clk, stk)) (SOME (&LENGTH (c_nopr P n), clk', stk'))
 ``,
-Induct_on `n` THEN rw [] THEN metis_tac [nopr_safe_2, c_nopr_def])
+Induct_on `n` THEN rw [] THEN metis_tac [ffp_safe_2, c_nopr_def])
 
 val comp_nopr_def = Define `comp_nopr P = c_nopr P (LENGTH P)`
 
