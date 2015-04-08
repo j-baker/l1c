@@ -412,4 +412,53 @@ THEN fs [nop_elim_fetch, nop_elim_def] THEN rw [] THEN1 decide_tac THEN res_tac 
 rw [EL_APPEND_THM] THEN `l <= LENGTH P` by decide_tac
 THEN fs [GSYM mapi_length_thm, LENGTH_TAKE, take_el, drop_el, EL_MAPi_thm] THEN fs [rw_for_def] THEN rw [vsm_exec_c_instr_cases] THEN fsa [])))))
 
+val nopr_safe_1 = prove(``!P clk stk l.vsm_exec_c P (SOME (0, clk, stk)) NONE ==> vsm_exec_c (nop_elim P l) (SOME (0, clk, stk)) NONE``,
+rw [nop_elim_def] THEN fs []
+
+THEN ` (SOME (0,clk,stk),SOME (0, clk, stk)) ∈ bisim_set P l ⇒
+          (NONE,NONE) ∈ bisim_set P l ⇒ vsm_exec_c (nop_elim P l) (SOME (0, clk, stk)) NONE` by (imp_res_tac remove_nop_sound THEN rw [bisim_set_def]) THEN fs [bisim_set_def, NOT_LESS_EQUAL] THEN rfs [make_pair_def] THEN fs [GSYM NOT_LESS_EQUAL, nop_elim_def] THEN metis_tac [])
+
+val nopr_safe_2 = prove(``!P clk stk l clk' stk'.vsm_exec_c P (SOME (0, clk, stk)) (SOME (&LENGTH P, clk', stk')) ==> vsm_exec_c (nop_elim P l) (SOME (0, clk, stk)) (SOME (&LENGTH (nop_elim P l), clk', stk'))``,
+rw [] THEN Cases_on `(EL l P <> VSM_Nop)  \/ (LENGTH P <= l)` THEN fs [] THEN imp_res_tac remove_nop_sound THEN fs [bisim_set_def] THEN rfs []
+
+THEN fs [SPECIFICATION] THEN (TRY (`nop_elim P l = P` by all_tac THEN fs [nop_elim_def] THEN rw [] THEN FAIL_TAC ""))
+
+THEN `make_pair l (&LENGTH P) clk' stk' = (SOME (&LENGTH P, clk', stk'), SOME (&LENGTH (nop_elim P l), clk', stk')) ` by (
+
+fs [make_pair_def, NOT_LESS_EQUAL] THEN fs [nop_elim_def, GSYM NOT_LESS_EQUAL, GSYM mapi_length_thm] THEN `l <= LENGTH P` by decide_tac THEN fs [LENGTH_TAKE] THEN rwa [] THEN Cases_on `LENGTH P` THEN fs [] THEN `&SUC n - 1 = &n` by fsa [] THEN rw [] THEN decide_tac)
+
+THEN `make_pair l 0 clk stk = (SOME (0, clk, stk), SOME (0, clk, stk))` by fs [make_pair_def]
+
+THEN fs [NOT_LESS_EQUAL]
+
+THEN `
+     vsm_exec_c P (SOME (0, clk, stk)) (SOME (&LENGTH P, clk', stk')) ⇒
+       (SOME (0, clk, stk), SOME (0, clk, stk)) ∈ bisim_set P l ⇒
+       (SOME (&LENGTH P, clk', stk'), SOME (&LENGTH (nop_elim P l), clk', stk')) ∈ bisim_set P l ⇒
+       vsm_exec_c (nop_elim P l) (SOME (0, clk, stk)) (SOME (&LENGTH (nop_elim P l), clk', stk'))` by metis_tac [remove_nop_sound]
+
+THEN rfs [] THEN fs [bisim_set_def, make_pair_def] THEN rfs [])
+
+val c_nopr_def = Define `(c_nopr P 0 = nop_elim P 0) /\ (c_nopr P (SUC n) = nop_elim (c_nopr P n) (SUC n))`
+
+val c_nopr_1_thm = prove(``
+!P clk stk n.vsm_exec_c P (SOME (0, clk, stk)) NONE ==> vsm_exec_c (c_nopr P n) (SOME (0, clk, stk)) NONE
+``,
+Induct_on `n` THEN rw [] THEN metis_tac [nopr_safe_1, c_nopr_def])
+
+val c_nopr_2_thm = prove(``
+!P clk stk n clk' stk'.vsm_exec_c P (SOME (0, clk, stk)) (SOME (&LENGTH P, clk', stk')) ==> vsm_exec_c (c_nopr P n) (SOME (0, clk, stk)) (SOME (&LENGTH (c_nopr P n), clk', stk'))
+``,
+Induct_on `n` THEN rw [] THEN metis_tac [nopr_safe_2, c_nopr_def])
+
+val comp_nopr_def = Define `comp_nopr P = c_nopr P (LENGTH P)`
+
+val comp_nopr_1_thm = store_thm("comp_nopr_1_thm", ``
+!P clk stk.vsm_exec_c P (SOME (0, clk, stk)) NONE ==> vsm_exec_c (comp_nopr P) (SOME (0, clk, stk)) NONE
+``, metis_tac [comp_nopr_def, c_nopr_1_thm])
+
+val comp_nopr_2_thm = store_thm("comp_nopr_2_thm", ``
+!P clk stk clk' stk'.vsm_exec_c P (SOME (0, clk, stk)) (SOME (&LENGTH P, clk', stk')) ==> vsm_exec_c (comp_nopr P) (SOME (0, clk, stk)) (SOME (&LENGTH (comp_nopr P), clk', stk'))
+``, metis_tac [comp_nopr_def, c_nopr_2_thm])
+
 val _ = export_theory ()

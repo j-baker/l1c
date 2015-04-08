@@ -34,7 +34,7 @@ val compile_il2_def = Define `compile_il2 e = il1_to_il2 (l1_to_il1 e 0)`
 
 val compile_def = Define `compile e = il2_to_il3 (compile_il2 e)`
 
-val compile_opt_def = Define `compile_opt e = comp_pp (compile e)`
+val compile_opt_def = Define `compile_opt e = comp_nopr (comp_pp (compile e))`
 
 val push_zeroes_def = Define `(push_zeroes 0 = []) /\ (push_zeroes (SUC n) = SNOC (VSM_Push 0) (push_zeroes n))`
 
@@ -246,13 +246,13 @@ THEN REWRITE_TAC [Once (GSYM INT_ADD_LID)]
 THEN REWRITE_TAC [Once (CONJUNCT2 (SPEC_ALL (Q.SPEC `&LENGTH (push_zeroes (s_uloc (compile e)))` (GEN_ALL (GSYM incr_pc_vsm0_def)))))]
 THEN rw [GSYM incr_pc_vsm0_def]
 
-THEN match_mp_tac APPEND_TRACE_SAME_2_VSM0_THM THEN rw [compile_opt_def, comp_pp_1_thm])
+THEN match_mp_tac APPEND_TRACE_SAME_2_VSM0_THM THEN rw [compile_opt_def, comp_pp_1_thm, comp_nopr_1_thm])
 
 val init_stack_2_thm = prove(``!e c astk c'.vsm_exec_c (compile e) (SOME (0, c, make_stack e)) (SOME (&LENGTH (compile e), c', astk)) ==>
 vsm_exec_c (full_compile e) (SOME (0, c, [])) (SOME (&LENGTH (full_compile e), c', astk))``,
 rw [full_compile_def]
 THEN match_mp_tac thmtest1
-THEN Q.LIST_EXISTS_TAC [`c`, `make_stack e`] THEN rw [push3_thm] THEN RW_TAC (srw_ss () ++ intSimps.INT_ARITH_ss) [compile_opt_def, comp_pp_2_thm])
+THEN Q.LIST_EXISTS_TAC [`c`, `make_stack e`] THEN rw [push3_thm] THEN RW_TAC (srw_ss () ++ intSimps.INT_ARITH_ss) [compile_opt_def, comp_pp_2_thm, comp_nopr_2_thm])
 
 val total_c_lem_1 = store_thm("total_c_lem_1", ``!c e.bs_l1_c c (e, create_store e) NONE ==> vsm_exec_c (full_compile e) (SOME (0, c, [])) NONE``,
 rw [] THEN match_mp_tac init_stack_1_thm
