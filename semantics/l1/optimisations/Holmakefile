@@ -1,0 +1,2 @@
+INCLUDES = .. ../proofs
+OPTIONS = QUIT_ON_FAILURE
