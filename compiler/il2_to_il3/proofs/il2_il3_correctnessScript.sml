@@ -1,7 +1,7 @@
-open HolKernel boolLib bossLib il2_to_il3_compilerTheory pairTheory lcsymtacs finite_mapTheory pred_setTheory integerTheory il3_store_propertiesTheory smallstep_il3Theory smallstep_vsm0Theory listTheory smallstep_il2Theory relationTheory smallstep_il2_clockedTheory smallstep_il3_clockedTheory;
+open HolKernel boolLib bossLib il2_to_il3_compilerTheory pairTheory lcsymtacs finite_mapTheory pred_setTheory integerTheory il3_store_propertiesTheory smallstep_il3Theory smallstep_vsm0Theory listTheory smallstep_il2Theory relationTheory smallstep_il2_clockedTheory smallstep_il3_clockedTheory
 
 
-val _ = new_theory "il2_il3_correctness";
+val _ = new_theory "il2_il3_correctness"
 
 val fsa = full_simp_tac (srw_ss () ++ intSimps.INT_ARITH_ss)
 
@@ -23,13 +23,13 @@ THEN rw [INT_1]
 THEN rw [int_sub]
 THEN REWRITE_TAC [GSYM INT_ADD_ASSOC]
 THEN REWRITE_TAC [Once INT_ADD_SYM]
-THEN rw [INT_ADD_LINV]);
+THEN rw [INT_ADD_LINV])
 
 val map_deref_match = prove(``∀P st x.
      ms_il2 P st ∧ x ∈ FDOM st ⇒
      (MAP_KEYS (map_fun (FST (make_loc_map P))) st '
       ((FST (make_loc_map P)) ' x) =
-      st ' x)``, metis_tac [map_deref_thm, map_fun_def]);
+      st ' x)``, metis_tac [map_deref_thm, map_fun_def])
 
 val fetch_append_thm = store_thm("fetch_append_thm",
 ``!i xs ys.(&0 <= i) ==> ((xs ++ ys) !! i = (if i < &LENGTH xs then xs !! i else ys !! (i - &LENGTH xs)))``,
@@ -49,7 +49,7 @@ THEN `xs ++ ys !! (i-1) = ys !! (i-1) - &LENGTH xs` by (full_simp_tac (srw_ss ()
 THEN Cases_on `i = 0` THEN full_simp_tac (srw_ss () ++ intSimps.INT_ARITH_ss) [APPEND, fetch_def] THEN rw []
 THEN full_simp_tac (srw_ss () ++ intSimps.INT_ARITH_ss) [INT]
 THEN `i - 1 - &LENGTH xs = i - (&LENGTH xs + 1)` by full_simp_tac (srw_ss () ++ intSimps.INT_ARITH_ss) [INT, INT_SUB_LNEG, INT_ADD_COMM]
-THEN rw []);
+THEN rw [])
 
 val il3_eql_il2 = prove(``!P c c'. exec_clocked P c c' ==> !pc ck stk st.(c = SOME (pc, ck, stk, st)) /\ (ms_il2 P st) ==> (?pc' ck' stk' st'.(c' = SOME (pc', ck', stk', st')) /\ exec_il3_c (MAP (il2_to_il3m (FST (make_loc_map P))) P) (SOME (pc, ck, stk, MAP_KEYS (map_fun (FST (make_loc_map P))) st)) (SOME (pc', ck', stk', MAP_KEYS (map_fun (FST (make_loc_map P))) st'))) \/ ((c' = NONE) /\ exec_il3_c (MAP (il2_to_il3m (FST (make_loc_map P))) P) (SOME (pc, ck, stk, MAP_KEYS (map_fun (FST (make_loc_map P))) st)) NONE)``, 
 STRIP_TAC
@@ -69,10 +69,10 @@ THEN rfs [FETCH_EL] THEN rw [FETCH_EL, EL_MAP] THEN Cases_on `EL n P` THEN fs [e
 
 THEN1 (match_mp_tac EQ_SYM THEN match_mp_tac map_deref_match THEN rw [])
 THEN1 (rw [MAP_KEYS_def, map_fun_def] THEN HINT_EXISTS_TAC THEN rw [])
-THEN1 (`(FST (make_loc_map P) ' i, v) = (map_fun (FST (make_loc_map P)) i, v)` by metis_tac [map_fun_def] THEN fs [ms_il2_def] THEN metis_tac [make_loc_map_inj, MAP_KEYS_FUPDATE])));
+THEN1 (`(FST (make_loc_map P) ' i, v) = (map_fun (FST (make_loc_map P)) i, v)` by metis_tac [map_fun_def] THEN fs [ms_il2_def] THEN metis_tac [make_loc_map_inj, MAP_KEYS_FUPDATE])))
 
-val IL2_IL3_EQ_1 = store_thm("IL2_IL3_EQ_1", ``!P pc c stk st.exec_clocked P (SOME (pc, c, stk, st)) NONE /\ ms_il2 P st ==> exec_il3_c (il2_to_il3 P) (SOME (pc, c, stk, MAP_KEYS (map_fun (FST (make_loc_map P))) st)) NONE``, rw [] THEN imp_res_tac il3_eql_il2 THEN fs [il3_eql_il2, FST, SND, il2_to_il3_def]);
+val IL2_IL3_EQ_1 = store_thm("IL2_IL3_EQ_1", ``!P pc c stk st.exec_clocked P (SOME (pc, c, stk, st)) NONE /\ ms_il2 P st ==> exec_il3_c (il2_to_il3 P) (SOME (pc, c, stk, MAP_KEYS (map_fun (FST (make_loc_map P))) st)) NONE``, rw [] THEN imp_res_tac il3_eql_il2 THEN fs [il3_eql_il2, FST, SND, il2_to_il3_def])
 
-val IL2_IL3_EQ_2 = store_thm("IL2_IL3_EQ_2", ``!P pc c stk st pc' c' stk' st'.exec_clocked P (SOME (pc, c, stk, st)) (SOME (pc', c', stk', st')) /\ ms_il2 P st ==> exec_il3_c (il2_to_il3 P) (SOME (pc, c, stk, MAP_KEYS (map_fun (FST (make_loc_map P))) st)) (SOME (pc', c', stk', MAP_KEYS (map_fun (FST (make_loc_map P))) st'))``, rw [] THEN imp_res_tac il3_eql_il2 THEN fs [il3_eql_il2, FST, SND, il2_to_il3_def]);
+val IL2_IL3_EQ_2 = store_thm("IL2_IL3_EQ_2", ``!P pc c stk st pc' c' stk' st'.exec_clocked P (SOME (pc, c, stk, st)) (SOME (pc', c', stk', st')) /\ ms_il2 P st ==> exec_il3_c (il2_to_il3 P) (SOME (pc, c, stk, MAP_KEYS (map_fun (FST (make_loc_map P))) st)) (SOME (pc', c', stk', MAP_KEYS (map_fun (FST (make_loc_map P))) st'))``, rw [] THEN imp_res_tac il3_eql_il2 THEN fs [il3_eql_il2, FST, SND, il2_to_il3_def])
 
-val _ = export_theory ();
+val _ = export_theory ()

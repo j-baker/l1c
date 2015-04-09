@@ -1,6 +1,6 @@
-open HolKernel bossLib Parse boolLib listTheory lcsymtacs smallstep_il2Theory relationTheory ast_vsm0Theory integerTheory smallstep_vsm0Theory;
+open HolKernel bossLib Parse boolLib listTheory lcsymtacs smallstep_il2Theory relationTheory ast_vsm0Theory integerTheory smallstep_vsm0Theory
 
-val _ = new_theory "smallstep_vsm0_clocked";
+val _ = new_theory "smallstep_vsm0_clocked"
 
 val (vsm_exec_c_instr_rules, vsm_exec_c_instr_ind, vsm_exec_c_instr_cases) = Hol_reln `
 (!pc stk c.vsm_exec_c_instr VSM_Nop (SOME (pc, c, stk)) (SOME (pc+1, c, stk))) /\
@@ -16,14 +16,14 @@ val (vsm_exec_c_instr_rules, vsm_exec_c_instr_ind, vsm_exec_c_instr_cases) = Hol
 (!n pc stk c.vsm_exec_c_instr (VSM_Jz n) (SOME (pc, c, 0::stk)) (SOME (pc + 1 + n, c, stk))) /\
 (!n pc t stk c.(t <> 0) ==> vsm_exec_c_instr (VSM_Jz n) (SOME (pc, c, t::stk)) (SOME (pc + 1, c, stk))) /\
 (!v1 v2 pc stk c.(v1 >= v2) ==> vsm_exec_c_instr (VSM_Geq) (SOME (pc, c, v1::v2::stk)) (SOME (pc + 1, c, true_value::stk))) /\
-(!v1 v2 pc stk c.(v1 < v2) ==> vsm_exec_c_instr (VSM_Geq) (SOME (pc, c, v1::v2::stk)) (SOME (pc + 1, c, false_value::stk)))`;
+(!v1 v2 pc stk c.(v1 < v2) ==> vsm_exec_c_instr (VSM_Geq) (SOME (pc, c, v1::v2::stk)) (SOME (pc + 1, c, false_value::stk)))`
 
 val (vsm_exec_c_one_rules, vsm_exec_c_one_ind, vsm_exec_c_one_cases) = Hol_reln `
 !instrs pc clk stk r.
        ((pc >= 0) /\ (pc < &(LENGTH instrs)) /\
         (vsm_exec_c_instr (instrs !! pc) (SOME (pc, clk, stk)) r))
-    ==> vsm_exec_c_one instrs (SOME (pc, clk, stk)) r`;
+    ==> vsm_exec_c_one instrs (SOME (pc, clk, stk)) r`
 
-val vsm_exec_c_def = Define `vsm_exec_c P c c' = (vsm_exec_c_one P)^* c c'`;
+val vsm_exec_c_def = Define `vsm_exec_c P c c' = (vsm_exec_c_one P)^* c c'`
 
-val _ = export_theory ();
+val _ = export_theory ()

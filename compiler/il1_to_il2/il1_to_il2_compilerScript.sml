@@ -1,6 +1,6 @@
-open HolKernel boolLib bossLib ast_l1Theory ast_il1Theory ast_il2Theory listTheory smallstep_il2Theory;
+open HolKernel boolLib bossLib ast_l1Theory ast_il1Theory ast_il2Theory listTheory smallstep_il2Theory
 
-val _ = new_theory "il1_to_il2_compiler";
+val _ = new_theory "il1_to_il2_compiler"
 
 val il1e_to_il2_def = Define `
 (il1e_to_il2 (IL1_Value (IL1_Integer n)) = [IL2_Push n]) /\
@@ -15,7 +15,7 @@ val il1e_to_il2_def = Define `
 (il1e_to_il2 (IL1_EIf e1 e2 e3) =
                                     (il1e_to_il2 e1) ++ [IL2_Jz (&LENGTH (il1e_to_il2 e2) + 1)] ++ (il1e_to_il2 e2) ++ [IL2_Jump (&LENGTH  (il1e_to_il2 e3))] ++  (il1e_to_il2 e3)) /\
 (il1e_to_il2 (IL1_Geq e1 e2) = (il1e_to_il2 e2) ++ (il1e_to_il2 e1) ++ [IL2_Geq])
-`;
+`
 
 val il1_to_il2_def = Define `
 (il1_to_il2 (IL1_Expr e) = il1e_to_il2 e) /\
@@ -27,6 +27,6 @@ val il1_to_il2_def = Define `
 
 (il1_to_il2 (IL1_Tick e) = [IL2_Tick] ++ (il1_to_il2 e))
 
-`;
+`
 
-val _ = export_theory ();
+val _ = export_theory ()

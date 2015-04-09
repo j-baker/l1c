@@ -1,6 +1,6 @@
-open HolKernel boolLib bossLib listTheory Parse IndDefLib finite_mapTheory relationTheory arithmeticTheory ast_l1Theory bigstep_l1Theory pred_setTheory pairTheory lcsymtacs integerTheory ast_il1Theory;
+open HolKernel boolLib bossLib listTheory Parse IndDefLib finite_mapTheory relationTheory arithmeticTheory ast_l1Theory bigstep_l1Theory pred_setTheory pairTheory lcsymtacs integerTheory ast_il1Theory
 
-val _ = new_theory "il1_type";
+val _ = new_theory "il1_type"
 
 val (il1_expr_type_rules, il1_expr_type_ind, il1_expr_type_cases) = Hol_reln `
         (!g.il1_expr_type (IL1_Value IL1_ESkip) g unitL1) /\
@@ -24,7 +24,7 @@ val (il1_expr_type_rules, il1_expr_type_ind, il1_expr_type_cases) = Hol_reln `
            (il1_expr_type e1 g boolL1 /\
             il1_expr_type e2 g t /\
             il1_expr_type e3 g t)
-        ==> il1_expr_type (IL1_EIf e1 e2 e3) g t)`;
+        ==> il1_expr_type (IL1_EIf e1 e2 e3) g t)`
 
 val (il1_type_rules, il1_type_ind, il1_type_cases) = Hol_reln `
 (!e g t.il1_expr_type e g t ==> il1_type (IL1_Expr e) g t g) /\
@@ -48,6 +48,6 @@ val (il1_type_rules, il1_type_ind, il1_type_cases) = Hol_reln `
 
 (!e t g g'.
         il1_type e g t g' ==> il1_type (IL1_Tick e) g t g')
-`;
+`
 
-val _ = export_theory ();
+val _ = export_theory ()

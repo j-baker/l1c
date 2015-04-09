@@ -1,1 +1,2 @@
-INCLUDES = ..
+INCLUDES = .. ../../il2/proofs ../../il2
+OPTIONS = QUIT_ON_FAILURE

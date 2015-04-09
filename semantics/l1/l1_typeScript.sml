@@ -1,6 +1,6 @@
-open HolKernel Parse boolLib bossLib integerTheory finite_mapTheory ast_l1Theory smallstep_l1Theory lcsymtacs pairTheory;
+open HolKernel Parse boolLib bossLib integerTheory finite_mapTheory ast_l1Theory smallstep_l1Theory lcsymtacs pairTheory
 
-val _ = new_theory "l1_type";
+val _ = new_theory "l1_type"
 
 val (l1_type_rules, l1_type_ind, l1_type_cases) = Hol_reln `
     (!g.l1_type (L1_Value L1_Skip) g unitL1) /\
@@ -41,6 +41,6 @@ val (l1_type_rules, l1_type_ind, l1_type_cases) = Hol_reln `
     (!e1 e2 g.
        (l1_type e1 g boolL1 /\
         l1_type e2 g unitL1)
-    ==> l1_type (L1_While e1 e2) g unitL1)`;
+    ==> l1_type (L1_While e1 e2) g unitL1)`
 
-val _ = export_theory ();
+val _ = export_theory ()
