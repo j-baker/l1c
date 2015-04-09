@@ -1,4 +1,4 @@
-open HolKernel boolLib bossLib l1_to_il1_compilerTheory il1_to_il2_compilerTheory store_creationTheory il1_il2_correctnessTheory l1_il1_correctnessTheory lcsymtacs il2_to_il3_compilerTheory listTheory pairTheory pred_setTheory l1_il1_totalTheory bigstep_il1Theory ast_l1Theory store_equivalenceTheory finite_mapTheory il3_to_vsm0_correctnessTheory il3_store_propertiesTheory il2_il3_correctnessTheory bs_ss_equivalenceTheory smallstep_vsm0_clockedTheory bigstep_il1_clockedTheory bigstep_l1_clockedTheory l1_typeTheory clocked_equivTheory compilerTheory relationTheory integerTheory vsm0_clocked_equivTheory bigstep_determinacyTheory
+open HolKernel boolLib bossLib l1_to_il1_compilerTheory il1_to_il2_compilerTheory store_creationTheory il1_il2_correctnessTheory l1_il1_correctnessTheory lcsymtacs il2_to_il3_compilerTheory listTheory pairTheory pred_setTheory l1_il1_totalTheory bigstep_il1Theory ast_l1Theory store_equivalenceTheory finite_mapTheory il3_to_vsm0_correctnessTheory il3_store_propertiesTheory il2_il3_correctnessTheory bs_ss_equivalenceTheory smallstep_vsm0_clockedTheory bigstep_il1_clockedTheory bigstep_l1_clockedTheory l1_typeTheory clocked_equivTheory compilerTheory relationTheory integerTheory vsm0_clocked_equivTheory bigstep_determinacyTheory constant_foldingTheory
 
 val _ = new_theory "divergence_preservation"
 
@@ -148,12 +148,12 @@ THEN imp_res_tac L1_DETERMINISTIC
 THEN fs [])
 
 val cor_oneway = prove(``
-!e g t.l1_type e g t /\ g ⊆ FDOM (create_store e) ==> (~?v s'.bs_l1 (e, create_store e) v s') ==> ~?stk' s'.vsm_exec (full_compile e) (0, []) (&LENGTH (full_compile e), stk')``,
+!e g t.l1_type e g t /\ g ⊆ FDOM (create_store e) ==> (~?v s'.bs_l1 (e, create_store e) v s') ==> ~?stk' s'.vsm_exec (c_opts e) (0, []) (&LENGTH (c_opts e), stk')``,
 rw []
-
+THEN imp_res_tac type_sub
 THEN `!c.bs_l1_c c (e, create_store e) NONE` by metis_tac [lem1, lem3]
 
-THEN `!c.vsm_exec_c (full_compile e) (SOME (0,c,[])) NONE` by metis_tac [total_c_lem_1]
+THEN `!c.vsm_exec_c (c_opts e) (SOME (0,c,[])) NONE` by metis_tac [total_c_lem_1]
 
 THEN CCONTR_TAC THEN fs []
 
@@ -163,7 +163,7 @@ THEN fs [FST, SND]
 
 THEN metis_tac [lem2])
 
-val DIVERGENCE_PRESERVATION = store_thm("DIVERGENCE_PRESERVATION", ``!e g t.l1_type e g t /\ g ⊆ FDOM (create_store e) ==> ((~?v s'. bs_l1 (e, create_store e) v s') <=> (~?stk' s'.vsm_exec (full_compile e) (0, []) (&LENGTH (full_compile e), stk')))``,
-metis_tac [EQ_IMP_THM, cor_oneway, CORRECTNESS_THM])
+val DIVERGENCE_PRESERVATION = store_thm("DIVERGENCE_PRESERVATION", ``!e g t.l1_type e g t /\ g ⊆ FDOM (create_store e) ==> ((~?v s'. bs_l1 (e, create_store e) v s') <=> (~?stk' s'.vsm_exec (c_opts e) (0, []) (&LENGTH (c_opts e), stk')))``,
+metis_tac [EQ_IMP_THM, cor_oneway, CORRECTNESS_THM, type_sub])
 
 val _ = export_theory ()
