@@ -20,7 +20,7 @@ ho_match_mp_tac bs_l1_c_strongind THEN rw [] THEN rw [Once bs_l1_c_cases] THEN d
 
 val closer = imp_res_tac type_means_value_type THEN res_tac THEN rw [] THEN res_tac THEN fs [] THEN rw [] THEN (TRY (Cases_on `b`)) THEN metis_tac [SUBSET_DEF]
 
-val type_means_reduces = prove(``
+val type_means_reduces = store_thm("type_means_reduces", ``
 !e g t.l1_type e g t ==> !s.(g ⊆ FDOM s) ==> !c.?r.bs_l1_c c (e, s) r
 ``,
 ho_match_mp_tac l1_type_strongind THEN rw []
@@ -102,12 +102,13 @@ THEN `?r.bs_l1_c n (L1_While e e', q''') r` by metis_tac []
 
 THEN Cases_on `r` THEN1 closer THEN Cases_on `x` THEN Cases_on `r` THEN `l1_type (L1_While e e') g unitL1` by metis_tac [l1_type_cases] THEN closer)
 
-val lem1 = prove(``!e s g t.l1_type e g t /\ g ⊆ FDOM s ==> ~(!c.bs_l1_c c (e, s) NONE) ==> (?c r.bs_l1_c c (e, s) (SOME r))``,
+val lem1 = store_thm("lem1",
+``!e s g t.l1_type e g t /\ g ⊆ FDOM s ==> ~(!c.bs_l1_c c (e, s) NONE) ==> (?c r.bs_l1_c c (e, s) (SOME r))``,
 rw []
 THEN `?r.bs_l1_c c (e,s) r` by metis_tac [type_means_reduces, domain_constant_thm]
 THEN Cases_on `r` THEN metis_tac [])
 
-val vsm_exec_det = prove(``!P c c'.vsm_exec_c P c c' ==> !c''.vsm_exec_c P c c'' ==> vsm_exec_c P c' c'' \/ vsm_exec_c P c'' c'``,
+val vsm_exec_det = store_thm("vsm_exec_det", ``!P c c'.vsm_exec_c P c c' ==> !c''.vsm_exec_c P c c'' ==> vsm_exec_c P c' c'' \/ vsm_exec_c P c'' c'``,
 STRIP_TAC THEN fs [vsm_exec_c_def] THEN ho_match_mp_tac RTC_STRONG_INDUCT THEN rw []
 
 THEN `(c = c''') \/ ?u.(vsm_exec_c_one P) c u /\ (vsm_exec_c_one P)^* u c'''` by metis_tac [RTC_CASES1]
@@ -116,7 +117,8 @@ THEN rw [] THEN1 metis_tac [RTC_CASES1]
 
 THEN fs [vsm_exec_c_one_cases] THEN rw [] THEN (`c' = u` by Cases_on `P !! pc` THEN fs [vsm_exec_c_instr_cases] THEN rw []) THEN fs [int_ge, GSYM INT_NOT_LT])
 
-val lem2 = prove(``!p stk s.(?c c' stk' r.vsm_exec_c p (SOME (0, c, stk)) (SOME (&LENGTH p, c', stk'))) ==> ~(!c.vsm_exec_c p (SOME (0, c, stk)) NONE)
+val lem2 = store_thm("lem2",
+``!p stk s.(?c c' stk' r.vsm_exec_c p (SOME (0, c, stk)) (SOME (&LENGTH p, c', stk'))) ==> ~(!c.vsm_exec_c p (SOME (0, c, stk)) NONE)
 ``,
 rw []
 
@@ -125,7 +127,8 @@ THEN `vsm_exec_c p (SOME (0,c,stk)) NONE` by metis_tac []
 
 THEN imp_res_tac vsm_exec_det THEN rw [] THEN fs [vsm_exec_c_def] THEN imp_res_tac RTC_CASES1 THEN fs [vsm_exec_c_one_cases])
 
-val lem3 = prove(``!e s.(!v s'.~bs_l1 (e, s) v s') <=> ~(?c r.bs_l1_c c (e, s) (SOME r))``,
+val lem3 = store_thm("lem3",
+``!e s.(!v s'.~bs_l1 (e, s) v s') <=> ~(?c r.bs_l1_c c (e, s) (SOME r))``,
 rw [EQ_IMP_THM]
 
 THEN CCONTR_TAC THEN fs []
@@ -137,7 +140,9 @@ THEN fs [] THEN metis_tac [])
 THEN imp_res_tac UNCLOCKED_IMP_CLOCKED
 THEN metis_tac [])
 
-val lem4 = prove(``!e s.(!c.bs_l1_c c (e, s) NONE) ==> (!v s'.¬bs_l1 (e, s) v s')``, rw [] THEN CCONTR_TAC THEN fs [] THEN rw []
+val lem4 = store_thm(
+"lem4",
+``!e s.(!c.bs_l1_c c (e, s) NONE) ==> (!v s'.¬bs_l1 (e, s) v s')``, rw [] THEN CCONTR_TAC THEN fs [] THEN rw []
 
 THEN imp_res_tac UNCLOCKED_IMP_CLOCKED
 
@@ -148,7 +153,7 @@ THEN imp_res_tac L1_DETERMINISTIC
 THEN fs [])
 
 val cor_oneway = prove(``
-!e g t.l1_type e g t /\ g ⊆ FDOM (create_store e) ==> (~?v s'.bs_l1 (e, create_store e) v s') ==> ~?stk' s'.vsm_exec (c_opts e) (0, []) (&LENGTH (c_opts e), stk')``,
+!e g t.l1_type e g t /\ g ⊆ FDOM (create_store e) ==> (~?v s'.bs_l1 (e, create_store e) v s') ==> ~?stk'.vsm_exec (c_opts e) (0, []) (&LENGTH (c_opts e), stk')``,
 rw []
 THEN imp_res_tac type_sub
 THEN `!c.bs_l1_c c (e, create_store e) NONE` by metis_tac [lem1, lem3]
@@ -163,7 +168,7 @@ THEN fs [FST, SND]
 
 THEN metis_tac [lem2])
 
-val DIVERGENCE_PRESERVATION = store_thm("DIVERGENCE_PRESERVATION", ``!e g t.l1_type e g t /\ g ⊆ FDOM (create_store e) ==> ((~?v s'. bs_l1 (e, create_store e) v s') <=> (~?stk' s'.vsm_exec (c_opts e) (0, []) (&LENGTH (c_opts e), stk')))``,
+val DIVERGENCE_PRESERVATION = store_thm("DIVERGENCE_PRESERVATION", ``!e g t.l1_type e g t /\ g ⊆ FDOM (create_store e) ==> ((~?v s'. bs_l1 (e, create_store e) v s') <=> (~?stk'.vsm_exec (c_opts e) (0, []) (&LENGTH (c_opts e), stk')))``,
 metis_tac [EQ_IMP_THM, cor_oneway, CORRECTNESS_THM, type_sub])
 
 val _ = export_theory ()

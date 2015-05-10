@@ -28,7 +28,7 @@ val cfold_def = Define `
 					| x => L1_While x (cfold e2))
 `
 
-val while_true_div = prove(``!c s.bs_l1_c c (L1_While (L1_Value (L1_Bool T)) (L1_Value L1_Skip), s) NONE``,
+val while_true_div = store_thm("while_true_div", ``!c s.bs_l1_c c (L1_While (L1_Value (L1_Bool T)) (L1_Value L1_Skip), s) NONE``,
 Induct_on `c` THEN rw [Once bs_l1_c_cases] THEN DISJ2_TAC THEN DISJ2_TAC THEN1 (DISJ1_TAC THEN Q.LIST_EXISTS_TAC [`0`, `s`, `s`] THEN rw [] THEN rw [Once bs_l1_c_cases])
 THEN 
 DISJ2_TAC
@@ -76,7 +76,7 @@ rw [SUBMAP_DEF] THEN fs [FAPPLY_FUPDATE_THM])
 
 val supdate_def = Define `(supdate _ NONE = NONE) /\ (supdate s' (SOME (v, s, c)) = SOME (v, s', c))`
 
-val submap_reduces_thm = prove(``!c p r.bs_l1_c c p r ==> !s2.(s2 ⊑ (SND p)) ==> !t.l1_type (FST p) (FDOM s2) t ==> ?s2'.bs_l1_c c (FST p, s2) (supdate s2' r) /\ ((r <> NONE) ==> (s2' ⊑ FST (SND (THE r))))``,
+val submap_reduces_thm = store_thm("submap_reduces_thm", ``!c p r.bs_l1_c c p r ==> !s2.(s2 ⊑ (SND p)) ==> !t.l1_type (FST p) (FDOM s2) t ==> ?s2'.bs_l1_c c (FST p, s2) (supdate s2' r) /\ ((r <> NONE) ==> (s2' ⊑ FST (SND (THE r))))``,
 (REVERSE (ho_match_mp_tac bs_l1_c_strongind THEN rw []))
 
 THEN fs [Once (Q.SPEC `L1_Plus A B` l1_type_cases), Once (Q.SPEC `L1_Geq A B` l1_type_cases), Once (Q.SPEC `L1_Deref L` l1_type_cases), Once (Q.SPEC `L1_Assign L E` l1_type_cases), Once (Q.SPEC `L1_Seq A B` l1_type_cases), Once (Q.SPEC `L1_If A B C` l1_type_cases), Once (Q.SPEC `L1_While A B` l1_type_cases)]
@@ -106,15 +106,19 @@ Induct_on `e` THEN fs [create_store_def] THEN rw [] THEN fs [FUNION_DEF] THEN me
 val subset_imp = prove(``!e e'.(FDOM (create_store e) ⊆ FDOM (create_store e')) ==> (create_store e ⊑ create_store e')``,
 rw [] THEN fs [SUBMAP_DEF, SUBSET_DEF] THEN rw [cs_prop])
 
-val submap_cfold = METIS_PROVE [subset_cfold, subset_imp] ``!e.(create_store (cfold e)) ⊑ (create_store e)``
-val cs_min = prove(``!e g t.l1_type e g t ==> l1_type e (FDOM (create_store e)) t``,
+val submap_cfold = store_thm("submap_cfold",
+``!e.(create_store (cfold e)) ⊑ (create_store e)``,
+metis_tac [subset_cfold, subset_imp])
+
+val cs_min = store_thm("cs_min", ``!e g t.l1_type e g t ==> l1_type e (FDOM (create_store e)) t``,
 Induct_on `e` THEN rw [] THEN fs [Once (Q.SPEC `L1_Plus A B` l1_type_cases), Once (Q.SPEC `L1_Geq A B` l1_type_cases), Once (Q.SPEC `L1_Deref L` l1_type_cases), Once (Q.SPEC `L1_Assign L E` l1_type_cases), Once (Q.SPEC `L1_Seq A B` l1_type_cases), Once (Q.SPEC `L1_If A B C` l1_type_cases), Once (Q.SPEC `L1_While A B` l1_type_cases)] THEN1 (Cases_on `l` THEN fs [Once l1_type_cases]) THEN rw [] THEN (TRY (match_mp_tac type_sub)) THEN rw [create_store_def]  THEN res_tac
 
 THEN (TRY (Q.EXISTS_TAC `FDOM (create_store e)` THEN rw [SUBSET_DEF] THEN FAIL_TAC ""))
 THEN (TRY (Q.EXISTS_TAC `FDOM (create_store e')` THEN rw [SUBSET_DEF] THEN FAIL_TAC ""))
 THEN (TRY (Q.EXISTS_TAC `FDOM (create_store e'')` THEN rw [SUBSET_DEF] THEN FAIL_TAC "")))
 
-val ltcfold = prove(``!e g t.l1_type e g t /\ (FDOM (create_store e)) ⊆ g ==> l1_type (cfold e) g t``,
+val ltcfold = store_thm("ltcfold",
+``!e g t.l1_type e g t /\ (FDOM (create_store e)) ⊆ g ==> l1_type (cfold e) g t``,
 Induct_on `e` THEN rw []
 THEN fs [Once (Q.SPEC `L1_Plus A B` l1_type_cases), Once (Q.SPEC `L1_Geq A B` l1_type_cases), Once (Q.SPEC `L1_Deref L` l1_type_cases), Once (Q.SPEC `L1_Assign L E` l1_type_cases), Once (Q.SPEC `L1_Seq A B` l1_type_cases), Once (Q.SPEC `L1_If A B C` l1_type_cases), Once (Q.SPEC `L1_While A B` l1_type_cases)]
 

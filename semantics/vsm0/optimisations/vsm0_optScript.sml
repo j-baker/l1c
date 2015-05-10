@@ -7,7 +7,7 @@ val rwa = rw_tac (srw_ss () ++ intSimps.INT_ARITH_ss)
 
 val MAPi_def = Define `(MAPi P [] = []) /\ (MAPi P (x::xs) = (P 0 x)::MAPi (P o SUC) xs)`
 
-val EL_MAPi_thm = prove(``!P l n.n < LENGTH l ==> (EL n (MAPi P l) = P n (EL n l))``, Induct_on `l` THEN rw [] THEN rw [MAPi_def] THEN Cases_on `n` THEN rw [EL] THEN fs [])
+val EL_MAPi_thm = store_thm("EL_MAPi_thm", ``!f l n.n < LENGTH l ==> (EL n (MAPi f l) = f n (EL n l))``, Induct_on `l` THEN rw [] THEN rw [MAPi_def] THEN Cases_on `n` THEN rw [EL] THEN fs [])
 
 
 val rw_for_def = Define `(rw_for len pc (VSM_Jump n) = if len < &pc + n + 1 then (VSM_Jump (n - 1)) else VSM_Jump n)
@@ -105,7 +105,7 @@ THEN (TRY (EVAL_TAC THEN fs [] THEN Cases_on `x` THEN Cases_on `q` THEN Cases_on
 
 THEN Cases_on `x'` THEN fs [epbs_compute_def] THEN Cases_on `x` THEN Cases_on `r` THEN fs [epbs_compute_def])
 
-val everyi_thm = prove(``
+val everyi_thm = store_thm("everyi_thm", ``
 !L P l.(l < LENGTH L) /\ EVERYi P L ==> P l (EL l L)``,
 
 Induct_on `l` THEN fs [] THEN rw [] THEN1 (Cases_on `L` THEN fs [EVERYi_DEF])
@@ -122,7 +122,7 @@ THEN rw [fetch_def]
 THEN rw [EL] THEN Cases_on `xs` THEN fs [LENGTH] THEN res_tac THEN rw [fetch_def] THEN `&SUC n - 1 = &n` by (fs [INT, int_sub] THEN rw [Once (GSYM INT_ADD_ASSOC)]) THEN rw [])
 
 
-val plus_sound_thm = prove(``
+val plus_sound_thm = store_thm("plus_sound_thm", ``
 !P l.
 (SUC l < LENGTH P) /\ (no_jumps (SUC l) P) /\ (?x.EL l P = VSM_Push x) /\ (EL (SUC l) P = VSM_Pop) ==>
 !c c'.vsm_exec_c P c c' ==> !d d''.(c, d) ∈ (el_pp_bs_set P l) ==> (c', d'') ∈ (el_pp_bs_set P l)
@@ -155,24 +155,24 @@ THEN fs [vsm_exec_c_one_cases] THEN rw [] THEN imp_res_tac FETCH_EL THEN fs [FET
 THEN fs [vsm_exec_c_instr_cases] THEN `&ipc + 1 = &SUC ipc` by rwa [] THEN fs [] THEN rw [] THEN fs [no_jumps_def] THEN
 imp_res_tac everyi_thm THEN rfs [nj_def] THEN fsa []))
 
-val pushpop_safe_1 = prove(``!P clk stk l.vsm_exec_c P (SOME (0, clk, stk)) NONE ==> vsm_exec_c (elim_pushpop P l) (SOME (0, clk, stk)) NONE``,
+val pushpop_safe_1 = store_thm("pushpop_safe_1", ``!P clk stk l.vsm_exec_c P (SOME (0, clk, stk)) NONE ==> vsm_exec_c (elim_pushpop P l) (SOME (0, clk, stk)) NONE``,
 rw []
 THEN Cases_on `(SUC l < LENGTH P) /\ (no_jumps (SUC l) P) /\ (case EL l P of VSM_Push x => T | _ => F) /\ (EL (SUC l) P = VSM_Pop)` THEN fs []
 THEN1 (Cases_on `EL l P` THEN fs [] THEN imp_res_tac plus_sound_thm THEN fs [el_pp_bs_set_def] THEN `l < LENGTH P` by decide_tac THEN fs []) THEN rw [elim_pushpop_def])
 
-val pushpop_safe_2 = prove(``!P clk stk l clk' stk'.vsm_exec_c P (SOME (0, clk, stk)) (SOME (&LENGTH P, clk', stk')) ==> vsm_exec_c (elim_pushpop P l) (SOME (0, clk, stk)) (SOME (&LENGTH (elim_pushpop P l), clk', stk'))``,
+val pushpop_safe_2 = store_thm("pushpop_safe_2", ``!P clk stk l clk' stk'.vsm_exec_c P (SOME (0, clk, stk)) (SOME (&LENGTH P, clk', stk')) ==> vsm_exec_c (elim_pushpop P l) (SOME (0, clk, stk)) (SOME (&LENGTH (elim_pushpop P l), clk', stk'))``,
 rw []
 THEN Cases_on `(SUC l < LENGTH P) /\ (no_jumps (SUC l) P) /\ (case EL l P of VSM_Push x => T | _ => F) /\ (EL (SUC l) P = VSM_Pop)` THEN fs []
 THEN1 (Cases_on `EL l P` THEN fs [] THEN imp_res_tac plus_sound_thm THEN fs [el_pp_bs_set_def] THEN `l < LENGTH P` by decide_tac THEN fs [] THEN Cases_on `LENGTH P <> SUC l` THEN fs [] THEN fs [elim_pushpop_def] THEN rfs []) THEN rw [elim_pushpop_def])
 
 val c_pp_def = Define `(c_pp P 0 = elim_pushpop P 0) /\ (c_pp P (SUC n) = elim_pushpop (c_pp P n) (SUC n))`
 
-val c_pp_1_thm = prove(``
+val c_pp_1_thm = store_thm("c_pp_1_thm", ``
 !P clk stk n.vsm_exec_c P (SOME (0, clk, stk)) NONE ==> vsm_exec_c (c_pp P n) (SOME (0, clk, stk)) NONE
 ``,
 Induct_on `n` THEN rw [] THEN metis_tac [pushpop_safe_1, c_pp_def])
 
-val c_pp_2_thm = prove(``
+val c_pp_2_thm = store_thm("c_pp_2_thm", ``
 !P clk stk n clk' stk'.vsm_exec_c P (SOME (0, clk, stk)) (SOME (&LENGTH P, clk', stk')) ==> vsm_exec_c (c_pp P n) (SOME (0, clk, stk)) (SOME (&LENGTH (c_pp P n), clk', stk'))
 ``,
 Induct_on `n` THEN rw [] THEN metis_tac [pushpop_safe_2, c_pp_def])
@@ -215,7 +215,7 @@ val nop_elim_fetch = prove(``
 rw [] THEN `n < LENGTH P` by decide_tac THEN rw [nop_elim_def, FETCH_EL]
 THEN match_mp_tac FETCH_EL THEN rw [GSYM mapi_length_thm, LENGTH_TAKE] THEN `l <= LENGTH P` by decide_tac THEN fs [LENGTH_TAKE] THEN decide_tac)
 
-val remove_nop_sound = prove(``
+val remove_nop_sound = store_thm("remove_nop_sound", ``
 !P l c c'.vsm_exec_c P c c' ==> !d d''.(c, d) ∈ (bisim_set P l) ==> (c', d'') ∈ (bisim_set P l) ==> vsm_exec_c (nop_elim P l) d d''
 ``,
 (NTAC 2 STRIP_TAC) THEN fs [vsm_exec_c_def] THEN ho_match_mp_tac RTC_STRONG_INDUCT THEN rw []
@@ -417,13 +417,13 @@ THEN fs [nop_elim_fetch, nop_elim_def] THEN rw [] THEN1 decide_tac THEN res_tac 
 rw [EL_APPEND_THM] THEN `l <= LENGTH P` by decide_tac
 THEN fs [GSYM mapi_length_thm, LENGTH_TAKE, take_el, drop_el, EL_MAPi_thm] THEN fs [rw_for_def] THEN rw [vsm_exec_c_instr_cases] THEN fsa [])))))
 
-val nopr_safe_1 = prove(``!P clk stk l.vsm_exec_c P (SOME (0, clk, stk)) NONE ==> vsm_exec_c (nop_elim P l) (SOME (0, clk, stk)) NONE``,
+val nopr_safe_1 = store_thm("nopr_safe_1", ``!P clk stk l.vsm_exec_c P (SOME (0, clk, stk)) NONE ==> vsm_exec_c (nop_elim P l) (SOME (0, clk, stk)) NONE``,
 rw [nop_elim_def] THEN fs []
 
 THEN ` (SOME (0,clk,stk),SOME (0, clk, stk)) ∈ bisim_set P l ⇒
           (NONE,NONE) ∈ bisim_set P l ⇒ vsm_exec_c (nop_elim P l) (SOME (0, clk, stk)) NONE` by (imp_res_tac remove_nop_sound THEN rw [bisim_set_def]) THEN fs [bisim_set_def, NOT_LESS_EQUAL] THEN rfs [make_pair_def] THEN fs [GSYM NOT_LESS_EQUAL, nop_elim_def] THEN metis_tac [])
 
-val nopr_safe_2 = prove(``!P clk stk l clk' stk'.vsm_exec_c P (SOME (0, clk, stk)) (SOME (&LENGTH P, clk', stk')) ==> vsm_exec_c (nop_elim P l) (SOME (0, clk, stk)) (SOME (&LENGTH (nop_elim P l), clk', stk'))``,
+val nopr_safe_2 = store_thm("nopr_safe_2", ``!P clk stk l clk' stk'.vsm_exec_c P (SOME (0, clk, stk)) (SOME (&LENGTH P, clk', stk')) ==> vsm_exec_c (nop_elim P l) (SOME (0, clk, stk)) (SOME (&LENGTH (nop_elim P l), clk', stk'))``,
 rw [] THEN Cases_on `(EL l P <> VSM_Nop)  \/ (LENGTH P <= l)` THEN fs [] THEN imp_res_tac remove_nop_sound THEN fs [bisim_set_def] THEN rfs []
 
 THEN fs [SPECIFICATION] THEN (TRY (`nop_elim P l = P` by all_tac THEN fs [nop_elim_def] THEN rw [] THEN FAIL_TAC ""))

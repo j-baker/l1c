@@ -96,7 +96,7 @@ Induct_on `e`
 THEN rw [create_il2_store_def, FDOM_FEMPTY] THEN Cases_on `h` THEN fs [create_il2_store_def] THEN rw [] THEN Cases_on `i = l` THEN rw [FAPPLY_FUPDATE_THM])
 
 
-val store_equiv_gen_thm = prove(``!e n.equiv (con_store (create_store e)) (create_il2_store (il1_to_il2 (l1_to_il1 e n)))``,
+val store_equiv_gen_thm = store_thm("store_equiv_gen_thm", ``!e n.equiv (con_store (create_store e)) (create_il2_store (il1_to_il2 (l1_to_il1 e n)))``,
 
 Induct_on `e` THEN fs [compile_il2_def, il1_to_il2_def, il1e_to_il2_def, l1_to_il1_def, l1_to_il1_pair_def] THEN rw []
 
@@ -217,7 +217,7 @@ THEN `x ∈
 THEN imp_res_tac map_deref_thm THEN fs [MAP_KEYS_def] THEN res_tac THEN fs [] THEN metis_tac [il2_store_etc2])
 
 
-val push3_thm = prove(``!e c.vsm_exec_c (push_zeroes (s_uloc (compile e))) (SOME (0, c, [])) (SOME (&LENGTH (push_zeroes (s_uloc (compile e))), c, make_stack e))``,
+val push3_thm = store_thm("push3_thm", ``!e c.vsm_exec_c (push_zeroes (s_uloc (compile e))) (SOME (0, c, [])) (SOME (&LENGTH (push_zeroes (s_uloc (compile e))), c, make_stack e))``,
 rw []
 THEN `make_stack e = GENLIST_AUX (\x.0) (s_uloc (compile e)) []` by (fs [push2_thm, GSYM GENLIST_GENLIST_AUX] THEN
 match_mp_tac LIST_EQ THEN rw [] THEN rw [EL_REVERSE] THEN `PRE (s_uloc (compile e) - x) < s_uloc (compile e)` by decide_tac THEN rw []) THEN metis_tac [push_thm])

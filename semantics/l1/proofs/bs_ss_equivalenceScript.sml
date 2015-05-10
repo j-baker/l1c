@@ -161,7 +161,7 @@ val BS_VALUE_BACK_THM = prove(``!v v' s t.bs_l1 (L1_Value v, s) v' t ==> ((v = v
     rw [Once bs_l1_cases]
     THEN METIS_TAC [])
 
-val SS_STEP_BS_THM = prove(``!p p'.ss_l1 p p' ==> !v t.(bs_l1 p' v t ==> bs_l1 p v t)``,
+val SS_STEP_BS_THM = store_thm("SS_STEP_BS_THM", ``!p p'.ss_l1 p p' ==> !v t.(bs_l1 p' v t ==> bs_l1 p v t)``,
     HO_MATCH_MP_TAC ss_l1_strongind
     THEN rw []
     THEN rw [Once bs_l1_cases]
