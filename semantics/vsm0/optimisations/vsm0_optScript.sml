@@ -5,7 +5,7 @@ val _ = new_theory "vsm0_opt"
 val fsa = full_simp_tac (srw_ss () ++ intSimps.INT_ARITH_ss)
 val rwa = rw_tac (srw_ss () ++ intSimps.INT_ARITH_ss)
 
-val MAPi_def = Define `(MAPi P [] = []) /\ (MAPi P (x::xs) = (P 0 x)::MAPi (P o SUC) xs)`
+val MAPi_def = Define `(MAPi f [] = []) /\ (MAPi f (x::xs) = (f 0 x)::MAPi (f o SUC) xs)`
 
 val EL_MAPi_thm = store_thm("EL_MAPi_thm", ``!f l n.n < LENGTH l ==> (EL n (MAPi f l) = f n (EL n l))``, Induct_on `l` THEN rw [] THEN rw [MAPi_def] THEN Cases_on `n` THEN rw [EL] THEN fs [])
 
