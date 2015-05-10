@@ -11,12 +11,12 @@ val EL_MAPi_thm = store_thm("EL_MAPi_thm", ``!f l n.n < LENGTH l ==> (EL n (MAPi
 
 
 val rw_for_def = Define `(rw_for len pc (VSM_Jump n) = if len < &pc + n + 1 then (VSM_Jump (n - 1)) else VSM_Jump n)
-/\ (rw_for len pc (VSM_Jz n) = if len < &pc + n + 1 then (VSM_Jz (n - 1)) else VSM_Jump n)
+/\ (rw_for len pc (VSM_Jz n) = if len < &pc + n + 1 then (VSM_Jz (n - 1)) else VSM_Jz n)
 /\ (rw_for len pc x = x)
 `
 
 val rw_ba_def = Define `(rw_ba pc (VSM_Jump n) = if &pc + n + 1 < 0 then (VSM_Jump (n + 1)) else VSM_Jump n)
-/\ (rw_ba pc (VSM_Jz n) = if &pc + n + 1 < 0 then (VSM_Jz (n + 1)) else VSM_Jump n)
+/\ (rw_ba pc (VSM_Jz n) = if &pc + n + 1 < 0 then (VSM_Jz (n + 1)) else VSM_Jz n)
 /\ (rw_ba pc x = x)
 `
 
@@ -433,6 +433,7 @@ THEN `make_pair l (&LENGTH P) clk' stk' = (SOME (&LENGTH P, clk', stk'), SOME (&
 fs [make_pair_def, NOT_LESS_EQUAL] THEN fs [nop_elim_def, GSYM NOT_LESS_EQUAL, GSYM mapi_length_thm] THEN `l <= LENGTH P` by decide_tac THEN fs [LENGTH_TAKE] THEN rwa [] THEN Cases_on `LENGTH P` THEN fs [] THEN `&SUC n - 1 = &n` by fsa [] THEN rw [] THEN decide_tac)
 
 THEN `make_pair l 0 clk stk = (SOME (0, clk, stk), SOME (0, clk, stk))` by fs [make_pair_def]
+
 
 THEN fs [NOT_LESS_EQUAL]
 
