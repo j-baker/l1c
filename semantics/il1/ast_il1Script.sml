@@ -2,8 +2,8 @@ open HolKernel boolLib bossLib listTheory Parse IndDefLib finite_mapTheory relat
 
 val _ = new_theory "ast_il1"
 
-val _ = Datatype `il1_loc = User     loc
-                          | Compiler loc` 
+val _ = Datatype `il1_loc = User     num
+                          | Compiler num` 
 
 val _ = Datatype `il1_value = IL1_ESkip
                             | IL1_Integer int

@@ -31,7 +31,7 @@ exec_il3_c_one P (SOME (pc, c, stk, st)) (SOME (pc', c', stk', st')) /\ (up_stac
 `
 
 
-val cexec_step_thm = prove(``
+val cexec_step_thm = store_thm("cexec_step_thm", ``
 !P pc c stk st pc' c' stk' st' stkst stkst'.
     stack_contains_store st stkst /\
     up_stack (P !! pc) stk stkst stkst' /\
@@ -44,7 +44,7 @@ THENL [Q.EXISTS_TAC `stk' ++ stkst`, all_tac] THEN rw [] THEN Cases_on `P !! pc`
 
 THEN fs [fetch_rev_def, FETCH_EL, EL_LUPDATE, LENGTH_REVERSE, FAPPLY_FUPDATE_THM] THEN Cases_on `l = n` THEN rw [] THEN metis_tac [FETCH_EL, LENGTH_REVERSE])
 
-val vsm_lemma = prove(``!P pc c stk st stkst x.
+val vsm_lemma = store_thm("vsm_lemma", ``!P pc c stk st stkst x.
     stack_contains_store st stkst /\
     c_exec_il3_one P (SOME (pc, c, stk ++ stkst, st)) x
 ==> (!pc' c' stk' stkst' st'.(x = SOME (pc', c', stk' ++ stkst', st')) ==> vsm_exec_c_one P (SOME (pc, c, stk ++ stkst)) (SOME (pc', c', stk' ++ stkst'))) /\ ((x = NONE) ==> vsm_exec_c_one P (SOME (pc, c, stk ++ stkst)) NONE)``,
@@ -61,7 +61,7 @@ rw [] THEN imp_res_tac cexec_step_thm THEN metis_tac [vsm_lemma] )
 val take_thm = prove(``!a b.TAKE (LENGTH a) (a ++ b) = a``, Induct_on `a` THEN rw [LENGTH, TAKE_def])
 val drop_thm = prove(``!a b.DROP (LENGTH a) (a ++ b) = b``, Induct_on `a` THEN rw [LENGTH, DROP_def])
 
-val exec_il3_imp_vsm_exec = prove(``!P c c'.exec_il3_c P c c' ==> !x n astk.(c = SOME x) /\ (FST (SND (SND x)) = TAKE n astk) /\ stack_contains_store (SND (SND (SND x))) (DROP n astk) /\ (!l.l ∈ FDOM (SND (SND (SND x))) <=> l < s_uloc P) ==> 
+val exec_il3_imp_vsm_exec = store_thm("exec_il3_imp_vsm_exec", ``!P c c'.exec_il3_c P c c' ==> !x n astk.(c = SOME x) /\ (FST (SND (SND x)) = TAKE n astk) /\ stack_contains_store (SND (SND (SND x))) (DROP n astk) /\ (!l.l ∈ FDOM (SND (SND (SND x))) <=> l < s_uloc P) ==> 
 ((c' = NONE) /\ vsm_exec_c P (SOME (FST x, FST (SND x), astk)) NONE) \/ (?x'.(c' = SOME x') /\ ?n' astk'.vsm_exec_c P (SOME (FST x, FST (SND x), astk)) (SOME (FST x', FST (SND x'), astk')) /\ (FST (SND (SND x')) = TAKE n' astk') /\ stack_contains_store (SND (SND (SND x'))) (DROP n' astk'))``,
 STRIP_TAC THEN fs [exec_il3_c_def] THEN ho_match_mp_tac RTC_STRONG_INDUCT THEN rw []
 THEN1

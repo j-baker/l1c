@@ -22,7 +22,7 @@ ho_match_mp_tac bs_il1_c_strongind THEN rw [] THEN rw [Once bs_il1_c_cases] THEN
 val clock_dec5 = prove(``!c p r.bs_il1_c c p r ==> (r = NONE) ==> bs_il1_c c (IL1_Tick (FST p), SND p) NONE``,
 ho_match_mp_tac bs_il1_c_strongind THEN rw [] THEN rw [Once bs_il1_c_cases] THEN Cases_on `c` THEN rw [] THEN fs [Q.SPECL [`A`, `IL1_Tick B, C`] bs_il1_c_cases] THEN rw [] THEN rw [Once bs_il1_c_cases] THEN (TRY (metis_tac [clock_dec4])) THEN imp_res_tac clock_dec THEN fs [] THEN rw [] THEN metis_tac [])
 
-val WHILE_UNWIND_ONCE_THM = prove(``!e1 s e2 c x.bs_il1_expr (e1, s) (IL1_Boolean T) ==> (bs_il1_c c (IL1_While e1 e2, s) x <=> bs_il1_c c (IL1_Seq e2 (IL1_While e1 e2), s) x)``,
+val WHILE_UNWIND_ONCE_THM = store_thm("WHILE_UNWIND_ONCE_THM", ``!e1 s e2 c x.bs_il1_expr (e1, s) (IL1_Boolean T) ==> (bs_il1_c c (IL1_While e1 e2, s) x <=> bs_il1_c c (IL1_Seq e2 (IL1_While e1 e2), s) x)``,
 rw [EQ_IMP_THM]
 THEN1 (Cases_on `x` THEN1 (fs [Once bs_il1_c_cases] THEN DISJ2_TAC THEN metis_tac []) THEN 
 Cases_on `x'` THEN Cases_on `r` THEN
@@ -204,7 +204,7 @@ val min_clock_thm = prove(``!c p r.bs_il1_c c p r ==> !v s' c'.(r = SOME (v, s',
 ho_match_mp_tac bs_il1_c_strongind THEN rw [] THEN rw [Once bs_il1_c_cases] THEN metis_tac [])
 
 val L1_TO_IL1_CORRECTNESS_LEMMA = store_thm("L1_TO_IL1_CORRECTNESS_LEMMA",
-``!c p r.bs_l1_c c p r ==> !lc1 st ex lc1'.((st, ex, lc1') = l1_to_il1_pair lc1 (FST p)) ==> !fs.equiv (con_store (SND p)) fs ==> (?x.(r = SOME x) /\ ?fs'.bs_il1_c c (st, fs) (SOME (IL1_ESkip, fs', (SND (SND x)))) /\ bs_il1_expr (ex, fs') (l1_il1_val (FST x)) /\ equiv (con_store (FST (SND x))) fs') \/ ((r = NONE) /\ bs_il1_c c (st, fs) NONE)``,
+``!c p r.bs_l1_c c p r ==> !lc1 st ex lc1'.((st, ex, lc1') = l1_to_il1_pair lc1 (FST p)) ==> !fs.equiv (con_store (SND p)) fs ==> (?v s' c'.(r = SOME (v, s', c')) /\ ?fs'.bs_il1_c c (st, fs) (SOME (IL1_ESkip, fs', c')) /\ bs_il1_expr (ex, fs') (l1_il1_val v) /\ equiv (con_store s') fs') \/ ((r = NONE) /\ bs_il1_c c (st, fs) NONE)``,
 ho_match_mp_tac bs_l1_c_strongind THEN rw [FST, SND]
 
 (* Begin unit case *)
