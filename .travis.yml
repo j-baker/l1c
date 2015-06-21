@@ -9,3 +9,7 @@ cache:
     - $HOME/polyml
 notifications:
   email: false
+addons:
+  apt:
+    packages:
+    - polyml
