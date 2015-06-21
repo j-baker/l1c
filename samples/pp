@@ -1,0 +1,76 @@
+push 0
+push 0
+push 0
+push 0
+push 0
+push 0
+push 0
+push 0
+push 0
+push 50
+store 3
+load 0
+load 3
+geq
+jump 54
+tick
+load 1
+pop
+load 1
+store 8
+load 2
+load 8
+plus
+pop
+load 7
+store 2
+push 0
+store 1
+push 0
+store 7
+push 35
+store 6
+push 20
+load 6
+geq
+jump 2
+push 1
+jump 1
+push 0
+store 4
+push 20
+load 6
+geq
+jump 12
+push 1
+jump 8
+tick
+load 1
+store 5
+push ~1
+load 5
+plus
+store 1
+jump ~10
+push 0
+jump 1
+push 0
+pop
+push 1
+load 4
+geq
+jump 2
+push 0
+jump 1
+push 5
+pop
+push 50
+store 3
+jump ~58
+push 0
+store 2
+push 0
+store 1
+push 0
+store 0
+push 0

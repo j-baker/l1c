@@ -1,0 +1,11 @@
+c := 1;
+f1 := 1;
+f2 := 1;
+while (50 >= !c)
+  do
+    (
+        t := !f1;
+        f1 := (!f1 + !f2);
+        f2 := !t
+    );
+if (35 >= 20) then (while true do (f1 := !f1 + -1)) else 5

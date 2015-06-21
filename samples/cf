@@ -1,0 +1,97 @@
+push 0
+pop
+push 1
+pop
+push 0
+pop
+push 1
+pop
+push 0
+pop
+push 1
+pop
+push 0
+pop
+push 50
+store 3
+push 0
+pop
+push 0
+pop
+load 0
+load 3
+geq
+jz 58
+tick
+push 0
+pop
+load 1
+pop
+push 0
+pop
+load 1
+store 5
+push 0
+pop
+push 0
+pop
+load 2
+load 5
+plus
+pop
+push 0
+pop
+load 4
+store 2
+push 0
+pop
+push 0
+store 1
+push 0
+pop
+push 0
+store 4
+push 0
+pop
+push 0
+pop
+push 0
+pop
+push 1
+jz 8
+tick
+push 0
+pop
+push 0
+pop
+push 0
+pop
+jump ~10
+push 0
+pop
+push 0
+pop
+push 0
+pop
+push 50
+store 3
+push 0
+pop
+push 0
+pop
+jump ~62
+push 0
+pop
+push 0
+store 2
+push 0
+pop
+push 0
+store 1
+push 0
+pop
+push 0
+store 0
+push 0
+pop
+push 0
