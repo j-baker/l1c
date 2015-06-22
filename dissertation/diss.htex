@@ -1,0 +1,3450 @@
+% Template for a Computer Science Tripos Part II project dissertation
+\documentclass[12pt,a4paper,twoside,openright]{report}
+\usepackage[pdfborder={0 0 0}]{hyperref}    % turns references into hyperlinks
+\usepackage[margin=25mm]{geometry}  % adjusts page layout
+\usepackage{graphicx}  % allows inclusion of PDF, PNG and JPG images
+\usepackage{verbatim}
+\usepackage{docmute}   % only needed to allow inclusion of
+                      % proposal.tex
+\usepackage{alltt}
+\usepackage{proof}
+\usepackage{fancyvrb}
+\usepackage{caption}
+\usepackage{amsthm}
+\usepackage{amsmath}
+\usepackage{holtexbasic}
+\usepackage{listings}
+\usepackage{lmodern}
+\usepackage{tikz}
+\usepackage{geometry}
+
+\usetikzlibrary{shapes,arrows,positioning,calc}
+
+\tikzstyle{block} = [draw, fill=blue!20, rectangle, minimum height=3em, minimum width=6em]
+\tikzstyle{semantic} = [draw, circle, minimum height=3em, minimum width=6em]
+\tikzstyle{sum} = [draw, fill=blue!20, circle, node distance=1cm]
+\tikzstyle{input} = [coordinate]
+\tikzstyle{output} = [coordinate]
+\tikzstyle{pinstyle} = [pin edge={to-,thin,black}]
+
+%TC:envir alltt [] ignore
+%TC:macro \HOLinline [ignore]
+
+\DeclareMathOperator{\sslo}{ss\_l1}
+\DeclareMathOperator{\bslo}{bs\_l1}
+\DeclareMathOperator{\bsilo}{bs\_il1}
+\DeclareMathOperator{\bsiloe}{bs\_il1\_expr}
+\DeclareMathOperator{\dom}{dom}
+\DeclareMathOperator{\compone}{l1\_to\_il1\_pair}
+\DeclareMathOperator{\FST}{FST}
+\DeclareMathOperator{\SND}{SND}
+\DeclareMathOperator{\equivs}{equiv}
+\DeclareMathOperator{\constore}{con\_store}
+\DeclareMathOperator{\fdom}{FDOM}
+
+
+\raggedbottom                           % try to avoid widows and orphans
+\sloppy
+\clubpenalty1000%
+\widowpenalty1000%
+
+\renewcommand{\baselinestretch}{1.1}    % adjust line spacing to make
+                                        % more readable
+\newtheoremstyle{mine}
+  {}%         Space above, empty = `usual value'
+  {}%         Space below
+  {}% Body font
+  {}%         Indent amount (empty = no indent, \parindent = para indent)
+  {\bfseries}% Thm head font
+  {.}%        Punctuation after thm head
+  {\newline}% Space after thm head: \newline = linebreak
+  {}%         Thm head spec
+
+\theoremstyle{mine}
+\newtheorem{lemma}{Lemma}
+\newtheorem{theorem}{Theorem}
+\newtheorem{conjecture}{Conjecture}
+\newtheorem{definition}{Definition}
+\newtheorem{example}{Example}
+
+\begin{document}
+
+\newcommand{\wipcite}[1]{\texttt{{[}#1{]}}}
+
+
+\bibliographystyle{plain}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Title
+
+\begin{titlepage}
+\pagestyle{empty}
+
+\rightline{\LARGE \textbf{James Baker}}
+
+\vspace*{60mm}
+\begin{center}
+\Huge
+\textbf{A simple formally verified compiler} \\[5mm]
+Computer Science Tripos -- Part II \\[5mm]
+Pembroke College \\[5mm]
+\today  % today's date
+\end{center}
+\end{titlepage}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Proforma, table of contents and list of figures
+
+\pagestyle{plain}
+
+\chapter*{Proforma}
+
+{\large
+\begin{tabular}{ll}
+Name:               & \bf James Baker                     \\
+College:            & \bf Pembroke College                     \\
+Project Title:      & \bf A simple formally verified compiler \\
+Examination:        & \bf Computer Science Tripos -- Part II, May 2015  \\
+Word Count:         & \bf 11999\footnotemark[1]  \\
+Project Originator: & James Baker                   \\
+Supervisor:         & Ramana Kumar                  \\
+\end{tabular}
+}
+\footnotetext[1]{This word count was computed
+by \texttt{texcount diss.tex -sum -sub=chapter}
+}
+\stepcounter{footnote}
+
+
+\section*{Original Aims of the Project}
+
+Implementation of a system in a proof assistant providing a formally
+verified compiler for the languages presented in the Part IB Semantics
+of Programming Languages and Compiler Construction courses. The
+compiler should have an end-to-end proof of correctness, perhaps
+cheating on some of the harder subgoals.
+
+\section*{Work Completed}
+
+An application was produced with a proven statement of correctness.
+Furthermore, two verified optimisations were implemented, as well as a
+proof of divergence preservation. The compiler accepts concrete
+syntax, and outputs machine code.
+
+\section*{Special Difficulties}
+
+\newpage
+\section*{Declaration}
+
+I, James Baker of Pembroke College, being a candidate for Part II of the Computer
+Science Tripos, hereby declare
+that this dissertation and the work described in it are my own work,
+unaided except as may be specified below, and that the dissertation
+does not contain material that has already been used to any substantial
+extent for a comparable purpose.
+
+\bigskip
+\leftline{Signed}
+
+\medskip
+\leftline{Date}
+
+\tableofcontents
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% now for the chapters
+
+\pagestyle{headings}
+
+\chapter{Introduction}
+
+This dissertation is about a project that produced an end-to-end
+mechanised correctness proof of a compiler for a toy language, through
+three levels of intermediate languages. Completed extensions include a
+proof of divergence preservation, and two simple optimisations,
+operating on the source and target languages respectively. The bulk of
+the dissertation concerns a discussion of the nature of each level of
+proof, as well as critically evaluating the design decisions made.
+
+\section{Motivations}
+Whilst most can tolerate the occasional bug, there are some fields in
+which this is unacceptable.\footnote{Canonically
+  aerospace and medical tech.} Software developers in these fields
+sometimes minimise bugs by incorporating formal methods into their
+workflows \cite{souyris2009formal}.
+
+Such analysis usually takes place over the source language, which is
+problematic because a bug in the compiler can invalidate any
+guarantees derived from formal methods, or any expected behaviour of
+the source. This is not merely a problem on paper. Vallat wrote in
+2013 that, ``While one would like to expect a minimum level of
+correctness and trustworthiness from a modern compiler, we can't,
+regardless of the compiler we use'' \cite{vallat}. This is neither a
+new problem nor one that is likely to disappear any time soon,
+especially given the enduring and unnerving ability for the release of
+a new type of fuzzer to lead to hundreds of compiler bugs found in
+short timeframes \cite{emi,llvmfuzz,csmith}.
+
+A way in which these concerns can be relieved is with a formal proof
+of compiler correctness, a proof that the output is
+observationally equivalent to the source. If such a proof is provided
+and checked, a concerned rocket scientist or kernel developer has
+strong evidence that their compiler is not going to change the
+semantics of their source program.\footnote{A \emph{bug} could only then be
+  caused by incorrect specification of the target with respect to the
+  true target \cite{horn} or a bug in the theorem prover.}
+
+Due to the complexity of such a proof, such compilers are typically
+either not produced, or are produced at great effort. In this
+dissertation I explore the general viability of such compilers by producing
+one for a toy language. This is undertaken primarily as a learning
+experience, which falls at an unlikely intersection between hard
+theory and industry.
+
+\section{Challenges}
+The traditional view is that it is, in general, much easier to write a
+correct program than it is to prove it correct, from my
+dalliances with proof assistants before the start of this project, I
+would tend to concur.
+
+Even the simplest of toy compilers still require perhaps a thousand
+lines of code before one can even state what correctness means, and
+proving that statement almost certainly requires hundreds of smaller
+sub-goals to be proved about the semantics of the source, target and
+intermediate languages, not to mention the translations between
+them. Leroy claims in \cite{validatingregister} that in general,
+around $6-8$ lines of proof are required for every line of program code.
+
+A verified compiler for a larger language ends up being of incredible
+overall complexity; Cuoq recently wrote that, ``It is only the
+most useful optimisations that are implemented in CompCert, at perhaps
+an implementation cost of one PhD thesis per optimisation pass'' \cite{cuoq}.
+
+Moreover, proof assistants are typically arcane beasts,
+with documentation sparse \cite{holkernel} or obsolete
+\cite{concretesem}. Learning a modern proof assistant to a useful
+level is judged to take around a month \cite{hol4}, which amortised
+across two terms ends up being around the overall length of a Part II
+project.
+
+This project is conceptually hard, and so it would be foolish to be
+ambitious with a choice of either source or target language especially
+given that I am a beginner with the tools. Rather, the task should be
+to achieve a base goal, and extend it in interesting ways.
+
+\section{Related Work} Compilers are in a small class of computer
+software where the inputs and outputs are well defined and easily
+formalised. Moreover, compilers are a fundamental part of computer
+infrastructure, and a result is that verified compilers have existed
+for many years; John McCarthy has a claim to being first, in
+1967 \cite{mccarthy}. The first proof assistant approach was in 1972,
+by Milner and Wehrauch \cite{milner1972proving}.
+
+A fundamental blocking influence at that time was the poor standard of
+computers; in his history of HOL \cite{holhistory}, Gordon wrote that
+Paulson and Huet collaborated on LCF development by sending each other
+magnetic tapes in the post. Furthermore, in an email conversation he
+explained that HOL now has mostly acceptable performance only due to
+Moore's Law and decades of careful tweaking. This means that it is only
+in recent years that projects have broken this mould.
+
+\subsection{CompCert}
+CompCert \cite{compcert} is by far the most well known verified
+compiler, and has been used in industry, specifically for Airbus
+flight control software \cite{airbus}. Xavier Leroy of INRIA is its
+lead developer.\footnote{Leroy is as well known for creating OCaml and
+  LinuxThreads.} It is written inside of the Coq proof assistant, and
+compiles a significant subset of C90 (known as Clight) to many
+hardware architectures.
+
+It has a mixture of verified and unverified code, most notably the
+preprocessor and assembler are unverified. The Csmith randomized
+testing tool \cite{csmith} could not find any bugs in the verified
+parts of CompCert. In contrast, the same tests run on GCC and LLVM
+discovered 49 and 75 bugs respectively in the corresponding parts of
+those compilers, despite far greater overall use and development.
+
+\subsection{CakeML}
+CakeML is a research project in Cambridge that compiles a significant
+subset of Standard ML to x86-64 \cite{cakeml}. The compiler is novel
+in a number of regards:
+\begin{enumerate}
+\item It is end-to-end verified; the compilation algorithm converts
+  from plaintext to machine code with no unverified parsers,
+  assemblers etc.
+\item The compiler can bootstrap itself; the execution of the
+  compiler is verified to run as specified on an x64 machine.
+\end{enumerate}
+
+This
+project importantly focuses more on full correctness than CompCert;
+some elements of CompCert are unverified, with the result then
+validated. This of course could result in a failure, if the validation
+does not succeed.
+
+\chapter{Preparation}
+\section{The HOL4 Proof Assistant}
+\subsection{The need for and choice of a proof assistant}
+In principle there is no requirement for a correctness proof to be
+mechanised, and it is possible to construct one using pen and
+paper. The disadvantages are however large.
+
+Most programming languages have complex syntax or execution cases, and
+these lead to large numbers of cases in inductive proofs. On paper,
+this inexorably leads to tedium, leading to shortcuts, leading to
+errors. Attempts to be rigorous lead to dozens of pages of
+intellectually inpenetrable proof.\footnote{Chen and Tarditi
+  \cite{msr68} sketch important properties such as progress as being
+  by `standard induction', with the accompanying tech report expanding
+  such a one line proof `sketch' to many pages.} In many cases, proof
+assistants can collapse simple cases, or even prove them
+automatically. Furthermore, machines can easily check proofs, reducing
+the ability for bugs to creep in.
+
+I looked for supervisors based on the relevance of their work. The
+people at Cambridge who write verified compilers use HOL4, so it made
+sense for me to also use HOL4.
+
+\subsection{High level introduction to HOL4}
+Higher order logic (HOL) is a variant of Church's simple type theory
+with Hindley-Milner style polymorphism. It was proposed and
+implemented by Mike Gordon \cite{holhistory}.
+This now forms the core of the HOL4 theorem prover, an environment
+built atop this logic. It's written in Standard ML, and ML is used as
+the meta-language for interaction with the logic. HOL is intuitive for
+the functional programmer; as a broad characterisation, Nipkow writes
+that HOL $=$ Functional Programming $+$ Logic \cite{concretesem}.
+
+The fundamental restrictions on HOL as compared to Standard ML are
+that in HOL, all functions must always terminate, and when the
+environment cannot execute a proof of this automatically, the user
+must prove it themselves. Furthermore, HOL has no references; it is
+pure.
+
+Knowledge of ML proved partially useful for the project, as
+programming in HOL can be generalised as programming in a subset of
+ML. Proving theorems was not comparable to any programming that I have
+encountered, and I found Leroy's statistic of 6-8 lines of proof per
+line of HOL \cite{validatingregister} an accurate heuristic; HOL
+functions were in a tiny minority of total code.
+
+Before the start of the project, I had very little knowledge of HOL; I
+had completed some of the exercises in Nipkow's book Concrete
+Semantics \cite{concretesem} in Isabelle/HOL, and when it became clear
+that I would use HOL4 for my dissertation, I repeated the first dozen
+in HOL4. This means that I had enough experience to know that I
+enjoyed using theorem provers, but not enough to produce
+anything useful.
+
+\subsection{Programming in HOL}
+A HOL proof can be thought of as a human prover
+applying an operation to a `goal' to produce zero or more further
+goals where the proof of these new goals proves the theorem described
+by the original goal. Consequently, proofs are generally series of
+simplifying operations; an example of a conceptually simple proof can
+be found in Figure \ref{sumeq}.
+
+\begin{figure}[h]
+\centering
+\begin{lstlisting}[language=ml,breaklines=true]
+val sum_def = Define `(sum 0 = 0) /\ (sum (SUC n) = SUC n + sum n)`;
+
+val sum_eq_thm = prove(``!n.sum n = (n*(n+1)) DIV 2``,
+Induct_on `n` THEN rw [sum_def, GSYM ADD1]
+THEN `EVEN (n) \/ ODD (n)` by rw [EVEN_ODD]
+THEN fs [ODD_EXISTS, EVEN_EXISTS] THEN rw []
+THEN `SUC (SUC (2 * m)) = 2* (SUC m)` by decide_tac
+THEN RW_TAC arith_ss []
+THEN `!x y.(0 < x) ==> (x * y DIV x = y)` by rw [Once MULT_COMM, MULT_DIV]
+THEN rw [ADD1] THEN decide_tac);
+\end{lstlisting}
+\captionsetup{singlelinecheck=off}
+\caption[foo bar]{A proof of the sum identity.}
+\label{sumeq}
+\end{figure}
+
+This proof is not particularly readable and its nontrivial proof is
+largely a consequence of HOL's limited decision procedures. Paulson
+writes in \cite{psledge} that ``without them (decision procedures),
+obvious identities can take hours to prove; with them, complicated
+facts can be proved instantly''. Nevertheless, a proof of that general
+structure is the standard in HOL4 proofs. Understanding this limitation,
+Isabelle/HOL allows the Isar proof language \cite{isar}, which is
+designed to be more human readable, but unfortunately this is not
+available in HOL.
+
+HOL works by forwards proof; in principle one starts with their axioms
+and rules of inference and therafter derives theorems from these.
+This is in general not a useful or typical
+way of proving theorems; if proving with a specific goal in mind, it is as
+likely as not that the results of that approach will simply be a multitude of
+random theorems \cite{logicproof}.
+
+Nevertheless, HOL uses forward proof as its main proof mechanism. This
+is presented to the user as a backwards proof through the use of lazy
+evaluation. HOL has a series of combinators that take theorems and
+produce new theorems. A `tactic' is a function that takes a goal and
+returns the user a list of goals and a validation function. If the
+user provides the validation function with a list of theorems
+(corresponding to these goals) this is supposed to return the user a
+theorem corresponding to the provided goal.
+
+Tactics range from atomic logical operations (provide a witness to an
+existential, apply modus ponens) to tactics that use provided theorems
+to simplify the structure of a goal (and its assumptions) to full
+theorem provers.
+
+Programming for the purposes of verification is very different from
+regular programming. With proof assistant programming, the constant
+goal is to produce something that can be proven correct. This means
+that functions typically do one thing, don't do it in a clever way,
+and are carefully refined as proofs are developed. Extensionally
+identical functions can be harder or easier to reason about, sometimes
+requiring a deep knowledge of the proof assistant to understand
+why.
+
+\section{What is verification?}
+It's important to understand what is meant by formal verification of a
+compiler. In the context of this dissertation, a compiler verified to
+have some property of the source and the target compilation $Prop$ is any
+compiler \texttt{Comp} accompanied with a proof of the theorem
+\begin{alltt}
+\HOLtm[alltt]{!S C. (Comp(S) = C) ==> Prop(S, C)}.
+\end{alltt}
+
+I want to prove that if $S$ has well defined semantics then $S$ and $C$
+are observationally equivalent (to be precisely specified later).
+
+An alternative approach is translation validation. Here,
+we prove nothing about the compiler, but instead write a verifier $V$.
+We then prove
+\begin{alltt}
+\HOLtm[alltt]{!S C. V(S, C) ==> Prop(S, C)}.
+\end{alltt}
+
+This can lead to shorter proofs; \cite{validatingregister} is an
+example of validation leading to more concise code than verification
+\cite{verifiedcoloring} (1,000 vs 10,000 lines). There are inherent
+complications; if the validation predicate is false, we cannot use
+that transformation.
+
+This means that verification is generally used unless there is some
+compelling reason to use validation. My
+project aims to follow the former process.
+
+\section{Representations of semantics}
+Observational equivalence must be defined, and so the project requires
+at least one mechanised semantics for each language and intermediate
+language.
+
+There are two main classes of operational semantics, and these lead to
+different goals being harder or easier to prove. For example, it is
+usually easier to prove type soundness with a small-step semantics,
+and soundness of transformations in big-step semantics
+\cite{coinductive}.
+
+I shall explain small-step, big-step and clocked big-step semantics,
+and in section \ref{languages} I explain where I shall use each. I did
+not consider coinductive semantics for coinductive relations have no
+first-class support in HOL.
+
+\subsection{Small-step semantics}
+
+Small-step semantics define a transition system between configurations,
+where a configuration is the expression being reduced and a store. An
+execution is a pair in the reflexive transitive closure
+relation. Figure \ref{ssplus} shows rules for addition.
+
+\begin{figure}
+\centering
+\begin{alltt}\mbox{}
+\HOLtm[alltt,nosp]{
+    (* Plus *)
+    (!n1 n2 s.ss_l1 (L1_Plus (L1_Value (L1_Int n1)) (L1_Value (L1_Int n2)), s)
+                    (L1_Value (L1_Int (n1 + n2)), s)) /\
+    (!e1 e1' e2 s s'.
+          ss_l1 (e1, s) (e1', s')
+      ==> ss_l1 (L1_Plus e1 e2, s) (L1_Plus e1' e2, s')) /\
+    (!n e2 e2' s s'.
+          ss_l1 (e2, s) (e2', s')
+      ==> ss_l1 (L1_Plus (L1_Value (L1_Int n)) e2, s)
+                (L1_Plus (L1_Value (L1_Int n)) e2', s'))}
+\end{alltt}
+\caption{Small-step rules for $+$ in the L1 language, formalised in
+  HOL.}
+\label{ssplus}
+\end{figure}
+
+There are two key advantages of using a small-step semantics over a
+big-step semantics.
+\begin{itemize}
+\item We can observe intermediate steps in the execution.
+\item We can explicitly reason about non-terminating (diverging)
+  executions.
+\end{itemize}
+
+We assign a notion of termination by saying that a configuration $(e,
+s)$ becomes stuck if there is an $(e', s')$ such that $(e, s)$
+evaluates to $(e', s')$ and there are no transitions possible from
+$(e', s')$.
+
+\subsection{Big-step semantics}
+A big-step semantics instead attempts to describe
+the evaluation of an expression by relating it to the result of its
+evaluation. In this case, the relation is between the program, its
+initial store, its returning value and its final store.
+
+So, for \texttt{+}, we reach the single rule shown in Figure
+\ref{bsplus}.
+
+\begin{figure}
+\centering
+\begin{alltt}\mbox{}
+\HOLtm[alltt,nosp]{
+    (!e1 e2 n1 n2 s s' s''.
+        (bs_l1 (e1, s) (L1_Int n1) s' /\
+	 bs_l1 (e2, s') (L1_Int n2) s'')
+     ==> bs_l1 (L1_Plus e1 e2, s) (L1_Int (n1 + n2)) s'')
+}
+\end{alltt}
+\caption{Big-step rules for $+$ in the L1 language, formalised in
+  HOL.}
+\label{bsplus}
+\end{figure}
+
+The primary disadvantage of a big-step semantics is that it cannot say
+anything about programs that do not reduce to a value. In particular,
+this means that it cannot distinguish between programs that `go wrong'
+and programs that diverge.
+
+This means that big-step semantics are not typically used to
+prove the soundness of a type system, or properties of termination,
+but they are useful in the context of the compiler in no small part
+because their rule induction cases correspond very closely to the
+structural induction cases of the expression datatype.
+
+\subsection{Clocked big-step semantics}\label{clockedbigstep}
+The primary problem with using a big-step semantics is that it cannot be
+used to make any judgement about a program that does not reduce. This
+is problematic for a proof of divergence preservation, (see section
+\ref{divergence-preservation}), that requires a proof that certain behaviour
+occurs for a subset of the set of diverging programs.
+
+A pragmatic approach to dealing with this is to use a clocked big-step
+semantics. Here, we attach a counter to the configuration, and every
+time an operation is executed that could potentially lead to
+non-termination (enter a while loop, function call, etc) we decrement
+the counter. If the counter is at zero, we timeout.
+
+For all counters, expressions that diverge will
+timeout, but those that simply error will not.
+
+It is relatively simple to extend a proof about the big-step semantics
+to a proof about the clocked big-step semantics. Finally, clocked
+big-step semantics can be easily related to unclocked, meaning that
+unlike some uses of this technique, for example
+\cite{jourdan2012validating}, no `fuel' parameter need be provided.
+
+\section{Source and target languages}\label{languages}
+The project proposal provided the source and target languages, being
+L1 \cite{spl} and vsm0 \cite{compconstr}. These are particularly
+useful suggestions because as well as seemingly being of `Goldilocks' language
+complexity, before the start of the project there already existed a
+basic compiler which could be used for reference and general design
+guidance.\footnote{In practice this was not helpful.}
+This ideally should result in less time needing to be spent on the
+design on the compiler, leaving more time for a proof of correctness.
+
+The choice of the languages does have to be justified technically,
+however. It would be foolish to choose languages that are too hard to
+prove correct and fail, or alternatively to choose languages that are too
+straightforward and consequently do not admit enough complexity.
+
+Different language features lead to different choices of semantics to
+use for their formal definition. Leroy writes with respect to (C)
+language features, ``This sensitivity is disturbingly high: add one
+language feature, redo the whole semantics'' \cite{leroybrooks}. For example, 
+\texttt{goto} can be expressed in a relatively straightforward way
+with a small-step semantics, but only in a convoluted way with a big-step
+semantics, which also causes an explosion in the number of
+rules \cite{HTewsCompositional}.
+
+In any case, it is important to pick a source
+language that does not constrain my choice of semantics, because it is
+well known that different semantics make certain proofs harder, or
+easier, or impossible \cite{coinductive}.
+
+\subsection{Source language}\label{sourcelanguage}
+L1 \cite{spl} is a reasonable choice for this project because it
+contains many of the basic constructs one would expect to find in a
+programming language, but few more. This means that it is largely
+unmotivated by specific implementation details but can still inform a
+real implementation.\footnote{One does not have to (for example) worry
+  about a model of I/O.}
+
+The canonical toy language is Glynn Winskel's IMP \cite{fsempl}; L1 is
+somewhat more complex than this. In particular, IMP separates boolean
+and arithmetical expressions, presumably to simplify other classes of
+semantics (a Hoare logic for L1 would be
+difficult to produce due to potentially side-effecting RHS of
+assignments, for example). For example, an expression like:
+
+\noindent
+\begin{lstlisting}[language=ML,breaklines=true]
+while (if (5 >= !x) then (x := !x +  1; true) else false)
+   do (y := !y + 5)
+\end{lstlisting}
+
+\noindent would not be allowed in IMP, but is allowed in L1. Figure
+\ref{L1Syntax} shows the complete syntax of L1, which should inform a
+mental model of evaluation.
+
+\begin{figure}
+\centering
+\begin{BVerbatim}
+E = n (n an integer)
+  | true
+  | false
+  | E + E
+  | E >= E
+  | !l (l a location)
+  | l := E (l a location)
+  | if E then E else E
+  | while E do E
+  | skip
+  | E; E
+  | (E)
+\end{BVerbatim}
+\caption{An informal presentation of the syntax of L1.}
+\label{L1Syntax}
+\end{figure}
+
+The use of L1 does not materially affect the choice of semantics to
+use; it has no features that are particularly hard to represent with
+either big or small-step semantics.
+
+Nevertheless, there \emph{are} constraints placed on the choices. The
+`definition' of L1 should probably be a big-step semantics. This is
+because the compiler will practically require the use of big-step
+semantics (Leroy writes in \cite{coinductive} that ``compiler
+correctness proofs using small-step semantics \dots are difficult even
+for simple, non-optimizing compilation schemes'').
+
+The complication here is that L1 is formally defined in the notes of
+the SPL course \cite{spl} and a goal is to mimic this; this can be
+performed by defining a small-step semantics that is `obviously'
+identical to the paper definition, and prove it equivalent to the big
+step semantics.
+
+\subsection{Target language}\label{target}
+
+Register allocation is a difficult task for practical architectures,
+and formally verified register allocation is even worse; the standard
+colouring algorithm required 10,000 lines of Coq proof code to prove
+correct in \cite{verifiedcoloring}.
+
+This puts its complexity on the order of an entire Part II project, at
+least for a beginner. A stack machine target seems more pragmatic.
+
+The stack machine I looked at initially was the vsm0 machine, (syntax
+in Figure \ref{vsm0}), from the Compiler Construction Part IB course
+\cite{compconstr}, and this is definitely sufficient, but contains a
+number of redundant instructions. For my own language, I discarded the
+\texttt{pri, prb, sub, mul, ifp, ifn}, renamed \texttt{ifz} to
+\texttt{jz} and added a \texttt{geq} instruction for simplicity.
+
+An oddity here is that the reference implementation of vsm0 has no
+external store; the store is formed of the bottom few elements of the
+stack, the \texttt{load} and \texttt{store} operations simply
+reference the element $n$-th from bottom of the stack. The compiler
+must then push enough initial elements onto the stack that it can not
+accidentally overwrite the store with a stack operation. I kept this
+behaviour.
+
+In terms of semantic representation, this requires a small-step
+semantics. A big-step semantics would be very difficult to make work
+properly; the paper that does this, an unpublished paper from a
+decade ago \cite{HTewsCompositional}, seems to be more about proving
+that it can be done than proving it practical. A small-step semantics
+seems more straightforward.
+
+\begin{figure}
+\centering
+\begin{BVerbatim}
+ops = nop
+    | push n (n an integer)
+    | load l (l a location in store)
+    | store l (l a location in store)
+    | pop
+    | add
+    | sub
+    | mul
+    | halt
+    | jump off (off a pc offset)
+    | ifz off
+    | ifp off
+    | ifn off
+    | pri (print int)
+    | prb (print boolean)
+\end{BVerbatim}
+\caption{A summary of VSM0. A program is a list of ops.}
+\label{vsm0}
+\end{figure}
+
+\section{Choice of tools}
+
+\subsection{Development environment}
+
+I performed primary development
+entirely on my personal laptop, running Mac OS X. Once built, the HOL4
+stack is a largely self-contained environment that integrates well
+with Emacs.
+
+\subsection{Source control and test environment}
+I extensively used GitHub for source control purposes, as a loss of
+code would be disastrous, and not being able to wind back the clock on
+an experiment would be at least irritating.
+
+This allowed me to checkpoint regularly with a fine granularity. I
+used a subset of the Git Flow \cite{gitflow} model for source control.
+
+This meant developing concurrent features easy, as extensive use of
+branches made it easier to decide which piece of development had
+broken the build.
+
+I utilised Travis CI to minimise the possibility of any regressions. A
+push to GitHub led to Travis pulling the latest changes and building
+the whole project. A proof becoming invalid resulted in a notification
+minutes later, and the build log gave the specific error.
+
+The combined use of source control and continuous integration tools
+gave me peace of mind.
+
+\subsection{Design process}
+
+My project is unusual in that it needs no explicit testing. If the formalised
+specifications have proofs, and those proofs compile, then any tests
+would be superfluous except for the detection of serious bugs in the
+proof assistant.
+
+Furthermore, since specifications must be easily provable, their production
+must be intrinsically intertwined with their implementation.
+
+This means that the factors that make traditional software engineering
+methodologies valid for use do not apply to my project. My specific
+design and implementation process can be lightly described as
+iterative development.
+
+\chapter{Implementation}
+
+In this chapter, I'm going to describe the implementation and
+verification of my compiler. I am first going to explain the overall
+structure of the compiler and properties proven of the source
+language, then I shall sequentially explain each level of compilation,
+and its proof of correctness.
+
+To assign some utility to these proofs, I will explain how
+the proofs of correctness can be chained, in order to produce one
+end-to-end verified compiler.
+
+Finally, I explain the frontend and the two extensions undertaken; the
+parser and packaging, my proof of divergence preservation, a verified
+implementation of constant folding, and a push/pop eliminating
+peephole optimisation.
+
+At each intermediate language stage I will explain the design
+decisions that led me to that language, the specific challenges I
+experienced when compiling to this level, and details of some of the
+more interesting proofs.
+
+I will not explain the minutiae of proofs; in particular most will be
+handwaved or consigned to appendices. The proofs are
+hard to understand in isolation, and the interactions between
+theorems are more interesting. An exception to this is section
+\ref{l1-to-il1}, where I explain proofs more carefully for
+illustration purposes. The entire chained proof is reproduced in Appendix
+\ref{chaincorrect}.
+
+\section{Observational equivalence and compiler structure}
+
+The goal stated is to prove `observational equivalence' of source
+and target. My model of observational equivalence holds if the value
+returned by two programs is identical. This allows more optimisations,
+as unused locations can be excised. It does not reduce
+the power of the language, since any program can be trivially modified
+to return the contents of any location referenced.
+
+The structure of the compiler is the common model of a lexer, parser,
+transformations with optimisations then output. Perhaps more
+interesting are the interactions between the semantics and compilation
+layers, which are described in Figure \ref{compiler-structure}.
+
+
+\tikzstyle{syntax} = [draw, circle, minimum width=6em, text width=3em, align=center,minimum height=6em]
+\tikzstyle{semantics} = [draw, rectangle, minimum width=6em, minimum height=4em, text width=2.5cm,align=center]
+\tikzstyle{unverified} = [draw, diamond, minimum width=5em, text width=2cm,align=center]
+\tikzstyle{verified} = [draw, rectangle, rounded corners=3pt, minimum width=6em, minimum height = 3em,text width=2.5cm,align=center]
+\begin{figure}
+\centering
+\begin{tikzpicture}[auto, node distance=4cm,>=latex']
+\node [syntax, name=input] {Concrete syntax};
+
+\node [syntax, name=parsed, below of=input] {L1 AST};
+
+\node [syntax, name=il1, below of=parsed] {IL1 AST};
+
+\node [syntax, name=il2, below of=il1] {IL2 AST};
+
+\node [syntax, name=vsm0, below of=il2] {vsm0 AST};
+
+\node [syntax, name=output, below of=vsm0] {Concrete output};
+
+\node [semantics, name=l1ss, right of=parsed] {Small-step L1};
+\node [semantics, name=l1bs, right of=l1ss] {Big-step L1};
+\node [semantics, name=l1cbs, right of=l1bs] {Clocked big-step L1};
+
+\node [semantics, name=il1cbs, below of=l1cbs] {Clocked big-step IL1};
+
+\node [semantics, name=il2css, below of=il1cbs] {Clocked small-step IL2};
+
+\node [semantics, name=il3css, below of=il2css] {Clocked small-step IL3};
+
+\node [semantics, name=vsm0css, left of=il3css] {Clocked small-step vsm0};
+\node [semantics, name=vsm0ss, left of=vsm0css] {Small-step vsm0};
+
+\node [unverified, name=parser, below of=input, yshift=2cm, xshift=-2cm] {Parser};
+\node [unverified, name=printer, below of=vsm0, yshift=2cm, xshift=-2cm] {Printer};
+
+\node [verified, name=cfolding, below of=input, yshift=2cm, xshift=2cm] {Constant folding};
+\node [verified, name=pushpop, below of=vsm0, yshift=2cm, xshift=2cm] {Push/pop elimination};
+\node [verified, name=l1il1, below of=l1ss, yshift=2cm, xshift=2cm] {L1 $\to$ IL1};
+\node [verified, name=il1il2, below of=l1il1] {IL1 $\to$ IL2};
+\node [verified, name=il2vsm0, below of=il1il2] {IL2 $\to$ IL3 $\to$ vsm0};
+
+\draw [<->] (l1ss) -- (l1bs);
+\draw [<->] (l1bs) -- (l1cbs);
+
+\draw [<->] (vsm0css) -- (vsm0ss);
+
+\draw [->] (il2) |- ($(il2vsm0.west) + (0, 0.1)$);
+\draw [->] ($(il2vsm0.west) + (0, -0.1)$) -| (vsm0);
+\draw [->] ($(il2vsm0.east) + (0, -0.3)$) -| (vsm0css);
+\draw [<->] ($(il2vsm0.east) + (0, -0.1)$) -| (il3css);
+\draw [->] (il2css) |- ($(il2vsm0.east) + (0, 0.1)$);
+
+\draw [->] (il1cbs) |- ($(il1il2.east) + (0, 0.1)$);
+\draw [->] ($(il1il2.east) + (0, -0.1)$) -| (il2css);
+
+\draw [->] (l1cbs) |- ($(l1il1.east) + (0, 0.1)$);
+\draw [->] ($(l1il1.east) + (0, -0.1)$) -| (il1cbs);
+
+\draw [->] (il1) |- ($(il1il2.west) + (0, 0.1)$);
+\draw [->] ($(il1il2.west)+(0, -0.1)$) -| (il2);
+
+\draw [->] (parsed) |- ($(l1il1.west) + (0, 0.1)$);
+\draw [->] ($(l1il1.west) + (0, -0.1)$) -| (il1);
+
+\draw [->] (vsm0) -| (pushpop);
+\draw [->] (pushpop) -| (vsm0);
+
+\draw [->] (parsed) |- (cfolding);
+\draw [->] (cfolding) |- (parsed);
+
+\draw [->] (input) -| (parser);
+\draw [->] (parser) |- (parsed);
+
+\draw [->] (vsm0) -| (printer);
+\draw [->] (printer) |- (output);
+
+\end{tikzpicture}
+\caption{A block diagram displaying the structure of the overall
+  compiler.  Language representations are circles, semantics are
+  rectangles, verified transformations are rounded rectangles and
+  unverified transformations are diamonds.}\label{compiler-structure}
+\end{figure}
+
+In order to provide support for divergence preservation, I needed to
+use clocked big-step semantics for all sections of the proof, with unclocked
+semantics only used at the source and target layers.
+
+This meant that much of the code was rewritten towards the end of the
+project (see section \ref{divergence-preservation} for details). My
+description is of the latest version of the code.
+
+\section{L1 semantics and language properties}
+As discussed in section \ref{sourcelanguage}, the semantics of L1 are
+defined in small-step form, with the definition given in Figure
+\ref{l1smallstep}. A typing relation is given in Figure \ref{l1typing}.
+
+\begin{figure}
+\centering
+\includegraphics{figs/l1-smallstep}
+\caption{The collected definition of L1, reproduced in full from \cite{spl}.}
+\label{l1smallstep}
+\end{figure}
+
+\begin{figure}
+\centering
+\includegraphics{figs/l1-typing}
+\caption{The typing relation of L1, reproduced in full from \cite{spl}.}
+\label{l1typing}
+\end{figure}
+
+The HOL definitions have almost identical syntax and semantics. The
+primary difference is that stores are not partial functions, but are
+HOL's \HOLty{:('a |-> 'b)} map type for convenience.
+
+As a form of translation validation it makes sense to
+verify some of the stated properties of L1, in particular determinacy,
+type preservation and progress.
+
+These were all proved in the semantics of programming languages course
+notes, and so one of them not being true would be an indication of a
+problem.
+
+\begin{theorem}[L1 Determinacy]\label{l1-determinacy}
+\begin{alltt}\mbox{}
+\HOLthm[nosp]{smallstep_determinacy.L1_DETERMINACY_THM}
+\end{alltt}
+\end{theorem}
+\begin{proof}
+By rule induction on definition of \HOLtm{ss_l1}. The `usual' proof is by
+structural induction on $e$, but in practice the rule induction proof
+gives easier proof cases, although there are more of them.
+\end{proof}
+
+\begin{theorem}[L1 Progress]
+\begin{alltt}\mbox{}
+\HOLthm[nosp]{smallstep_progress.L1_PROGRESS_THM}
+\end{alltt}
+\end{theorem}
+\begin{proof}
+By rule induction on definition of the typing relation. Once the typing relation
+is expanded, the conclusion follows in a straightforward manner by the
+definition of $\subseteq$.
+\end{proof}
+
+\begin{theorem}[L1 Type Preservation]
+\begin{alltt}\mbox{}
+\HOLthm[nosp]{smallstep_type_preservation.SMALLSTEP_TYPE_PRESERVATION}
+\end{alltt}
+\end{theorem}
+\begin{proof}
+Work by rule induction on
+\HOLtm{ss_l1}. Expand the definition of the typing relation in each case,
+then each case can be solved automatically, since typing context is always constant.
+\end{proof}
+
+A big-step semantics for this language aids with proofs of
+correctness. A HOL definition of this is given in Figure \ref{bsl1}.
+
+\begin{figure}
+\centering
+{\scriptsize
+\begin{alltt}
+\HOLthm[nosp]{bigstep_l1.bs_l1_rules}
+\end{alltt}
+}
+\caption{A HOL4 big-step semantics for the L1 language.}
+\label{bsl1}
+\end{figure}
+
+Next, this must be proved to be equivalent to the small-step
+semantics. The big-step semantics do not admit reasoning about
+diverging computations;\footnote{Any `execution diverges' result would
+  require an ill-founded proof, since there are no divergent axioms.}
+it thus makes sense to consider only those theorems that reduce to a
+value.
+
+\begin{lemma}\label{ss-step-bs-thm}
+\begin{alltt}\mbox{}
+\HOLthm[nosp]{bs_ss_equivalence.SS_STEP_BS_THM}
+\end{alltt}
+\end{lemma}
+\begin{proof}
+Proof by rule induction on $\sslo$, then expansion of definition of
+$\bslo$. Remaining goals can be solved automatically.
+\end{proof}
+
+\begin{theorem}[Small-step implies big-step]
+\begin{alltt}\mbox{}
+\HOLthm[nosp]{bs_ss_equivalence.SS_EQ_BS_THM}
+\end{alltt}
+\end{theorem}
+\begin{proof}
+
+`If` case by rule induction on the reflexive transitive closure. The base case
+  is solved easily. In the inductive case, we have that $\sslo^*\ (e',
+  s')\ (v, s'')$ and $\sslo\ (e, s)\ (e', s')$, and $\bslo\ (e', s')\
+  v\ s''$. By lemma \ref{ss-step-bs-thm}, $\bslo\ (e, s) v\ s''$.
+
+The `only-if` case is slightly more involved; here follows a detailed
+description of the addition case. The proof is  by rule induction, and all of the cases can be proven in the
+same way. A rule like
+\[
+\infer{(e_1 + e_2, s) \rightarrow (e_1' + e_2, s')}{(e_1, s)
+  \rightarrow (e_1', s')}
+\]
+implies that
+\[
+\infer{(e_1 + e_2, s) \rightarrow^* (e_1' + e_2, s')}{(e_1, s)
+  \rightarrow^* (e_1', s')}
+\]
+and correspondingly,
+\[
+\infer{(v + e_2, s) \rightarrow^* (v + e_2', s')}{(e_2, s)
+  \rightarrow^* (e_2', s')}.
+\]
+By the inductive hypothesis, I have
+\begin{itemize}
+\item \HOLtm{ss_l1^* (e1, s) (L1_Value n1, s')}, and
+\item \HOLtm{ss_l1^* (e2, s') (L1_Value n2, s'')}.
+\end{itemize}
+and so by the small-step relation rules
+\begin{itemize}
+\item \HOLtm{ss_l1^* (L1_Plus e1 e2, s) (L1_Plus n1 e, s')}, 
+\item \HOLtm{ss_l1 (L1_Plus n1 e2, s') (L1_Plus n1 n2, s'')}, and
+\item \HOLtm{ss_l1 (L1_Plus n1 n2, s'') (n, s'')} (where $n = n_1 + n_2$).
+\end{itemize}
+The conclusion follows by transitivity.
+\end{proof}
+
+It is then the case that iff an expression reduces to a value in the
+big-step semantics, it must reduce to that value in the small-step
+semantics. Coupled with determinacy and progress, the two
+semantics are equivalent.
+
+Lastly, there is a clocked
+version of the L1 semantics, \HOLtm{bs_l1_c}. This is of the type
+\HOLty{:num -> (l1_expr # state) -> ((l1_value # state # num) option)},
+indicating that either the relation reduces to a value,
+state and new clock value, or to \HOLtm{NONE}.
+
+Theorems \ref{clocked-imp-unclocked} and \ref{unclocked-imp-clocked}
+indicate that every reducing configuration in the clocked or unclocked
+semantics corresponds to a reducing configuration in the other.
+
+\begin{theorem}\label{clocked-imp-unclocked}
+\begin{alltt}\mbox{}
+\HOLthm[nosp]{clocked_equiv.CLOCKED_IMP_UNCLOCKED}
+\end{alltt}
+\end{theorem}
+\begin{proof}
+Simple rule induction.
+\end{proof}
+
+\begin{theorem}\label{unclocked-imp-clocked}
+\begin{alltt}\mbox{}
+\HOLthm[nosp]{clocked_equiv.UNCLOCKED_IMP_CLOCKED}
+\end{alltt}
+\end{theorem}
+\begin{proof}
+Simple rule induction.
+\end{proof}
+
+I have formalised the small-step semantics of L1 and smell-tested them
+by proving important properties. I have formalised equivalent clocked
+and unclocked big-step semantics and proven their equivalence to
+themselves and to the small-step semantics.
+
+\section{IL1 translation and correctness proof}
+When choosing the first intermediate language, I took inspiration from
+the reference compiler and the transformation it made. At this stage
+I was still attempting to postverify. The change taken by this
+compiler is that it splits the syntax into `expressions' and
+`statements', expressions not being able to change the store,
+statements not having such constraints. Statements
+have a more restrictive syntax (one cannot add or assign statements).
+
+This makes the language a lot more IMP-like, and represents a
+conceptually straightforward program transformation. The AST for the
+langauge is shown in definition \ref{ast-il1}.
+
+\begin{definition}\label{ast-il1}
+\begin{alltt}\mbox{}
+\HOLthm{ast_il1.datatype_il1_loc}
+
+\HOLthm{ast_il1.datatype_il1_value}
+
+\HOLthm{ast_il1.datatype_il1_expr}
+
+\HOLthm{ast_il1.datatype_il1_stm}
+\end{alltt}
+\end{definition}
+
+The goal of this compilation pass is to split up each L1 expression
+into one statement which can affect the state, and an expression which
+cannot. When executing, first the state is changed, and then the
+expression is evaluated in order to obtain the result. This naturally
+results in a nuance. For
+example, consider a program (concrete syntax) which will always return
+true, like
+\begin{verbatim}
+if (foo := 5; !foo >= 2) then (foo := 0; true) else false.
+\end{verbatim}
+
+\noindent The na\"{i}ve conversion
+would lead to something like
+\begin{verbatim}
+STATEMENT: foo := 5; if !foo >= 2 then foo := 0 else skip
+EXPRESSION: if !foo >= 2 then true else false
+RESULT: STATEMENT; EXPRESSION
+\end{verbatim}
+\noindent but this does not work, as after the statement is executed
+\texttt{foo} is 0, not 5. This means that
+the result of executing the expression is \texttt{false}, which is
+defective. A general fix is to write down the boolean somewhere, like
+\begin{verbatim}
+STATEMENT: foo := 5;
+temp := if !foo >= 2 then 1 else 0;
+if !temp >= 1 then foo := 0 else skip
+EXPRESSION: if !temp >= 1 then true else false.
+\end{verbatim}
+This works, but raises the question of what \texttt{temp} should
+be. Certainly, it cannot be a single location, otherwise an expression like
+
+\begin{verbatim}
+if !foo >= 5 then (if !bar >= 3 then true else false) else false
+\end{verbatim}
+
+\noindent might overwrite the data and compromise correctness. Initially, a
+stack seems like it would suffice, but this leads to interesting
+problems. For example, say \texttt{PUSH}, \texttt{PEEK}, and
+\texttt{POP} commands are introduced, reducing to \texttt{skip} for
+the former, and the value on the top of the stack for the latter
+two. One might expect to compile the first example to
+
+\begin{verbatim}
+STATEMENT: foo := 5; PUSH if !foo >= 2 then 1 else 0;
+if PEEK >= 1 then foo := 0 else skip
+EXPRESSION: if POP >= 1 then true else false
+\end{verbatim}
+but this turns out to not work in general especially in the cases of
+binary operations. For example:
+
+\begin{verbatim}
+SOURCE:
+(if s1;e1 then s2;e2 else s3;e3) >= (if s4;e4 then s5;e5 else s6;e6)
+
+STATEMENT:
+s1;
+PUSH e1;
+if PEEK >= 1 then s2 else s3;
+PUSH if POP >= 1 then e2 else e3;
+s4;
+PUSH e4;
+if PEEK >= 1 then s5 else s6;
+
+EXPRESSION (erroneous):
+POP >= (if POP >= 1 then e5 else e6)
+\end{verbatim}
+The first element we want to \texttt{POP} in the expression is the
+second element from the top of the stack. I can generalise this to
+being any number of elements from the top of the stack.
+
+It is possible to fix this ordering problem, but the fix is a data
+stack; the stated purpose of the intermediate language is missed. This
+raises questions of whether the intermediate language was necessary if
+the target is a stack machine; at the time of writing the code I
+believed that it was. It held promise and seemed to be necessary for
+the second transformation. After some adjustment to the second and
+subsequent languages, it is less necessary.
+
+The approach taken by the reference compiler is to create an ML
+\texttt{int ref} pointing to an unused store location, and whenever a
+new store location is needed, the location referenced is used and
+changed to another unused store location (incremented).
+
+HOL has no references, which means that the implementation must be
+more involved. In particular, the compiler is easiest to verify if it
+is recursive over L1 expressions, and so cannot know what the largest
+location in a program is, merely the largest location used in a
+sub-expression. I decided to rectify this with a datatype.
+
+\begin{alltt}
+\HOLthm{ast_il1.datatype_il1_loc}
+\end{alltt}
+
+An L1 store is mapped to an IL1 store by simply applying the
+\texttt{User} constructor to all keys, and it is easily proven that
+there are initially no \texttt{Compiler} locations in the store. Then,
+the compiler takes a location as an argument, and returns the next
+unused location. This can then be used by parent calls. Figure
+\ref{l1-to-il1} gives the source code for the $+$ case.
+
+\begin{figure}
+\begin{alltt}\mbox{}
+\HOLtm[alltt]{
+(l1_to_il1_pair lc (L1_Plus e1 e2) =
+    let (sl1, e1', lc2) = l1_to_il1_pair lc e1 in
+    let (sl2, e2', lc3) = l1_to_il1_pair lc2 e2
+    in
+        (IL1_Seq
+            (IL1_Seq sl1 (IL1_Assign (Compiler lc3) e1'))
+            sl2,
+         IL1_Plus (IL1_Deref (Compiler lc3)) e2',
+         lc3 + 1))}
+\end{alltt}
+\caption{The `plus' case of the L1 to IL1 compiler. Note the
+  assignment to the unused temp location lc3, followed by the
+  dereference. Note also the returning of $lc3 + 1$.}
+\label{l1-to-il1}
+\end{figure}
+
+The correctness of the compiler must be proven, and this will
+certainly be by rule induction. The correctness theorem settled on
+is:
+
+\begin{theorem}\label{correctness-il1}
+\begin{alltt}\mbox{}
+\HOLthm[nosp]{l1_il1_correctness.L1_TO_IL1_CORRECTNESS_LEMMA}
+\end{alltt}
+\noindent where \HOLtm{equiv} is a relation equating two stores iff they agree
+on all \HOLtm{User} locations; i.e. they are equal in the eyes of
+L1. L1 stores are converted to IL1 stores by \HOLtm{con_store}, which
+is defined as \HOLthm[tt,nostile]{store_equivalence.con_store_def}, where
+\HOLtm{MAP_KEYS} is the HOL function defined in the expected way.
+\end{theorem}
+
+The relation is defined slightly oddly because HOL's
+\texttt{ho\_match\_mp\_tac}
+(which is used to initiate the rule induction) has fairly specific requirements for
+succeeding. Informally, the conjecture says that if an expression reduces
+successfully in L1, when compiled and executed on any equivalent
+store, it will also reduce in IL1, and the store on completion will be
+equivalent to the store outputted by the L1 reduction.
+
+The proof of this theorem is difficult. The value cases and
+\HOLtm{IL1_Seq} are largely straightforward and are easily
+provable. The failure cases (when \HOLtm{bs_l1_c} relates the program
+to \HOLtm{NONE}) are also conceptually straightforward, if fiddly.
+
+The remainder are more difficult, because they involve temporary
+locations or recursion in the semantics. Two illustrative examples are
+\HOLtm{IL1_While} and \HOLtm{IL1_Plus}.
+
+\subsection{Proving the \HOLtm{IL1_While} case correct}
+In this section I am going to show how the \HOLtm{IL1_While} case of the
+correctness theorem can be proved correct. I compile \HOLtm{IL1_While} by:
+\begin{alltt}
+\HOLtm[alltt]{
+(l1_to_il1_pair lc (L1_While e1 e2) =
+        let (sl1, e1', lc2) = l1_to_il1_pair lc e1 in
+        let (sl2, e2', lc3) = l1_to_il1_pair lc2 e2
+        in
+            (IL1_Seq sl1 (IL1_While e1' (IL1_Seq (IL1_Tick sl2) (IL1_Seq (IL1_Expr e2') sl1))), IL1_Value IL1_ESkip, lc3))}
+\end{alltt}
+
+Here in the rule induction, I am given two cases to prove, the cases
+where $e_1$ evaluates to false and true. The former case
+is easy to prove, the latter is harder.
+
+\noindent Skipping a few steps and instantiating some variables, I have:
+\begin{alltt}
+\HOLtm[alltt]{bs_l1_c c (e1, s) (SOME (L1_Bool T, s', c'))}
+\HOLtm[alltt]{bs_l1_c c' (e2, s') (SOME (L1_Skip, s'', SUC c''))}
+\HOLtm[alltt]{bs_l1_c c'' (L1_While e1 e2, s'') (SOME (L1_Skip, s''', c'''))}
+\HOLtm[alltt]{l1_to_il1_pair lc e1 = (st1, ex1, lc')}
+\HOLtm[alltt]{l1_to_il1_pair lc' e2 = (st2, ex2, lc'')}
+\HOLtm[alltt]{equiv (con_store s) ts}
+\HOLtm[alltt]{bs_il1_c c (st1, ts) (SOME (IL1_ESkip, ts', c'))}
+\HOLtm[alltt]{equiv (con_store s') ts'}
+\HOLtm[alltt]{bs_il1_expr (ex1, ts') (IL1_Bool T)}
+\HOLtm[alltt]{bs_il1_c c' (st2, ts') (SOME (IL1_ESkip, ts'', SUC c''))}
+\HOLtm[alltt]{bs_il1_expr (ex2, ts'') IL1_ESkip}
+\HOLtm[alltt]{equiv (con_store s'') ts''}
+\HOLtm[alltt]{bs_il1_c c'' (IL1_Seq st1 (IL1_While ex1 (IL1_Seq st2 (IL1_Seq (IL1_Expr ex2) st1))), ts'') (SOME (IL1_ESkip, ts''', c'''))}
+\end{alltt}
+
+\noindent and I must prove that
+\begin{alltt}
+\HOLtm[alltt]{bs_il1_c c
+(IL1_Seq
+    st1
+    (IL1_While
+        ex1
+        (IL1_Seq
+            (IL1_Tick st2)
+            (IL1_Seq (IL1_Expr ex2) st1))), ts) (SOME (IL1_ESkip, ts''', c'''))}.
+\end{alltt}
+Trying to prove this immediately is not really viable. In particular,
+I can reduce it to:
+\begin{alltt}
+\HOLtm[alltt]{bs_il1_c c'
+(IL1_While
+    ex1
+    (IL1_Seq
+        (IL1_Tick st2)
+        (IL1_Seq (IL1_Expr ex2) st1)), ts') (SOME (IL1_ESkip, ts''', c'))}.
+\end{alltt}
+\noindent and can go no further. Careful thought leads to a useful lemma:
+
+\begin{lemma}[IL1 While unwinding]\label{whileunwind}
+\begin{alltt}\mbox{}
+\HOLthm[nosp]{l1_il1_correctness.WHILE_UNWIND_ONCE_THM}
+\end{alltt}
+\end{lemma}
+\begin{proof}
+Proof by straightforward case analysis.
+\end{proof}
+\noindent Using lemma \ref{whileunwind}, rewrite the goal to
+\begin{alltt}
+\HOLtm[alltt]{bs_il1_c c'
+(IL1_Seq
+    (IL1_Seq
+        (IL1_Tick st2)
+        (IL1_Seq (IL1_Expr ex2) st1))
+    (IL1_While
+        ex1
+        (IL1_Seq
+            st2
+            (IL1_Seq (IL1_Expr ex2) st1))), ts') (SOME (IL1_ESkip, ts''', c'''))}
+\end{alltt}
+Using associativity of \HOLtm{IL1_Seq} (proved elsewhere by
+case analysis), we reach
+\begin{alltt}
+\HOLtm[alltt]{bs_il1_c c'
+(IL1_Seq
+    (IL1_Tick st2)
+    (IL1_Seq
+        (IL1_Seq (IL1_Expr ex2) st1)
+        (IL1_While
+            ex1
+            (IL1_Seq
+                st2
+                (IL1_Seq (IL1_Expr ex2) st1)))), ts') (SOME (IL1_ESkip, ts''', c'''))}
+\end{alltt}
+and from this (expanding on definition of \HOLtm{bs_il1_c}):
+\begin{alltt}
+\HOLtm[alltt]{bs_il1_c c''
+(IL1_Seq
+    (IL1_Seq (IL1_Expr ex2) st1)
+    (IL1_While
+        ex1
+        (IL1_Seq
+            st2
+            (IL1_Seq (IL1_Expr ex2) st1))), ts'') (SOME (IL1_ESkip, ts''', c'''))}
+\end{alltt}
+and from \HOLtm{bs_il1_expr (ex2, ts'') IL1_ESkip} we can reduce
+further to
+\begin{alltt}
+\HOLtm[alltt]{bs_il1_c c''
+(IL1_Seq
+    st1
+    (IL1_While
+        ex1
+        (IL1_Seq
+            st2
+            (IL1_Seq (IL1_Expr ex2) st1))), ts'') (SOME (IL1_ESkip, ts''', c'''))}
+\end{alltt}
+and we are done, because that is part of the inductive hypothesis.
+
+\subsection{Proving the \HOLtm{IL1_Plus} case correct}
+This case is tricker. In particular, if I start to prove correctness
+immediately, there are several obvious roadblocks. This is because
+\begin{itemize}
+\item it has not been proven that a temporary location has not been written to
+  between initially writing it and reading it, and
+\item it has not been proven that a temporary location has been written to at
+  all when we come to read it.
+\end{itemize}
+So, before we start, I'll prove some useful statements that imply this.
+
+First, I define a predicate \HOLtm{contains_a} of type \HOLty{:il1_loc -> il1_stm -> bool},
+which returns true iff the location is assigned to in the supplied program.
+
+\begin{lemma}\label{complocincreasing}
+\begin{alltt}\mbox{}
+\HOLthm[nosp]{comp_location.COMP_LOC_INCREASING_THM}
+\end{alltt}
+\end{lemma}
+\begin{proof}
+Structural induction on $e$.
+\end{proof}
+
+\begin{theorem}\label{all-co-locs-in-range}
+\begin{alltt}\mbox{}
+\HOLthm[nosp]{comp_location.UNCHANGED_LOC_SIMP_THM}
+\end{alltt}
+\end{theorem}
+\begin{proof}
+Both the `if' and `only-if' directions can be solved by structural
+induction on $e$, with case splitting and automated methods serving to
+complete the proofs.
+\end{proof}
+
+This places an important restriction on compiler locations; it places
+them in a numerical range, and states that the range is
+full. Furthermore, combined with lemma \ref{complocincreasing} and the
+definition of the compiler, it proves that a compiler location can
+only be assigned to at most once.
+
+\begin{theorem}\label{useless-loc-thm}
+\begin{alltt}\mbox{}
+\HOLthm[nosp]{l1_il1_correctness.USELESS_LOC_THM}
+\end{alltt}
+\end{theorem}
+\begin{proof}
+By rule induction on \HOLtm{bs_il1_c}.
+\end{proof}
+
+\noindent Now I am ready to tackle the proof. Initially, I have:
+\begin{alltt}
+\HOLtm[alltt]{bs_l1_c c (e1, s) (SOME (L1_Int n1, s', c'))}
+\HOLtm[alltt]{bs_l1_c c' (e2, s') (SOME (L1_Int n2, s'', c''))}
+\HOLtm[alltt]{l1_to_il1_pair lc e1 = (st1, ex1, lc')}
+\HOLtm[alltt]{l1_to_il1_pair lc' e2 = (st2, ex2, lc'')}
+\HOLtm[alltt]{equiv (con_store s) ts}
+\HOLtm[alltt]{bs_il1_c c (st1, ts) (SOME (IL1_ESkip, ts', c'))}
+\HOLtm[alltt]{equiv (con_store s') ts'}
+\HOLtm[alltt]{bs_il1_expr (ex1, ts') (IL1_Integer n1)}
+\HOLtm[alltt]{bs_il1_c c' (st2, ts') (SOME (IL1_ESkip, ts'', c''))}
+\HOLtm[alltt]{equiv (con_store s'') ts''}
+\HOLtm[alltt]{bs_il1_expr (ex2, ts'') (IL1_Integer n2)}
+\end{alltt}
+and I must prove that
+\begin{alltt}
+\HOLtm[alltt]{
+?ts'''.
+bs_il1_c c (IL1_Seq (IL1_Seq st1 (IL1_Assign (Compiler lc'') ex1)) st2, ts) 
+    (SOME (IL1_ESkip, ts''', c''))
+/\ bs_il1_expr (IL1_Plus (IL1_Deref (Compiler lc'')) ex2, ts''')
+       (IL1_Integer (n1 + n2))
+/\ equiv (con_store s'') ts'''}
+\end{alltt}
+First, instantiate \HOLtm{ts'''} to \HOLtm{ts'' |+ (Compiler lc'', n1)}.
+\begin{alltt}
+\HOLtm[alltt]{
+bs_il1_c c (IL1_Seq (IL1_Seq st1 (IL1_Assign (Compiler lc'') ex1)) st2, ts)
+    (SOME (IL1_ESkip, (ts'' |+ (Compiler lc'', n1), c''))) 
+/\ bs_il1_expr (IL1_Plus (IL1_Deref (Compiler lc'')) ex2,
+                ts'' |+ (Compiler lc'', n1))
+     (IL1_Integer (n1 + n2))
+/\ equiv (con_store s'') (ts'' |+ (Compiler lc'', n1))}
+\end{alltt}
+and by expansion and associativity of \HOLtm{IL1_Seq}, one can immediately simplify to
+
+\begin{alltt}
+\HOLtm[alltt]{bs_il1_c c' (IL1_Seq (IL1_Assign (Compiler lc'') ex1) st2, ts')
+    (SOME (IL1_ESkip, (ts'' |+ (Compiler lc'', n1), c''))) 
+/\ bs_il1_expr (IL1_Plus (IL1_Deref (Compiler lc'')) ex2,
+                ts'' |+ (Compiler lc'', n1))
+     (IL1_Integer (n1 + n2))
+/\ equiv (con_store s'') (ts'' |+ (Compiler lc'', n1))}.
+\end{alltt}
+
+\begin{definition}\label{equiv-def}
+\begin{alltt}\mbox{}
+\HOLthm[def]{store_equivalence.equiv_def}
+\end{alltt}
+\end{definition}
+
+By definition of equivalence of stores (definition \ref{equiv-def}) and the inductive
+hypothesis, the third conjunct is solved easily, and the second conjunct is
+also solved in a straightforward manner by expansion of \HOLtm{bs_il1_expr} and the
+library theorem \texttt{FAPPLY\_FUPDATE}, \HOLthm[tt,nosp]{finite_map.FAPPLY_FUPDATE_THM}. We are left with 
+\begin{alltt}
+\HOLtm[alltt]{bs_il1_c c' (IL1_Seq (IL1_Assign (Compiler lc'') ex1) st2, ts')
+    (SOME (IL1_ESkip, (ts'' |+ (Compiler lc'', n1)), c''))}
+\end{alltt}
+which by definition of \HOLtm{bs_il1_c} and an existential quantifier
+instantiation can be split to
+\begin{alltt}
+\HOLtm[alltt]{bs_il1_c c' (IL1_Assign (Compiler lc'') ex1, ts')
+       (SOME (IL1_ESkip, (ts' |+ (Compiler lc'', n1)), c'))
+/\ bs_il1_c c' (st2, ts' |+ (Compiler lc'', n1))
+          (SOME (IL1_ESkip, (ts'' |+ (Compiler lc'', n1)), c''))}
+\end{alltt}
+By inductive hypothesis \HOLtm{l1_to_il1_pair lc' e2 = (st2, ex2, lc'')} and theorem
+\ref{all-co-locs-in-range} it follows that
+\HOLtm{!t.contains_a (Compiler t) st2 <=> ((lc' <= t) /\ (t < lc''))} and so
+since \HOLtm{~(lc'' < lc'')} by definition of $<$ then \HOLtm{~contains_a (Compiler lc'') st2}. By
+theorem \ref{useless-loc-thm} and the inductive hypothesis, the case
+is proven.
+
+\subsection{Other cases}
+The other cases in the proof proceed similarly. The \HOLtm{L1_If} cases
+are conceptually trickier in that they are longer and more
+time-consuming, but the overall arguments are similar. Here concludes the
+correctness proof of the L1 $\rightarrow$ IL1 translation.
+
+\section{IL2 translation and correctness proof}
+My second intermediate language collapses all control flow and manipulates
+data on a stack. It uses the same locations, user and compiler, as
+IL1.
+
+\noindent The syntax for my IL2 is given in definition \ref{ast-il2}.
+
+\begin{definition}\label{ast-il2}
+\begin{alltt}\mbox{}
+\HOLthm{ast_il2.datatype_il2_stm}
+
+type il2_prog = il2_stm list
+\end{alltt}
+\end{definition}
+
+This is the stage at which big-step semantics become
+unhelpful. Presented in definition \ref{ss-il2} is a small-step
+semantics; the actual instruction relation \texttt{exec\_instr} is
+omitted for brevity.
+
+\begin{definition}\label{ss-il2}
+\begin{alltt}\mbox{}
+\HOLthm[def]{smallstep_il2.fetch_def}
+
+\HOLthm[nosp,nostile]{smallstep_il2_clocked.exec_clocked_one_rules}
+
+\HOLthm[def]{smallstep_il2_clocked.exec_clocked_def}
+\end{alltt}
+\end{definition}
+
+Here, the program context is a optional 4-tuple of the program counter,
+clock, data stack and the store. The next state relation
+\HOLtm{exec_clocked_one} takes a program and such a state, and relates
+them to a next state, where one exists. A next state exists where the
+\HOLtm{exec_clocked_instr} relation is defined; this splits
+instruction fetch and instruction execution. Upon timeout,
+\HOLtm{exec_clocked_instr} returns \HOLtm{NONE}, and so execution
+cannot continue.
+
+Important to note is that the program counter is an integer, not a
+natural number, despite there only being positive program
+indices. This is for the purposes of program composition; it is
+desirable for a fragment of a program to be able to jump beyond its
+bounds, and this is not possible in the backwards direction if it
+cannot jump to a negative location.
+
+This leads to the definition of a new operator in order to select
+instructions, \texttt{!!}. There is a built in function \texttt{EL}
+that does the same with a natural argument and so can much more easily
+be reasoned about; c.f. lemma \ref{FETCH-EL} for equivalence.
+
+\begin{lemma}\label{FETCH-EL}
+\begin{alltt}\mbox{}
+\HOLthm[nosp]{il3_store_properties.FETCH_EL}
+\end{alltt}
+\end{lemma}
+
+When reasoning about executions in IL2, the most useful theorem proved
+to be the composition theorem, (theorem \ref{il2-composition}). This was
+the case because it allowed executions to be split into two, over
+boundaries where \texttt{!!} operations might not have been possible.
+
+Lemmas \ref{compose-for} and \ref{compose-back} almost directly imply
+theorem \ref{il2-composition}.
+
+\begin{lemma}\label{compose-for}
+\begin{alltt}\mbox{}
+\HOLthm[nosp]{il2_composition.APPEND_TRACE_SAME_THM}
+\end{alltt}
+\end{lemma}
+\begin{proof}
+Induction on reflexive transitive closure.
+\end{proof}
+
+\begin{lemma}\label{compose-back}
+\begin{alltt}\mbox{}
+\HOLthm[nosp]{il2_composition.APPEND_TRACE_SAME_2_THM}
+\end{alltt}
+\end{lemma}
+\begin{proof}
+Induction on reflexive transitive closure.
+\end{proof}
+
+\begin{theorem}\label{il2-composition}
+\begin{alltt}\mbox{}
+\HOLthm[nosp]{il2_composition.EXECUTION_COMPOSE_THM}
+\end{alltt}
+\end{theorem}
+\begin{proof}
+This is simply a more useful formulation of lemmas \ref{compose-for} and \ref{compose-back}.
+\end{proof}
+
+The compiler works in the standard way; the assignment case for example is
+\begin{alltt}
+\HOLtm[alltt]{(il1_to_il2 (IL1_Assign l e) = (il1e_to_il2 e) ++ [IL2_Store l; IL2_Push skip_value])}
+\end{alltt}
+
+The final IL2 correctness theorems (\ref{il2-correctness-1} and
+\ref{il2-correctness-2}) do not follow immediately, but the proofs are
+mechanical and uninteresting, boiling down to aggressively applying
+theorem \ref{il2-composition} wherever possible, while using the
+execution relation to execute known instructions and the inductive
+hypothesis to clear the rest.
+
+\begin{theorem}\label{il2-correctness-1}
+\begin{alltt}\mbox{}
+\HOLthm[nosp]{il1_il2_correctness.IL1_IL2_CORRECTNESS_1_THM}
+\end{alltt}
+\end{theorem}
+\begin{theorem}\label{il2-correctness-2}
+\begin{alltt}\mbox{}
+\HOLthm[nosp]{il1_il2_correctness.IL1_IL2_CORRECTNESS_2_THM}
+\end{alltt}
+\end{theorem}
+\begin{proof}
+Rule induction on \HOLtm{bs_il1_c}.
+\end{proof}
+
+\section{IL3 translation and correctness proof}\label{il3-correctness}
+\begin{definition}\label{ast-vsm0}
+\begin{alltt}\mbox{}
+\HOLthm{ast_vsm0.datatype_vsm_stm}
+
+type il2_prog = il2_stm list
+\end{alltt}
+\end{definition}
+
+The IL3 syntax is the same as that of vsm0 (definition
+\ref{ast-vsm0}), but the semantics are altered. The reason for this
+is straightforward; the target language does not have
+\HOLtm{Compiler} and \HOLtm{User} locations; it needs
+numerical locations. IL3 is thus identical to IL2, except the location
+referencing operations have \HOLty{:num} arguments, not \HOLty{:il1_loc}.
+
+I produce this store by recursively considering each program point in
+an IL2 program, adding each referenced location to the mapping at most
+once. This is described in definition \ref{make-loc-map-def}.
+
+\begin{definition}\label{make-loc-map-def}
+\begin{alltt}\mbox{}
+\HOLthm[def]{il2_to_il3_compiler.get_locations_def}
+
+\HOLthm[def]{il2_to_il3_compiler.locs_to_map_def}
+
+\HOLthm[def]{il2_to_il3_compiler.make_loc_map_def}
+\end{alltt}
+\end{definition}
+
+\begin{definition}\label{il2-to-il3-def}
+\begin{alltt}\mbox{}
+\HOLthm[def]{il2_to_il3_compiler.il2_to_il3m_def}
+
+\HOLthm[def]{il2_to_il3_compiler.il2_to_il3_def}
+\end{alltt}
+\end{definition}
+
+Considering what the final proof will look like, it is clear that it
+will be a proof by induction over the reflexive transitive closure (as
+\HOLtm{exec P = (exec_one P)^*}). Clearly the tricky cases here will
+be \HOLtm{VSM_Store} and \HOLtm{VSM_Load}, since every other operation
+is identical to the corresponding operation in \texttt{il2}.
+
+The immediate restriction that must be placed is that due to
+definition \ref{MAP-KEYS-def} I must prove that \HOLtm{\l. (FST
+  (make_loc_map P)) ' l} is an injection. This cannot be true over all
+locations; if a location in the store is not referenced in the program
+it will not be present in the map, and so the result of the function
+above is undefined. For this reason, I require that the store be
+\emph{minimal}, as defined in \ref{ms-il2-def}. This must happen at
+this stage, as otherwise definition \ref{MAP-KEYS-def} means that we
+cannot dereference anything from the mapped store.
+
+\begin{definition}\label{ms-il2-def}
+\begin{alltt}\mbox{}
+\HOLthm[def]{il3_store_properties.ms_il2_def}
+\end{alltt}
+\end{definition}
+
+\begin{definition}\label{MAP-KEYS-def}
+\begin{alltt}\mbox{}
+\HOLthm[nosp]{finite_map.MAP_KEYS_def}
+\end{alltt}
+\end{definition}
+
+\begin{lemma}\label{make-loc-map-inj}
+\begin{alltt}\mbox{}
+\HOLthm[nosp]{il3_store_properties.make_loc_map_inj}
+\end{alltt}
+\end{lemma}
+\begin{proof}
+Structural (list) induction on $P$.
+\end{proof}
+
+\noindent Thus follows the useful lemma \ref{map-deref-thm}, which
+proves that dereferencing the mapped store with a mapped key
+gives the same result as dereferencing the unmapped store with an
+unmapped key.
+
+\begin{lemma}\label{map-deref-thm}
+\begin{alltt}\mbox{}
+\HOLthm[nosp]{il3_store_properties.map_deref_thm}
+\end{alltt}
+\end{lemma}
+\begin{proof}
+  Follows directly from definitions \ref{MAP-KEYS-def},
+  \ref{ms-il2-def}, lemma \ref{make-loc-map-inj}, and the library
+  theorem
+\begin{alltt}
+\HOLthm[nosp]{pred_set.INJ_SUBSET}.
+\end{alltt}
+\end{proof}
+
+\noindent With this knowledge, the final correctness theorems
+(\ref{IL2-IL3-EQ-1} and \ref{IL2-IL3-EQ-2}) follow painlessly.
+
+\begin{theorem}\label{IL2-IL3-EQ-1}
+\begin{alltt}\mbox{}
+\HOLthm[nosp]{il2_il3_correctness.IL2_IL3_EQ_1}
+\end{alltt}
+\end{theorem}
+
+\begin{theorem}\label{IL2-IL3-EQ-2}
+\begin{alltt}\mbox{}
+\HOLthm[nosp]{il2_il3_correctness.IL2_IL3_EQ_2}
+\end{alltt}
+\end{theorem}
+
+\section{vsm0 correctness proof}
+At this point, the final program has been produced, but it has not
+been proven to execute properly on vsm0. In this stage I prove that
+this does happen.
+
+Section \ref{target} explains that vsm0 stores all
+its main memory at the bottom of the stack. This makes a C
+implementation easier, but complicates verification. The failure mode
+that must be proven to be avoided is a vsm0 program erasing memory
+accidentally by popping too many elements off the stack. From the vsm3
+proof we know that this cannot happen, because the stack can be
+instantiated to an empty list and correctness still holds.
+
+The initial problem is that with any IL3 program, only at most the top
+two elements on the stack can be modified in any one step. In vsm0 we
+can, in principle, modify any element of the stack in one step, by
+load or store. This problem of representing the changing stack was
+difficult to solve, and in the end I solved it by producing an
+intermediate step relation, defined in definition
+\ref{c-exec-il3-one}. This relation is the composition of the il3 step
+relation and a function that changes the stack, (see definition
+\ref{up-stack}), to simulate the store changing. Theorem
+\ref{cexec-step-thm} is then a more practical formulation; it proves
+that if we have some list that is equivalent to the IL3 store (see
+definition \ref{stack-contains-store-def}), and the program can make a
+step in IL3, then we can append this list to the IL3 stack and this is
+a valid step in \HOLtm{c_exec_il3_one} also.
+
+\begin{definition}\label{up-stack}
+\begin{alltt}\mbox{}
+\HOLthm[def]{il3_to_vsm0_correctness.up_stack_rules}
+\end{alltt}
+\end{definition}
+
+\begin{definition}\label{c-exec-il3-one}
+\begin{alltt}\mbox{}
+\HOLthm[def]{il3_to_vsm0_correctness.c_exec_il3_one_rules}
+\end{alltt}
+\end{definition}
+
+\begin{definition}\label{stack-contains-store-def}
+\begin{alltt}\mbox{}
+\HOLthm[def]{il3_store_properties.stack_contains_store_def}
+\end{alltt}
+\end{definition}
+
+\begin{theorem}\label{cexec-step-thm}
+\begin{alltt}\mbox{}
+\HOLthm[nosp]{il3_to_vsm0_correctness.cexec_step_thm}
+\end{alltt}
+\end{theorem}
+\begin{proof}
+By case analysis.
+\end{proof}
+
+
+The relation \HOLtm{c_exec_il3_one} is such that it is strongly
+bisimilar to \HOLtm{vsm_exec_c_one}. This is not proven, but a weaker
+statement is expressed in lemma \ref{vsm-lemma}. It is a good example
+of the simplest solution being more difficult to prove correct.
+
+\begin{lemma}\label{vsm-lemma}
+\begin{alltt}\mbox{}
+\HOLthm[nosp]{il3_to_vsm0_correctness.vsm_lemma}
+\end{alltt}
+\end{lemma}
+\begin{proof}
+By case analysis.
+\end{proof}
+
+\noindent Lemma \ref{exec-il3-imp-vsm-exec} can be proven, in a relatively
+involved way, and from that, as well as lemmas
+\ref{astack-produces-valid-store}, \ref{vsm-lemma} and
+\ref{cexec-step-thm}, are proved theorems
+\ref{vsm-exec-correctness-1-thm} and \ref{vsm-exec-correctness-2-thm}.
+
+\begin{lemma}\label{astack-produces-valid-store}
+\begin{alltt}\mbox{}
+\HOLthm[nosp]{il3_store_properties.astack_produces_valid_store}
+\end{alltt}
+\end{lemma}
+\begin{proof}
+By case analysis.
+\end{proof}
+
+\begin{lemma}\label{exec-il3-imp-vsm-exec}
+\begin{alltt}\mbox{}
+\HOLthm[nosp]{il3_to_vsm0_correctness.exec_il3_imp_vsm_exec}
+\end{alltt}
+\end{lemma}
+\begin{proof}
+By induction on the reflexive transitive closure.
+\end{proof}
+
+\begin{theorem}\label{vsm-exec-correctness-1-thm}
+\begin{alltt}\mbox{}
+\HOLthm[nosp]{il3_to_vsm0_correctness.vsm_exec_correctness_1_thm}
+\end{alltt}
+\end{theorem}
+\begin{proof}
+From lemma \ref{exec-il3-imp-vsm-exec} and theorem \ref{astack-produces-valid-store}.
+\end{proof}
+
+\begin{theorem}\label{vsm-exec-correctness-2-thm}
+\begin{alltt}\mbox{}
+\HOLthm[nosp]{il3_to_vsm0_correctness.vsm_exec_correctness_2_thm}
+\end{alltt}
+\end{theorem}
+\begin{proof}
+From lemma \ref{exec-il3-imp-vsm-exec} and theorem \ref{astack-produces-valid-store}.
+\end{proof}
+
+
+\section{Chained compiler correctness}
+Thus far, there is no overall certificate that could convince a
+sceptic to rely on this compiler. This stage produces a total
+compilation function from L1 to vsm0, and proves that function
+correct. This process is fiddly, so the proof is sketched, with pauses
+at interesting parts.
+
+This section is the first in which I shall assign an initial store
+state. There needs to be an initial store so that expressions reduce
+in L1, whilst vsm0 programs should not require any pre-existing data
+on the stack in order to execute properly.
+
+However, simply converting the L1 store to an IL2 store will not work; it
+won't contain the compiler allocated locations in its domain. So
+first, definitions \ref{create-store} and \ref{create-il2-store}
+define functions that produce minimal stores at their respective
+levels of compilation.
+
+\begin{definition}\label{create-store}
+\begin{alltt}\mbox{}
+\HOLthm[def]{store_creation.create_store_def}
+\end{alltt}
+\end{definition}
+
+\begin{definition}\label{create-il2-store}
+\begin{alltt}\mbox{}
+\HOLSymConst{create_il2_store} [] \HOLSymConst{=} \HOLConst{FEMPTY}
+\HOLSymConst{create_il2_store} (\HOLSymConst{IL2_Store} \HOLFreeVar{l}\HOLSymConst{::}\HOLFreeVar{xs}) \HOLSymConst{=}
+\HOLSymConst{create_il2_store} \HOLFreeVar{xs} \HOLSymConst{|+} (\HOLFreeVar{l}\HOLSymConst{,}\HOLNumLit{0})
+\HOLSymConst{create_il2_store} (\HOLSymConst{IL2_Load} \HOLFreeVar{l}\HOLSymConst{::}\HOLFreeVar{xs}) \HOLSymConst{=}
+\HOLSymConst{create_il2_store} \HOLFreeVar{xs} \HOLSymConst{|+} (\HOLFreeVar{l}\HOLSymConst{,}\HOLNumLit{0})
+\HOLSymConst{create_il2_store} (\HOLSymConst{_}\HOLSymConst{::}\HOLFreeVar{xs}) \HOLSymConst{=} \HOLSymConst{create_il2_store} \HOLFreeVar{xs}
+\end{alltt}
+\end{definition}
+
+\noindent Then, we can prove that these two stores are equivalent in the IL1 sense.
+
+\begin{lemma}\label{store-equiv-gen-thm}
+\begin{alltt}\mbox{}
+\HOLthm[nosp]{compiler.store_equiv_gen_thm}
+\end{alltt}
+\end{lemma}
+\begin{proof}
+  Structural induction on $e$.
+\end{proof}
+
+Now we have a minimal store for IL2, we must produce from it an
+initial stack for vsm0. I produced definition
+\ref{make-stack-def}. With this, we can prove that with the initial
+store in the L1 program given by \HOLtm{create_store e}, if $e$
+reduces with that store then the compiled version when executed on a
+store given by \HOLtm{make_stack e} will reduce to the same
+value. This follows from theorem
+\ref{MIN-STORE-IMP-ALL-LOCS-IN-RANGE}.
+
+\begin{definition}\label{make-stack-def}
+\begin{alltt}\mbox{}
+\HOLthm[def]{compiler.make_stack_def}
+\end{alltt}
+\end{definition}
+
+This is not ideal, as we want vsm0 to push its own locations onto the
+stack. This can be fixed by producing a program using definition \ref{push-zeroes-def}.
+
+\begin{definition}\label{push-zeroes-def}
+\begin{alltt}\mbox{}
+\HOLthm[def]{compiler.push_zeroes_def}
+\end{alltt}
+\end{definition}
+
+\begin{lemma}\label{push3-thm}
+\begin{alltt}\mbox{}
+\HOLthm[nosp]{compiler.push3_thm}
+\end{alltt}
+\end{lemma}
+\begin{proof}
+  List induction. Base case trivial, inductive case handled by program
+  composition.
+\end{proof}
+
+Lemma \ref{push3-thm} proves that a program can easily be produced that
+initialises the stack properly. Then, the final proof appears to be a simple matter of 
+composing correctness theorems.
+
+This is unfortunately not the case, as a condition for theorems
+\ref{vsm-exec-correctness-1-thm} and \ref{vsm-exec-correctness-2-thm}
+to be applicable, is that the store used on the left hand side must
+satisfy the condition \HOLtm{!l.l ∈ FDOM st <=> l < s_uloc
+  P}. \HOLtm{s_uloc} is described in definition \ref{s-uloc}.
+
+\begin{definition}\label{s-uloc}
+\begin{alltt}\mbox{}
+\HOLSymConst{s_uloc} [] \HOLSymConst{=} \HOLNumLit{0}
+\HOLSymConst{s_uloc} (\HOLSymConst{VSM_Load} \HOLFreeVar{l}\HOLSymConst{::}\HOLFreeVar{xs}) \HOLSymConst{=} \HOLConst{MAX} (\HOLFreeVar{l} \HOLSymConst{+} \HOLNumLit{1}) (\HOLSymConst{s_uloc} \HOLFreeVar{xs})
+\HOLSymConst{s_uloc} (\HOLSymConst{VSM_Store} \HOLFreeVar{l}\HOLSymConst{::}\HOLFreeVar{xs}) \HOLSymConst{=} \HOLConst{MAX} (\HOLFreeVar{l} \HOLSymConst{+} \HOLNumLit{1}) (\HOLSymConst{s_uloc} \HOLFreeVar{xs})
+\HOLSymConst{s_uloc} (\HOLSymConst{_}\HOLSymConst{::}\HOLFreeVar{xs}) \HOLSymConst{=} \HOLSymConst{s_uloc} \HOLFreeVar{xs}
+\end{alltt}
+\end{definition}
+
+\begin{theorem}\label{MIN-STORE-IMP-ALL-LOCS-IN-RANGE}
+\begin{alltt}\mbox{}
+\HOLthm[nosp]{il3_store_properties.min_store_imp_all_locs_in_range}
+\end{alltt}
+\end{theorem}
+\begin{proof}
+  This was the hardest proof in the whole project. Its proof is found
+  in full in appendix \ref{min-store-imp-all-locs-in-range-append}.
+\end{proof}
+
+Then the stack creating program and the compiled program (using a
+similar composition theorem to theorem \ref{il2-composition}) and the
+individual correctness theorems can be composed in order to prove the final correctness
+theorem, theorem \ref{correctness-thm}.
+
+\begin{theorem}\label{correctness-thm}
+\begin{alltt}\mbox{}
+\HOLthm[nosp]{compiler.CORRECTNESS_THM}
+\end{alltt}
+\end{theorem}
+
+\section{Proof of divergence preservation}\label{divergence-preservation}
+The proof of compiler correctness is certainly useful, but leaves out an important
+case. I have proven (with theorem \ref{correctness-thm}) that if a program
+reduces to a value in L1, the result of compilation will evaluate to
+that same value.
+
+This leaves the behaviour when the program does not reduce to a value
+in L1 unspecified. Since the target for a formally verified compiler
+are generally critical embedded systems, this is unaccceptable. These
+are generally reactive systems, consider for example flight control
+software designed to run until the computer is turned off. If
+a compiler does not preserve properties of divergence, this leads to
+practical issues \cite{fermatcompiler, boeingoverflow}.
+
+To characterise diverging executions in L1, I rewrote my
+semantics to be clocked big-step semantics (see section
+\ref{clockedbigstep}). The primary conceptual advantage is that in
+principle, all of the theorems that already exist are still theorems,
+the proofs just have more cases (10 to 23 for L1, where the 13 added
+correspond to timeouts).
+
+\subsection{Changes required to support the proof}
+The changes required rewriting every intermediate semantics to support
+clocks, and adding new clocked semantics for the source and target.
+
+At the L1 level, an attempt to execute the body of a while loop
+decrements the clock, or returns the erroneous value.
+
+IL1 (and all levels below) add a \HOLtm{IL1_Tick} operation that
+decrements the clock. An alternative was to have the same `while
+decrements clock' operation, but this would add more execution cases
+and proved difficult to implement in a correct way.
+
+I represented error values by using HOL's \texttt{option} type. A
+valid result is presented with the \HOLtm{SOME x} constructor, whilst
+a timeout is presented with the \HOLtm{NONE} constructor. Others
+represent many types of errors in this way with more complicated
+return types (e.g. a type error), but I kept my semantics simple.
+
+This meant that there were some changes to relations, giving the
+following correspondances.
+
+\begin{alltt}
+\HOLtm[alltt]{bs_l1 (e, s) v s'}
+\HOLtm[alltt]{bs_l1_c c (e, s) (SOME (v, s', c'))}
+\HOLtm[alltt]{vsm_exec P (pc, stk) (pc', stk')}
+\HOLtm[alltt]{vsm_exec_c P (SOME (pc, c, stk)) (SOME (pc', c', stk'))}
+\end{alltt}
+
+These are proven equivalent with theorems
+\ref{clocked-imp-unclocked}, \ref{unclocked-imp-clocked},
+\ref{vsm0-clocked-imp-unclocked}, and
+\ref{vsm0-unclocked-imp-clocked}. They prove that for every unclocked
+program that reduces, there is a clock that makes it reduce also, and
+for every clocked program that reduces, the corresponding unclocked
+program will reduce also.
+
+\begin{theorem}\label{vsm0-clocked-imp-unclocked}
+\begin{alltt}\mbox{}
+\HOLthm[nosp]{vsm0_clocked_equiv.VSM0_CLOCKED_IMP_UNCLOCKED}
+\end{alltt}
+\end{theorem}
+\begin{proof}
+Rule induction on reflexive transitive closure.
+\end{proof}
+
+\begin{theorem}\label{vsm0-unclocked-imp-clocked}
+\begin{alltt}\mbox{}
+\HOLthm[nosp]{vsm0_clocked_equiv.VSM0_UNCLOCKED_IMP_CLOCKED}
+\end{alltt}
+\end{theorem}
+\begin{proof}
+Rule induction on reflexive transitive closure.
+\end{proof}
+
+\subsection{Proof}
+The first thing to do is to make the correctness theorems
+stronger. With the unclocked semantics, we can prove only that if the
+source reduces to a value, the target reduces to the same value.
+
+With the clocked semantics, we can also prove that if the source
+reduces to \HOLtm{NONE}, the target reduces to \HOLtm{NONE} also.
+
+This merely added more cases to the pre-existing correctness proofs
+(generally at least doubled the number of cases), which required a few
+days of work to push through.
+
+The conclusion is present as theorem \ref{nonecorrectness}.
+
+\begin{theorem}\label{nonecorrectness}
+\begin{alltt}\mbox{}
+\HOLthm[nosp]{compiler.total_c_lem_1}
+\end{alltt}
+\end{theorem}
+
+\begin{lemma}\label{type-means-reduces}
+\begin{alltt}\mbox{}
+\HOLthm[nosp]{divergence_preservation.type_means_reduces}
+\end{alltt}
+\end{lemma}
+\begin{proof}
+  Rule induction on the typing relation, with a secondary
+  course-of-values induction on the clock for the while loop.
+\end{proof}
+
+Lemma \ref{type-means-reduces} proves that if an expression is
+typeable with some store, it must reduce to a value or timeout. It is
+then easy to prove that if a typeable program does not reduce to
+\HOLtm{NONE} on all clocks, it must reduce to a value for some clock
+(lemma \ref{lem1}). Lemma \ref{lem2} is the opposite direction for
+vsm0. Lemma \ref{lem3} proves that if an expression and store do not
+reduce in the unclocked semantics, they cannot reduce to \HOLtm{SOME
+  x} in the clocked semantics, whilst lemma \ref{lem4} proves the
+other direction; if an expression and store reduce to \texttt{NONE}
+with all clocks, they will not reduce in the unclocked semantics.
+
+These all lead to theorem \ref{divergence-preservation-thm}.
+
+\begin{lemma}\label{lem1}
+\begin{alltt}\mbox{}
+\HOLthm[nosp]{divergence_preservation.lem1}
+\end{alltt}
+\end{lemma}
+\begin{proof}
+This follows immediately from lemma \ref{type-means-reduces}.
+\end{proof}
+
+\begin{lemma}\label{vsm-exec-det}
+\begin{alltt}\mbox{}
+\HOLthm[nosp]{divergence_preservation.vsm_exec_det}
+\end{alltt}
+\end{lemma}
+\begin{proof}
+Rule induction on the reflexive transitive closure.
+\end{proof}
+
+\begin{lemma}\label{lem2}
+\begin{alltt}\mbox{}
+\HOLthm[nosp]{divergence_preservation.lem2}
+\end{alltt}
+\end{lemma}
+\begin{proof}
+This proof is by contradiction. Suppose the conclusion is false. By the assumption we have that for some $c$, the evaluation terminates properly. Since the conclusion is false, we also have that it evaluates to \texttt{NONE}. By lemma \ref{vsm-exec-det} it then must be the case that either \HOLtm{vsm_exec_c p NONE (SOME (&LENGTH p, c', stk'))} or \HOLtm{vsm_exec_c p (SOME (&LENGTH p, c', stk')) NONE}, and either are easily provably false, as the execution is stuck in either case and \HOLtm{NONE <> SOME (&LENGTH p, c', stk')}. Contradiction!
+\end{proof}
+
+\begin{lemma}\label{lem3}
+\begin{alltt}\mbox{}
+\HOLthm[nosp]{divergence_preservation.lem3}
+\end{alltt}
+\end{lemma}
+\begin{proof}
+Immediately follows in `if' and `only if' cases by theorems \ref{clocked-imp-unclocked} and \ref{unclocked-imp-clocked} respectively.
+\end{proof}
+
+\begin{lemma}\label{lem4}
+\begin{alltt}\mbox{}
+\HOLthm[nosp]{divergence_preservation.lem4}
+\end{alltt}
+\end{lemma}
+\begin{proof}
+  This lemma can be proven by contradiction. Suppose that there are some $e, s, v, s'$ such that
+  \HOLtm{bs_l1 (e, s) v s'}. Then by theorem
+  \ref{unclocked-imp-clocked}, there is a $c$ such that \HOLtm{bs_l1_c
+    (SUC c) (e, s) (SOME (v, s', SUC 0))}. By the left hand side of
+  the implication, \HOLtm{bs_l1_c (SUC c) (e, s) NONE} so by L1
+  determinacy (theorem \ref{l1-determinacy}) we have a contradiction,
+  and there cannot be any such $e, s, v, s'$.
+\end{proof}
+
+\begin{theorem}\label{divergence-preservation-thm}
+\begin{alltt}\mbox{}
+\HOLthm[nosp]{divergence_preservation.DIVERGENCE_PRESERVATION}
+\end{alltt}
+\end{theorem}
+\begin{proof}
+  The `only-if' case follows immediately from theorem
+  \ref{correctness-thm}.  For the `if' case, by lemmas \ref{lem1} and
+  \ref{lem3} we have that for all clocks, the expression and its store
+  reduce to \HOLtm{NONE} in the clocked semantics. By theorem
+  \ref{nonecorrectness} it is the case that for all clocks, the
+  expression in the clocked vsm0 semantics reduce to \HOLtm{NONE}. By
+  theorem \ref{vsm0-unclocked-imp-clocked} and lemma \ref{lem2} the
+  goal is proven.
+\end{proof}
+
+\section{Constant folding}\label{constant-folding}
+Constant folding is a basic and straightforward optimisation used in
+most languages. I implement an even more basic version of constant
+folding than is traditional.
+
+Many expressions have constant value even if they are evaluated at
+runtime; for example $5 + 3$ will always equal $8$. Where this is the
+case, one can achieve better runtime performance by compile time
+evaluation, because that expression can be evaluated by the compiler
+as it depends on no information available only at runtime. This can
+lead to elimination of code entirely; a conditional \HOLtm{L1_If
+  (L1_Value (L1_Bool T)) e1 e2} can be replaced with \HOLtm{e1}. My
+constant folding function is shown in definition \ref{cfold-def}.
+
+\begin{definition}\label{cfold-def}
+\begin{alltt}\mbox{}
+\HOLConst{cfold} (\HOLSymConst{L1_Value} \HOLFreeVar{v}) \HOLSymConst{=} \HOLSymConst{L1_Value} \HOLFreeVar{v}
+\HOLConst{cfold} (\HOLSymConst{L1_Plus} \HOLFreeVar{e\sb{\mathrm{1}}} \HOLFreeVar{e\sb{\mathrm{2}}}) \HOLSymConst{=}
+(\HOLKeyword{let} \HOLBoundVar{f\sb{\mathrm{1}}} = \HOLConst{cfold} \HOLFreeVar{e\sb{\mathrm{1}}} \HOLKeyword{in}
+ \HOLKeyword{let} \HOLBoundVar{f\sb{\mathrm{2}}} = \HOLConst{cfold} \HOLFreeVar{e\sb{\mathrm{2}}}
+ \HOLKeyword{in}
+   \HOLKeyword{case} \HOLBoundVar{f\sb{\mathrm{1}}} \HOLKeyword{of}
+     \HOLSymConst{L1_Value} (\HOLSymConst{L1_Int} \HOLBoundVar{n\sb{\mathrm{1}}}) \HOLTokenImp{}
+       (\HOLKeyword{case} \HOLBoundVar{f\sb{\mathrm{2}}} \HOLKeyword{of}
+          \HOLSymConst{L1_Value} (\HOLSymConst{L1_Int} \HOLBoundVar{n\sb{\mathrm{2}}}) \HOLTokenImp{} \HOLSymConst{L1_Value} (\HOLSymConst{L1_Int} (\HOLBoundVar{n\sb{\mathrm{1}}} \HOLSymConst{+} \HOLBoundVar{n\sb{\mathrm{2}}}))
+        \HOLTokenBar{} \HOLBoundVar{\HOLTokenUnderscore{}} \HOLTokenImp{} \HOLSymConst{L1_Plus} \HOLBoundVar{f\sb{\mathrm{1}}} \HOLBoundVar{f\sb{\mathrm{2}}})
+   \HOLTokenBar{} \HOLBoundVar{\HOLTokenUnderscore{}} \HOLTokenImp{} \HOLSymConst{L1_Plus} \HOLBoundVar{f\sb{\mathrm{1}}} \HOLBoundVar{f\sb{\mathrm{2}}})
+\HOLConst{cfold} (\HOLSymConst{L1_Geq} \HOLFreeVar{e\sb{\mathrm{1}}} \HOLFreeVar{e\sb{\mathrm{2}}}) \HOLSymConst{=}
+(\HOLKeyword{let} \HOLBoundVar{f\sb{\mathrm{1}}} = \HOLConst{cfold} \HOLFreeVar{e\sb{\mathrm{1}}} \HOLKeyword{in}
+ \HOLKeyword{let} \HOLBoundVar{f\sb{\mathrm{2}}} = \HOLConst{cfold} \HOLFreeVar{e\sb{\mathrm{2}}}
+ \HOLKeyword{in}
+   \HOLKeyword{case} \HOLBoundVar{f\sb{\mathrm{1}}} \HOLKeyword{of}
+     \HOLSymConst{L1_Value} (\HOLSymConst{L1_Int} \HOLBoundVar{n\sb{\mathrm{1}}}) \HOLTokenImp{}
+       (\HOLKeyword{case} \HOLBoundVar{f\sb{\mathrm{2}}} \HOLKeyword{of}
+          \HOLSymConst{L1_Value} (\HOLSymConst{L1_Int} \HOLBoundVar{n\sb{\mathrm{2}}}) \HOLTokenImp{} \HOLSymConst{L1_Value} (\HOLSymConst{L1_Bool} (\HOLBoundVar{n\sb{\mathrm{1}}} \HOLSymConst{\HOLTokenGeq{}} \HOLBoundVar{n\sb{\mathrm{2}}}))
+        \HOLTokenBar{} \HOLBoundVar{\HOLTokenUnderscore{}} \HOLTokenImp{} \HOLSymConst{L1_Geq} \HOLBoundVar{f\sb{\mathrm{1}}} \HOLBoundVar{f\sb{\mathrm{2}}})
+   \HOLTokenBar{} \HOLBoundVar{\HOLTokenUnderscore{}} \HOLTokenImp{} \HOLSymConst{L1_Geq} \HOLBoundVar{f\sb{\mathrm{1}}} \HOLBoundVar{f\sb{\mathrm{2}}})
+\HOLConst{cfold} (\HOLSymConst{L1_If} \HOLFreeVar{e\sb{\mathrm{1}}} \HOLFreeVar{e\sb{\mathrm{2}}} \HOLFreeVar{e\sb{\mathrm{3}}}) \HOLSymConst{=}
+\HOLKeyword{case} \HOLConst{cfold} \HOLFreeVar{e\sb{\mathrm{1}}} \HOLKeyword{of}
+\HOLTokenBar{} \HOLSymConst{L1_Value} (\HOLSymConst{L1_Bool} \HOLConst{T}) \HOLTokenImp{} \HOLConst{cfold} \HOLFreeVar{e\sb{\mathrm{2}}}
+\HOLTokenBar{} \HOLSymConst{L1_Value} (\HOLSymConst{L1_Bool} \HOLConst{F}) \HOLTokenImp{} \HOLConst{cfold} \HOLFreeVar{e\sb{\mathrm{3}}}
+\HOLTokenBar{} \HOLFreeVar{x} \HOLTokenImp{} \HOLSymConst{L1_If} \HOLFreeVar{x} (\HOLConst{cfold} \HOLFreeVar{e\sb{\mathrm{2}}}) (\HOLConst{cfold} \HOLFreeVar{e\sb{\mathrm{3}}})
+\HOLConst{cfold} (\HOLSymConst{L1_Assign} \HOLFreeVar{l} \HOLFreeVar{e}) \HOLSymConst{=} \HOLSymConst{L1_Assign} \HOLFreeVar{l} (\HOLConst{cfold} \HOLFreeVar{e})
+\HOLConst{cfold} (\HOLSymConst{L1_Deref} \HOLFreeVar{l}) \HOLSymConst{=} \HOLSymConst{L1_Deref} \HOLFreeVar{l}
+\HOLConst{cfold} (\HOLSymConst{L1_Seq} \HOLFreeVar{e\sb{\mathrm{1}}} \HOLFreeVar{e\sb{\mathrm{2}}}) \HOLSymConst{=}
+\HOLKeyword{case} \HOLConst{cfold} \HOLFreeVar{e\sb{\mathrm{1}}} \HOLKeyword{of}
+\HOLTokenBar{} \HOLSymConst{L1_Value} \HOLSymConst{L1_Skip} \HOLTokenImp{} \HOLConst{cfold} \HOLFreeVar{e\sb{\mathrm{2}}}
+\HOLTokenBar{} \HOLFreeVar{x} \HOLTokenImp{} \HOLSymConst{L1_Seq} \HOLFreeVar{x} (\HOLConst{cfold} \HOLFreeVar{e\sb{\mathrm{2}}})
+\HOLConst{cfold} (\HOLSymConst{L1_While} \HOLFreeVar{e\sb{\mathrm{1}}} \HOLFreeVar{e\sb{\mathrm{2}}}) \HOLSymConst{=}
+\HOLKeyword{case} \HOLConst{cfold} \HOLFreeVar{e\sb{\mathrm{1}}} \HOLKeyword{of}
+\HOLTokenBar{} \HOLSymConst{L1_Value} (\HOLSymConst{L1_Bool} \HOLConst{T}) \HOLTokenImp{}
+    \HOLSymConst{L1_While} (\HOLSymConst{L1_Value} (\HOLSymConst{L1_Bool} \HOLConst{T})) (\HOLSymConst{L1_Value} \HOLSymConst{L1_Skip})
+\HOLTokenBar{} \HOLSymConst{L1_Value} (\HOLSymConst{L1_Bool} \HOLConst{F}) \HOLTokenImp{} \HOLSymConst{L1_Value} \HOLSymConst{L1_Skip}
+\HOLTokenBar{} \HOLFreeVar{x} \HOLTokenImp{} \HOLSymConst{L1_While} \HOLFreeVar{x} (\HOLConst{cfold} \HOLFreeVar{e\sb{\mathrm{2}}})
+\end{alltt}
+\end{definition}
+
+This is more straightforward than many; for example, I do not
+substitute constant valued variables. This was purely due to time
+constraints. The first attempt at a correctness theorem is lemma
+\ref{cfold-safe}.
+
+\begin{lemma}\label{cfold-safe}
+\begin{alltt}\mbox{}
+\HOLthm[nosp]{constant_folding.CFOLD_SAFE}
+\end{alltt}
+\end{lemma}
+\begin{proof}
+  By rule induction over \HOLtm{bs_l1}. Only the while case is interesting, it requires
+  \HOLthm[tt,nostile]{constant_folding.while_true_div}.
+\end{proof}
+
+At present, the above statement is not strong enough to integrate into
+the compilation. Section \ref{il3-correctness} indicates that the overall
+correctness proof is only valid when the store provided is
+\emph{minimal}, meaning that there are no locations in the store that
+are not referenced in the program. \HOLtm{cfold} does not preserve
+store minimality, see theorem \ref{cfold-not-minimal}.
+
+\begin{theorem}\label{cfold-not-minimal}
+  It is not the case that a minimal store for $e$ is necessarily a
+  minimal store for \HOLtm{cfold e}.
+\end{theorem}
+\begin{proof}
+  Proof by contradiction. Suppose that it is the case that a minimal
+  store for $e$ is necessarily a minimal store for \HOLtm{cfold e}. We
+  know that 
+\begin{alltt}
+\HOLtm[alltt]{cfold (L1_While (L1_Value (L1_Bool T)) (L1_Assign l
+    (L1_Value (L1_Int 3)))) = L1_While (L1_Value (L1_Bool T))
+    (L1_Value L1_Skip)}.
+\end{alltt}
+A minimal store for the left hand side must contain the location $l$,
+whilst a minimal store for the right side must not.
+\end{proof}
+
+The easiest way to resolve this quandry is with the type system. Lemma
+\ref{submap-reduces-thm} proves that if an expression and the domain
+of a store typecheck, and that store is a submap of another store for
+which the expression reduces to a value, then the expression will
+reduce to the same value with the submap as its store.
+
+\begin{lemma}\label{submap-reduces-thm}
+\begin{alltt}\mbox{}
+\HOLthm[nosp]{constant_folding.submap_reduces_thm}
+\end{alltt}
+\end{lemma}
+\begin{proof}
+By rule induction on \HOLtm{bs_l1_c}.
+\end{proof}
+
+\noindent Now, prove that for all $e$, the store created after folding
+is a submap of the store created before.
+
+\begin{lemma}\label{submap-cfold}
+\begin{alltt}\mbox{}
+\HOLthm[nosp]{constant_folding.submap_cfold}
+\end{alltt}
+\end{lemma}
+\begin{proof}
+Structural induction.
+\end{proof}
+
+So, considering lemma \ref{submap-reduces-thm}, all we need to prove
+is that the expression is typed with its own created store.
+
+\begin{lemma}\label{cs-min}
+\begin{alltt}\mbox{}
+\HOLthm[nosp]{constant_folding.cs_min}
+\end{alltt}
+\end{lemma}
+\begin{proof}
+Proof by rule induction on the typing relation.
+\end{proof}
+
+\begin{lemma}\label{ltcfold}
+\begin{alltt}\mbox{}
+\HOLthm[nosp]{constant_folding.ltcfold}
+\end{alltt}
+\end{lemma}
+\begin{proof}
+By structural induction on $e$.
+\end{proof}
+
+\begin{theorem}\label{cf-1}
+\begin{alltt}\mbox{}
+\HOLthm[nosp]{constant_folding.cf_1}
+\end{alltt}
+\end{theorem}
+\begin{theorem}\label{cf-2}
+\begin{alltt}\mbox{}
+\HOLthm[nosp]{constant_folding.cf_2}
+\end{alltt}
+\end{theorem}
+\begin{proof}
+  These theorems follow promptly from the above lemmas. Lemma \ref{ltcfold} proves that
+  \HOLtm{l1_type (cfold e) (FDOM (create_store e)) t}, and lemma
+  \ref{cs-min} improves that to \HOLtm{l1_type (cfold e) (FDOM
+    (create_store (cfold e))) t}. Lemmas \ref{submap-cfold} and
+  \ref{submap-reduces-thm} then prove that \HOLtm{?r''.bs_l1_c c (e,
+    create_store (cfold e)) r''} (where $r''$ is the desired result in
+  each of the two theorems), and using lemma \ref{cfold-safe} the
+  proof is complete.
+\end{proof}
+
+Integrating the proofs into the compiler and its associated proofs was
+a straightforward task. An additional constraint placed is that the
+proof of correctness now requires the program to type check. This was
+already required by divergence preservation, so it's not an onerous
+requirement.
+
+\section{Push/pop removal}\label{pushpop}
+An obvious problem with the unoptimised generated code is that it
+contains many unnecessary occurrences of the pattern \HOLtm{[VSM_Push
+  x; VSM_Pop]}. Figure \ref{pp-example} gives an excerpt from an
+unoptimised compilation. This is largely because anything that reduces
+to \HOLtm{L1_Skip} will in vsm0 complete by pushing 0 to the stack. In
+the case where this is discarded immediately, (every case except the
+very last instruction), this is immediately popped off the stack.
+
+\begin{figure}
+\begin{verbatim}
+push 0
+pop
+load 2
+load 8
+plus
+pop
+push 0
+pop
+load 7
+store 2
+push 0
+pop
+push 0
+store 1
+\end{verbatim}
+  \caption{Redundancy of push/pop expressions. Throughout generated
+    programs, a constant is pushed onto the stack and is popped
+    immediately.}
+\label{pp-example}
+\end{figure}
+
+A particularly low hanging apple on the tree of optimisations then
+appears to be the removal of such redundant work. The simplest way of
+doing so would be to replace the removed instructions with
+\HOLtm{VSM_Nop}. The na\"{i}ve implementation does not work in every
+case; imagine a jump to the location of the pop (between the two
+instructions). So, we can only alter occurrences where there cannot be
+any jump to the midpoint.
+
+\begin{definition}\label{EVERYi-jdef}
+\begin{alltt}\mbox{}
+\HOLthm[def]{list.EVERYi_DEF}
+\end{alltt}
+\end{definition}
+
+\begin{definition}\label{elim-pushpop}
+\begin{alltt}\mbox{}
+\HOLConst{nj} \HOLFreeVar{x} \HOLFreeVar{m} (\HOLSymConst{VSM_Jump} \HOLFreeVar{n}) \HOLSymConst{\HOLTokenEquiv{}} \HOLSymConst{\&}\HOLFreeVar{x} \HOLSymConst{\HOLTokenNotEqual{}} \HOLSymConst{\&}\HOLFreeVar{m} \HOLSymConst{+} \HOLFreeVar{n} \HOLSymConst{+} \HOLNumLit{1}
+\HOLConst{nj} \HOLFreeVar{x} \HOLFreeVar{m} (\HOLSymConst{VSM_Jz} \HOLFreeVar{n}) \HOLSymConst{\HOLTokenEquiv{}} \HOLSymConst{\&}\HOLFreeVar{x} \HOLSymConst{\HOLTokenNotEqual{}} \HOLSymConst{\&}\HOLFreeVar{m} \HOLSymConst{+} \HOLFreeVar{n} \HOLSymConst{+} \HOLNumLit{1}
+\HOLConst{nj} \HOLFreeVar{v\sb{\mathrm{0}}} \HOLFreeVar{v\sb{\mathrm{1}}} \HOLSymConst{_} \HOLSymConst{\HOLTokenEquiv{}} \HOLConst{T}
+
+\HOLthm[def]{vsm0_opt.no_jumps_def}
+
+\HOLthm[def]{vsm0_opt.elim_pushpop_def}
+\end{alltt}
+\end{definition}
+
+A relation needs to be found that relates executions in the
+unchanged program to executions in the changed programs. The only
+visible difference should be that when the program counter points to
+the midpoint of the changed instructions, and in that case there
+should be an extra element on the stack in the unchanged program. This
+behaviour is described in definition \ref{el-pp-bs-set-def}.
+
+\begin{definition}\label{el-pp-bs-set-def}
+\begin{alltt}\mbox{}
+\HOLthm[def]{vsm0_opt.el_pp_bs_set_def}
+\end{alltt}
+\end{definition}
+
+\noindent Now, I prove that \HOLtm{el_pp_bs_set} is a simulation relation.
+
+\begin{lemma}\label{plus-sound-thm}
+\begin{alltt}\mbox{}
+\HOLthm[nosp]{vsm0_opt.plus_sound_thm}
+\end{alltt}
+\end{lemma}
+\begin{proof}
+  Proof by rule induction on reflexive transitive closure (definition
+  of \HOLtm{vsm_exec_c}). Some goals are proven immediately from the
+  inductive hypothesis, the remainder are by careful case analysis.
+\end{proof}
+
+This leads directly to two correctness theorems. We have two because
+the end-to-end correctness theorems are all in this form, which makes
+integrating into the compiler more straightforward.
+
+\begin{theorem}\label{pushpop-safe-1}
+\begin{alltt}\mbox{}
+\HOLthm[nosp]{vsm0_opt.pushpop_safe_1}
+\end{alltt}
+\end{theorem}
+\begin{theorem}\label{pushpop-safe-2}
+\begin{alltt}\mbox{}
+\HOLthm[nosp]{vsm0_opt.pushpop_safe_2}
+\end{alltt}
+\end{theorem}
+\begin{proof}
+  Deduction from lemma \ref{plus-sound-thm}, with a few case splits
+  where necessary.
+\end{proof}
+
+Theorems \ref{pushpop-safe-1} and \ref{pushpop-safe-2} prove only that
+we can remove zero or one push/pop occurrences safely. I increase this
+to all occurrences with definition \ref{comp-pp-def} and theorems
+\ref{comp-pp-1-thm} and \ref{comp-pp-2-thm}. The result can be
+implemented into the compilation in a straightforward manner. Only two
+proofs in \texttt{compilerTheory} are changed, and they are changed by
+adding theorem \ref{comp-pp-1-thm} and \ref{comp-pp-2-thm} to a single
+rewrite. This completes the removal of all push/pops. I could have
+also proved that this optimisation is optimal; i.e. not only does it
+remove all push/pops, but it is proven to do so. In the end this
+seemed to be an interesting but extraneous goal, and is not required
+for safety.
+
+\begin{definition}\label{comp-pp-def}
+\begin{alltt}\mbox{}
+\HOLthm[def]{vsm0_opt.c_pp_def}
+
+\HOLthm[def]{vsm0_opt.comp_pp_def}
+\end{alltt}
+\end{definition}
+
+\begin{lemma}\label{c-pp-1-thm}
+\begin{alltt}\mbox{}
+\HOLthm[nosp]{vsm0_opt.c_pp_1_thm}
+\end{alltt}
+\end{lemma}
+\begin{proof}
+  By mathematical induction with lemma \ref{pushpop-safe-1}.
+\end{proof}
+
+\begin{lemma}\label{c-pp-2-thm}
+\begin{alltt}\mbox{}
+\HOLthm[nosp]{vsm0_opt.c_pp_2_thm}
+\end{alltt}
+\end{lemma}
+\begin{proof}
+  By mathematical induction with lemma \ref{pushpop-safe-2}.
+\end{proof}
+
+\begin{theorem}\label{comp-pp-1-thm}
+\begin{alltt}\mbox{}
+\HOLthm[nosp]{vsm0_opt.comp_pp_1_thm}
+\end{alltt}
+\end{theorem}
+\begin{proof}
+Deduction using lemma \ref{c-pp-1-thm}.
+\end{proof}
+
+\begin{theorem}\label{comp-pp-2-thm}
+\begin{alltt}\mbox{}
+\HOLthm[nosp]{vsm0_opt.comp_pp_2_thm}
+\end{alltt}
+\end{theorem}
+\begin{proof}
+Deduction using lemma \ref{c-pp-2-thm}.
+\end{proof}
+
+
+\section{No-op elimination}
+In section \ref{pushpop} I wrote code that replaces sequential pushes
+and pops with no-ops, where that cannot change the final program
+state. Without deleting the resulting no-ops, this is no improvement.
+
+It was simplest to remove a single no-op, prove that transformation sound,
+and remove the rest by simply executing that many times, on every no-op.
+
+The primary difference between this operation and section
+\ref{pushpop} is that this can affect the execution of other
+instructions as well as visible states; since jumps are relative to
+the current program counter, a jump over a deleted instruction will
+point to the wrong program point. To rectify this, I rewrite the
+program.
+
+A complication is that whilst we would hope to perform some kind of
+\HOLtm{MAP}, this is not suitable for it would not allow calculation
+of the current program index. For this reason, I defined a function
+\HOLtm{MAPi}.
+
+\begin{definition}\label{MAPi}
+\begin{alltt}\mbox{}
+\HOLthm[def]{vsm0_opt.MAPi_def}
+\end{alltt}
+\end{definition}
+
+\begin{lemma}\label{EL-MAPi}
+\begin{alltt}\mbox{}
+\HOLthm[nosp]{vsm0_opt.EL_MAPi_thm}
+\end{alltt}
+\end{lemma}
+\begin{proof}
+  By induction on $l$. The base case is vacuously true. The inductive
+  ($h::t$) case is true, for \HOLthm[nosp]{arithmetic.num_CASES}. In
+  the former case the theorem is true by definition \ref{MAPi} and
+  definition of \texttt{EL}, whilst in the latter it is true by the
+  inductive hypothesis.
+\end{proof}
+
+The removal function is defined easily in terms of this; first define
+a function that adjusts a program point to the left of the removed
+location, then a function that adjusts a program point to the
+right. Finally, \texttt{MAPi} these functions to the subprograms to
+the left and right of the removed op.
+
+
+\begin{definition}\label{nop-elim}
+\begin{alltt}\mbox{}
+\HOLSymConst{rw_for} \HOLFreeVar{len} \HOLFreeVar{pc} (\HOLSymConst{VSM_Jump} \HOLFreeVar{n}) \HOLSymConst{=}
+\HOLKeyword{if} \HOLFreeVar{len} \HOLSymConst{\HOLTokenLt{}} \HOLSymConst{\&}\HOLFreeVar{pc} \HOLSymConst{+} \HOLFreeVar{n} \HOLSymConst{+} \HOLNumLit{1} \HOLKeyword{then} \HOLSymConst{VSM_Jump} (\HOLFreeVar{n} \HOLSymConst{\ensuremath{-}} \HOLNumLit{1}) \HOLKeyword{else} \HOLSymConst{VSM_Jump} \HOLFreeVar{n}
+\HOLSymConst{rw_for} \HOLFreeVar{len} \HOLFreeVar{pc} (\HOLSymConst{VSM_Jz} \HOLFreeVar{n}) \HOLSymConst{=}
+\HOLKeyword{if} \HOLFreeVar{len} \HOLSymConst{\HOLTokenLt{}} \HOLSymConst{\&}\HOLFreeVar{pc} \HOLSymConst{+} \HOLFreeVar{n} \HOLSymConst{+} \HOLNumLit{1} \HOLKeyword{then} \HOLSymConst{VSM_Jz} (\HOLFreeVar{n} \HOLSymConst{\ensuremath{-}} \HOLNumLit{1}) \HOLKeyword{else} \HOLSymConst{VSM_Jz} \HOLFreeVar{n}
+\HOLSymConst{rw_for} \HOLFreeVar{len} \HOLFreeVar{pc} \HOLFreeVar{x} \HOLSymConst{=} \HOLFreeVar{x}
+
+\HOLSymConst{rw_ba} \HOLFreeVar{pc} (\HOLSymConst{VSM_Jump} \HOLFreeVar{n}) \HOLSymConst{=}
+\HOLKeyword{if} \HOLSymConst{\&}\HOLFreeVar{pc} \HOLSymConst{+} \HOLFreeVar{n} \HOLSymConst{+} \HOLNumLit{1} \HOLSymConst{\HOLTokenLt{}} \HOLNumLit{0} \HOLKeyword{then} \HOLSymConst{VSM_Jump} (\HOLFreeVar{n} \HOLSymConst{+} \HOLNumLit{1}) \HOLKeyword{else} \HOLSymConst{VSM_Jump} \HOLFreeVar{n}
+\HOLSymConst{rw_ba} \HOLFreeVar{pc} (\HOLSymConst{VSM_Jz} \HOLFreeVar{n}) \HOLSymConst{=}
+\HOLKeyword{if} \HOLSymConst{\&}\HOLFreeVar{pc} \HOLSymConst{+} \HOLFreeVar{n} \HOLSymConst{+} \HOLNumLit{1} \HOLSymConst{\HOLTokenLt{}} \HOLNumLit{0} \HOLKeyword{then} \HOLSymConst{VSM_Jz} (\HOLFreeVar{n} \HOLSymConst{+} \HOLNumLit{1}) \HOLKeyword{else} \HOLSymConst{VSM_Jz} \HOLFreeVar{n}
+\HOLSymConst{rw_ba} \HOLFreeVar{pc} \HOLFreeVar{x} \HOLSymConst{=} \HOLFreeVar{x}
+
+\HOLthm[def]{vsm0_opt.nop_elim_def}
+\end{alltt}
+\end{definition}
+
+\noindent Next, relate execution states pre-removal to execution states
+post-removal.
+
+\begin{definition}\label{bisim-set}
+\begin{alltt}\mbox{}
+\HOLthm[def]{vsm0_opt.make_pair_def}
+
+\HOLthm[def]{vsm0_opt.bisim_set_def}
+\end{alltt}
+\end{definition}
+
+\noindent Now we can specify the soundness of a single no-op removal.
+
+\begin{lemma}\label{remove-nop-sound}
+\begin{alltt}\mbox{}
+\HOLthm[nosp]{vsm0_opt.remove_nop_sound}
+\end{alltt}
+\end{lemma}
+\begin{proof}
+  Despite the proof of this conjecture initially appearing
+  straightforward, it ended up
+  being composed of 421 individual proof steps, making this the single
+  longest in the project.
+
+  It is by rule induction on the reflexive transitive closure. This
+  leads to four cases, corresponding to the combinations of
+  \texttt{NONE} and \HOLtm{SOME x} for the initial and final
+  states. The only tricky cases were when both initial and final cases
+  were \HOLtm{SOME x}, and there case analysis and careful
+  rewrites eventually led to the goal.
+\end{proof}
+
+Given lemma \ref{remove-nop-sound}, I can prove two theorems that slot
+neatly into the pre-existing correctness proof.
+
+\begin{theorem}\label{nopr-safe-1}
+\begin{alltt}\mbox{}
+\HOLthm[nosp]{vsm0_opt.nopr_safe_1}
+\end{alltt}
+\end{theorem}
+\begin{theorem}\label{nopr-safe-2}
+\begin{alltt}\mbox{}
+\HOLthm[nosp]{vsm0_opt.nopr_safe_2}
+\end{alltt}
+\end{theorem}
+\begin{proof}
+  Expand definitions in lemma \ref{remove-nop-sound}, then proof is
+  straightforward.
+\end{proof}
+
+I want to remove all no-ops, not just the ones in a specific
+location. The na\"{i}ve solution is to attempt to remove a no-op at
+program point 0, then 1, then \dots. This does not work, as
+
+\begin{alltt}
+\HOLtm[alltt]{nop_elim (nop_elim [VSM_Nop; VSM_Nop] 0) 1 = [VSM_Nop]}
+\HOLtm[alltt]{nop_elim (nop_elim [VSM_Nop; VSM_Nop] 0) 0 = []}
+\end{alltt}
+
+The difficulty is that after deleting a the no-op at index $n$, the
+new index $n$ might refer to a no-op. The fix for this is to find the
+fixed point of no-op removal before progressing. I do this with a
+function \texttt{ffp}.
+
+\begin{definition}\label{ffp}
+\begin{alltt}\mbox{}
+\HOLthm[def]{vsm0_opt.ffp_def}
+\end{alltt}
+\end{definition}
+\begin{proof}
+  HOL cannot prove that this function terminates. It is the case that
+  either \HOLtm{(nop_elim P l = P) \/ (LENGTH (nop_elim P l) < LENGTH
+    P)}. In the former case there is no recursion and so the function
+  clearly terminates. In the latter case, the measure \HOLtm{\(P,
+    l). LENGTH P} is strictly larger for any call to \HOLtm{nop_elim}
+  than any call made recursively. Thus since there are a finite number
+  of naturals less than \HOLtm{LENGTH P}, the function must always
+  terminate.
+\end{proof}
+
+\noindent Then we can produce a function that removes all no-ops
+\HOLtm{comp_nopr}.
+\begin{definition}\label{c-nopr}
+\begin{alltt}\mbox{}
+\HOLthm[def]{vsm0_opt.c_nopr_def}
+\HOLthm[def]{vsm0_opt.comp_nopr_def}
+\end{alltt}
+\end{definition}
+\noindent and this leads rapidly to the final two
+correctness theorems that allow me to conclude that removing all
+no-ops is safe.
+\begin{theorem}
+\begin{alltt}\mbox{}
+\HOLthm[nosp]{vsm0_opt.comp_nopr_1_thm}
+\end{alltt}
+\end{theorem}
+\begin{theorem}
+\begin{alltt}\mbox{}
+\HOLthm[nosp]{vsm0_opt.comp_nopr_2_thm}
+\end{alltt}
+\end{theorem}
+\begin{proof}
+  A couple of lemmas are omitted. First prove that \HOLtm{ffp} is
+  sound (by rule induction), then prove that \HOLtm{c_nopr} is sound
+  by a straightforward mathematical induction. The conclusion follows.
+\end{proof}
+
+Integrating this into the compiler required only a few function
+declarations to be changed.
+
+\section{Parser, pretty printer and frontend}
+\subsection{Parser}
+I used the parser generator \texttt{ml-yacc} and its associated lexer
+generator \texttt{ml-lex} in order to generate parsers. When executed,
+the generated parser produces a value of type \texttt{expr} which
+corresponds to the abstract syntax tree. A fold over the tree
+produces the HOL representation, which can be compiled.
+
+\subsection{Pretty printer}
+As well as constructors, HOL has destructors, which take a HOL term
+and return its arguments. By recursively doing this, I converted the
+term corresponding to the compiled vsm0 program into an ML list of HOL
+terms corresponding to each individual instruction, and subsequently
+mapped each to a corresponding ML datatype, which could then be
+mapped to a string and the list printed.
+
+\subsection{Frontend}
+Producing an artifact was interesting, as although the semantics of
+Standard ML are defined, there is no binary building format
+specified. This means that each ML environment performs it differently
+(if at all); MLton produces a static binary, CakeML is implemented as
+a REPL, whilst PolyML has the user define a \texttt{main : unit ->
+  int} function in the REPL, and then call
+\texttt{PolyML.export(``l1c'', main)}, which produces an object file
+which can be linked with PolyML's static libraries with
+\texttt{ld}. My frontend code is given in appendix \ref{frontend}.
+
+\chapter{Evaluation}\label{evaluation}
+In `The Mythical Man Month' \cite{mythicalmanmonth} Brooks sagely
+advises that one should ``plan to throw one away, \dots, you will,
+anyhow''. Placed in the context of a realistic compiler projects, my
+project's compiler can be thought of as the one that is planned to be
+thrown away; the compiler implements a number of design decisions that
+would possibly constrict further work.
+
+Nevertheless, the project was a success. My success criterion in my
+proposal was met and more; beyond this there are no cheats and I
+managed to complete a number of extensions. Furthermore, my compiler
+compares well to contemporary research projects, given the short
+duration of the project.
+
+\section{Project scope, work done and difficulty}
+The scope of the project initially appeared small, which, when I started
+the project led me to questioning whether the project contained enough
+content. In particular, L1 and vsm0 are trivial languages and an
+unverified compiler between them could be written in an afternoon.
+
+The difficulty of proving correctness through the project was
+considerable, especially as a beginner. In hindsight this was very
+predictable; the surrounding literature shows established and
+accomplished computer scientists spending similarly large amounts of
+time programming with their proof assistants. Leroy wrote in
+\cite{leroy2006formal} that, ``We found that many of the non-optimizing
+translations performed, while often considered obvious in compiler
+literature, are surprisingly tricky to formally prove correct''.
+
+I estimate that total development took on the order of one
+man-month. In comparison, Leroy's CMinor compiler
+\cite{leroy2006formal}, which is from a tiny intermediate language to
+PowerPC, is stated to have taken one man-year to write, presumably
+with considerable prior knowledge of Coq, (and extensive knowledge of
+compilers and language design in general). That project is far more
+complex than my own, but the order of magnitude difference in
+timeframes suggests that my project was at least scoped correctly.
+
+My verification of correctness is around 6 times bigger than the code
+it proves (source and target semantics, compiler). This is in the
+accepted range. A full breakdown of my program code can be
+found in Figure \ref{codesummary}.
+
+\begin{figure}
+\centering
+\begin{tabular}{lrrrr}
+\hline
+Component & Definitions & Proofs & Total logic lines & Total lines \\ \hline
+Source, target semantics & 359 & 757 & 1116 & 1563 \\
+Intermediate semantics & 218 & 189 & 407 & 664 \\
+Compiler & 155 & 1543 & 1698 & 2298 \\
+Frontend & 0 & 0 & 0 & 257 \\ \hline
+Total & 603 & 2489 & 3092 & 4782 \\ \hline
+\end{tabular}
+\caption{A breakdown of the codebase, all units in lines of code. The
+  first three columns count the number of lines in HOL definitions,
+  the number of lines of proof tactics, and the sum of the two. The
+  last column counts the total number of lines
+  overall.}\label{codesummary}
+\end{figure}
+
+\section{What if there is a bug in HOL?}
+\subsection{Consequences for the correctness theorem}
+This is problematic. As stated, the proof only practically has
+meaning\footnote{At least in the context of this project.} because HOL
+says it has meaning. Relying on my compiler means trusting its proof
+statement, which has a large number of dependencies:
+\begin{enumerate}
+\item The support theories (list, integer etc) must be modelled correctly.
+\item The logic must be sound.
+\item The logic must be implemented correctly.
+\item The theorem prover must be correctly compiled.
+\item The theorem prover must be executed correctly.
+\item The theories must accurately model the semantics.
+\item The properties proven must have meaning.
+\end{enumerate}
+This is a large, daunting list and depressingly, examples of each
+type of bug have been recorded.
+
+HOL has soundness proofs \cite{kumar2014hol}, 
+which is good because were it not sound it would be worthless, but the
+implementation could still contain bugs. HOL has an advantage in that
+its kernel is very small, reducing the possibility for bugs. Coq has a
+much larger kernel (20,000 lines), and so it is perhaps not surprising that
+early in 2015 a proof was found for $\bot$ in Coq \cite{falso}.
+
+Bugs in the implementation of the logic are less of a problem, because
+unless a proof relies on the implementation bug, when the bug is fixed
+only a rebuild is required. In the case of \cite{falso}, since the bug
+required a type with over 255 constructors in order to be asserted it
+affected few users of Coq.
+
+Compiling the theorem prover correctly is a hard problem to solve, and
+is particularly ironic in the context of this project. At the moment
+an unverified ML runtime is required.\footnote{This is one of the
+  primary motivations behind the CakeML project.} The language
+features used by the HOL kernel are generic enough that any bug in a
+compiler would likely be discoverable in many other ML programs, but
+that does not give any assurance; Slind writes in \cite{slind} that
+``since proof assistants are arbiters of correctness they must be held
+to a higher standard \dots\ correctness of compilation for ITPs can be
+a significant component of the trust proposition''. Correct execution
+is a smaller problem, as hardware failure is easily avoided whilst
+architecture bugs are rare; semiconductor manufacturers have a
+huge financial incentive to avoid bugs.
+
+In terms of accurately modelling the semantics, the output is only
+regarded as correct by the user if the implementation of vsm0 matches
+the semantics given, and if the semantics of L1 are those expected by
+the user. This is a practical problem in industry; Horn \cite{horn}
+explains that Intel expends considerable energy to validate that their
+simulations are identical to their microcontrollers.
+
+In my case, the target semantics are not a problem, as my target is
+defined by its HOL semantics. The source semantics have a formal
+definition in \cite{spl} and a visual comparison between HOL definition
+and paper semantics strongly implies that they are identical.
+
+Any further checking would be beyond the scope of this project,
+although were I trying to target a real architecture, or use a
+predefined source with no well defined semantics (i.e. defined by its
+implementation), this would be a much larger problem.
+
+\subsection{Practical consequences}
+The consequences of a bug in the theorem proving stack would
+thankfully be much less bleak for users. The practicalities of writing
+a verified compiler ensure that considerably more time is spent
+writing and justifying each operation, and it is entirely reasonable
+to assume that this leads to more correct software in general.
+
+For example, CompCert's correctness statement is formalised in
+Coq. Even if Coq's logic were proven completely unsound and as a
+result it suffered from \emph{damnatio memoriae} by the mathematical
+community, CompCert would still be fantastic software, for that could
+not detract from the impressive feat that to my knowledge no one has
+ever managed to find a bug in the verified part of CompCert.
+
+\section{The HOL environment}
+\subsection{Programming in HOL}
+Programming in HOL was generally pleasant. It is in many ways similar
+to programming in Standard ML (in the Foundations of Computer Science
+sense), and so in practice the pure nature of the language did not prove
+a huge limitation. The syntax is different to ML, but only slightly
+so.
+
+There were a few cases in which I had to prove termination, but this
+was not hard. The environment's type errors were usually informative,
+and in the worst case one could turn on type annotations and debug
+manually.
+
+\subsection{Proving in HOL}
+One proves theorems in HOL by applying tactics, where the proof is the
+sequence of tactics. A problem is that statically, the composed tactic
+that solves the goal will not make any sense, and so to extract
+meaning the tactic must be stepped through manually. This was not a
+problem when writing proofs, but in practice one writes code so that it
+can be read and modified (otherwise you could compile and delete!) and
+this is more difficult.
+
+This is not unique to HOL; Leroy makes similar complaints about Coq,
+and I've seen comments on Isabelle mailing lists about proofs with
+`chains of tactics' being hard to modify. Isabelle wrote its own
+language for more readable proofs \cite{isar}.
+
+The consequence for this is that proofs generally ended up quite
+brittle; adding an execution case, for example, would break dozens of
+different proofs, even if it is entirely the same as an already
+existing case. This made making changes more work, and made it important to
+get everything right the first time.
+
+\subsection{HOL documentation}
+HOL documentation is generally poor. The Tutorial is regarded to be
+obsolete, whilst the Description is limited in scope and exhaustive in
+content. Myreen's HOL Interaction document is useful for bootstrapping
+HOL knowledge but is limited beyond that by design (only so much
+information can be compressed into 8 pages) and itself is a little
+outdated. The examples provided with the HOL distribution seem to be
+what people have used HOL for, and not examples of how to use HOL.
+
+I found limited documentation a major burden through the project, and
+was frequently ignorant of the right tool for the job, scraping away
+with what I knew, while the right tool for the job lay undocumented.
+This problem thankfully declined during the course of the project.
+
+\section{Performance of generated code}
+Since there is no `state-of-the-art' implementation of either source
+or target, it is difficult to evaluate directly the raw performance of
+my generated code. I thus evaluate by the metric of code size; this in
+practice would probably be an underestimate of the expected runtime
+performance improvement, due to loops.
+
+The example that I used is
+\begin{lstlisting}[language=ML]
+c := 1;
+f1 := 1;
+f2 := 1;
+(while (50 >= !c)
+  do (t := !f1; f1 := !f1 + !f2; f2 := !t));
+if (35 >= 20) then (while true do (f1 := !f1 + -1)) else 5
+\end{lstlisting}
+which is a composition of the calculation of the 50th Fibonacci number,
+and some code that is designed to be amenable to constant folding which leads
+to the program diverging.
+
+The code sizes with the different combinations of optimisations can be
+found in Figure \ref{opt-codesize}. On the test program, the compiler
+reduced the code size by 71\%. The compiler is not
+designed to produce good code without optimisations,\footnote{This is
+  usual; benchmarks in \cite{leroy2006formal} show \texttt{gcc -O0}
+  code running at between 22\% and 86\% of the time performance of even
+  \texttt{gcc -O1} code.} and the optimisations remove a lot of the
+badness.
+
+\begin{figure}
+\centering
+\begin{tabular}{llr}
+\hline
+Constant folding & Push/pop elimination & Length/lines of machine code \\
+\hline
+No & No & 139 \\
+No & Yes & 76 \\
+Yes & No & 97 \\
+Yes & Yes & 41 \\
+\hline
+\end{tabular}
+  \caption{The lengths of the results of compiling
+    a simple program with every combination of optimisations.}
+\label{opt-codesize}
+\end{figure}
+
+\section{Basic blocks and integer woes}\label{intproblems}
+Most modern compilers at some stage produce a control flow graph, with
+sequentially executing code (basic blocks) forming the vertices, and
+the jumps between them forming the edges. This makes many analyses and
+transformations straightforward to read and write; for example, when
+operating on basic blocks, the push/pop elimination operation I performed can
+be simplified to:
+\begin{lstlisting}[language=ML]
+fun pp_elim (VSM_Push x::VSM_Pop::xs) = pp_elim xs
+  | pp_elim [] = []
+  | pp_elim (x::xs) = x::pp_elim xs
+\end{lstlisting}
+and proving soundness takes around 20 lines of proof, as
+opposed to the 300 I eventually required.
+
+At some point I would have to replace basic blocks with offset jumps,
+and so taking into account a proof sketch this was a calculated decision.  Meanwhile, the
+comparative simplicity of my compiler suggested to me that ignoring
+basic blocks would be a viable task, and optimisations were an
+extension.
+
+In retrospect, I regret this decision. Using HOL integers for program
+counters proved much more difficult than natural numbers; HOL's
+integer decision procedure and simplification facilities are seemingly much
+weaker than its natural number equivalents, and I ended up bogged down
+proving trivial identities.
+
+While part of my code was certainly simpler due to this decision, it
+limits the ability to extend and made extensions harder to prove
+correct. In a hypothetical second system it would be rethought.
+
+
+\chapter{Conclusion}
+
+In this document, I have explained the design and implementation of my
+formally verified compiler. This was driven by my general interest
+in theorem proving and proof assistants, as well as the general field
+of compilers.
+
+As the project has evolved, it has been interesting to consider prior
+stages and realise how much more efficiently and effectively I can work
+than at the start of the project. This has been an enjoyable endeavour.
+
+\section{Results}
+
+As discussed in chapter \ref{evaluation}, my project met all the
+requirements set in the proposal (see appendix \ref{project-proposal}).
+
+As time allowed, I implemented a number of extensions conceived
+before work began, namely a proof of divergence preservation (section
+\ref{divergence-preservation}), and two optimisations
+(\ref{constant-folding}, \ref{pushpop}).
+
+\section{Lessons learnt}
+A problem that I grappled with through the length of the project was
+having to learn the environment largely from scratch in the same
+timeframe as I was supposed to be using that knowledge.
+
+Initially I had assumed that I would spend some time learning the
+environment and the rest being productive in it. As it happens, the
+learning overlapped almost entirely with the productivity, with the
+rate of work gradually increasing. Through the project (but especially
+early on) ignorance led to work being much harder than it needed to be.
+
+\section{Future work and hindsight}
+The project is complete with regards to its specification, however
+there is always going to be scope for improvement. I plan on releasing
+the source code under the Apache License 2.0 (a permissive license).
+
+Any improvements to the software would likely involve first a
+large-scale refactoring of the project. A number of design decisions
+backed the project into a corner, and any future developments would
+probably involve a large rewrite. A more flexible foundation to the
+project would ensure that adding more advanced features would be
+straightforward. Possible features would include:
+\begin{description}
+\item[a new target language:] At present the target language is
+  esoteric, and has semantics which are unparalleled by most practical
+  systems, for obvious reasons. These added complications and restrictions to the
+  verification effort. A practical simplification would result by
+  targeting a `real' architecture.
+\item[an improved source language:] At present the source language is
+  a tiny fragment of Standard ML. It would be possible to improve the
+  language beyond current (functions, more interesting types etc) but
+  all of this forms under the scope of the CakeML project. It would be
+  interesting to investigate more interesting languages, perhaps
+  some kind of DSL along the lines of Cryptol \cite{cryptol}.
+\item[more advanced optimisations:] The current optimisations are
+  implemented largely to exhibit the viability of optimisations. It
+  would be interesting to implement more interesting optimisations,
+  especially those revolving around abstract interpretation (maximum
+  stack size, perhaps).
+\end{description}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% the bibliography
+\addcontentsline{toc}{chapter}{Bibliography}
+\bibliography{refs}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% the appendices
+\appendix
+
+\chapter{Code samples}
+\section{Frontend code}\label{frontend}
+\begin{lstlisting}[language=ML,breaklines=true]
+val _ = PolyML.print_depth 0;
+
+load"printerLib";
+load"parsingLib";
+load"compilerTheory";
+load"bossLib";
+load"boolLib";
+load"intSimps";
+open HolKernel compilerTheory bossLib boolLib parsingLib printerLib CommandLine;
+
+fun snd (a, b) = b;
+
+fun main () = let val args = CommandLine.arguments()
+  in
+      if length(args) = 0 orelse length(args) > 1 then
+          (print("Must provide one input file as a command line argument.\n"); OS.Process.exit(OS.Process.failure))
+      else (let val filename = hd args
+                val file = TextIO.openIn filename
+                val file_contents = TextIO.inputAll file
+                val _ = TextIO.closeIn file
+                val parsed = parsingLib.parse file_contents
+                val compiled = snd (dest_eq (snd (dest_thm (SIMP_RULE intSimps.int_ss [] (EVAL ``c_opts ^parsed``)))))
+            in (printerLib.print_prog (printerLib.get_instructions compiled); OS.Process.exit(OS.Process.success)) end) end;
+
+PolyML.export("l1c", main);
+\end{lstlisting}
+
+\section{Proof of theorem \ref{MIN-STORE-IMP-ALL-LOCS-IN-RANGE}}\label{min-store-imp-all-locs-in-range-append}
+
+\begin{lstlisting}[language=ML, breaklines=true,extendedchars=true,literate={∈}{{$\in$}}1]
+val load_in_prog_imp_in_map = prove(``!P i'.MEM (IL2_Load i') P ==> i' ∈ FDOM (FST (make_loc_map P)) ``,
+Induct_on `P` THEN rw [] THEN fs [MEM, FST, make_loc_map_def, locs_to_map_def, get_locations_def]
+THEN (TRY (res_tac THEN Cases_on `h` THEN fs [fetch_def, make_loc_map_def, il2_to_il3_def, s_uloc_def, locs_to_map_def, get_locations_def, il2_to_il3m_def, FCARD_FEMPTY]))
+
+THEN `?m n.locs_to_map (get_locations P) = (m, n)` by metis_tac [locs_to_map_total_thm] THEN fs [LET_DEF]
+THEN Cases_on `i' ∈ FDOM m` THEN fs [] THEN rw [])
+
+val store_in_prog_imp_in_map = prove(``!P i'.MEM (IL2_Store i') P ==> i' ∈ FDOM (FST (make_loc_map P)) ``,
+Induct_on `P` THEN rw [] THEN fs [MEM, FST, make_loc_map_def, locs_to_map_def, get_locations_def]
+THEN (TRY (res_tac THEN Cases_on `h` THEN fs [fetch_def, make_loc_map_def, il2_to_il3_def, s_uloc_def, locs_to_map_def, get_locations_def, il2_to_il3m_def, FCARD_FEMPTY]))
+
+THEN `?m n.locs_to_map (get_locations P) = (m, n)` by metis_tac [locs_to_map_total_thm] THEN fs [LET_DEF]
+THEN Cases_on `i' ∈ FDOM m` THEN fs [] THEN rw [])
+
+
+val snd_arg_fcard = prove(``!P.SND (make_loc_map P) = FCARD (FST (make_loc_map P))``,
+
+fs [make_loc_map_def] THEN Induct_on `P` THEN rw [get_locations_def, locs_to_map_def, FST, FCARD_FEMPTY] THEN Cases_on `h` THEN  fs [fetch_def, make_loc_map_def, il2_to_il3_def, s_uloc_def, locs_to_map_def, get_locations_def, il2_to_il3m_def] THEN `?m n.locs_to_map (get_locations P) = (m, n)` by metis_tac [locs_to_map_total_thm] THEN fs [LET_DEF]
+THEN Cases_on `i ∈ FDOM m` THEN fs [FCARD_FUPDATE] THEN decide_tac)
+
+val s_uloc_fcard = prove(``!P.s_uloc (il2_to_il3 P) = FCARD (FST (make_loc_map P))``,
+
+Induct_on `P` THEN rw [get_locations_def, locs_to_map_def, FST, FCARD_FEMPTY, s_uloc_def, make_loc_map_def, il2_to_il3_def]
+THEN Cases_on `h` THEN fs [fetch_def, make_loc_map_def, il2_to_il3_def, s_uloc_def, locs_to_map_def, get_locations_def, il2_to_il3m_def, FCARD_FEMPTY]
+THEN `?m n.locs_to_map (get_locations P) = (m, n)` by metis_tac [locs_to_map_total_thm] THEN fs [LET_DEF]
+THEN Cases_on `i ∈ FDOM m` THEN fs [FCARD_FUPDATE, FCARD_FEMPTY]
+THEN (TRY (`m ' i < FCARD m` by metis_tac [snd_arg_fcard, map_range_thm, FST, SND, make_loc_map_def]
+THEN `m ' i + 1 <= FCARD m` by decide_tac THEN rw [MAX_DEF] THEN decide_tac))
+THEN `MAP (il2_to_il3m (m |+ (i, n))) P = MAP (il2_to_il3m m) P` by (
+    rw [MAP_EQ_f]
+    THEN Cases_on `e` THEN  fs [il2_to_il3m_def, get_locations_def, s_uloc_def] THEN 
+    `?m n.locs_to_map (get_locations P) = (m, n)` by metis_tac [locs_to_map_total_thm] THEN fs [LET_DEF]
+    THEN fs [locs_to_map_def, get_locations_def] THEN fs [LET_DEF]
+    THEN Cases_on `i' ∈ FDOM m'` THEN fs [] THEN rw [] THEN1 metis_tac [FAPPLY_FUPDATE_THM]
+    THEN fs [FDOM_FUPDATE]
+    THEN metis_tac [store_in_prog_imp_in_map, load_in_prog_imp_in_map, FST, make_loc_map_def, FAPPLY_FUPDATE_THM])
+THEN rw []
+THEN rw [MAX_DEF]
+THEN `FCARD m = n` by metis_tac [snd_arg_fcard, FST, make_loc_map_def, SND, MAX_DEF] THEN decide_tac)
+
+val least_unused_loc_is_next_to_use = prove(``!P.SND (make_loc_map P) = s_uloc (il2_to_il3 P)``, metis_tac [s_uloc_fcard, snd_arg_fcard])
+
+val min_store_imp_all_locs_in_range = store_thm("min_store_imp_all_locs_in_range", ``!P st.ms_il2 P st ==> (!l.l ∈ FDOM (MAP_KEYS (map_fun (FST (make_loc_map P))) st) <=> (l < s_uloc (il2_to_il3 P)))``,
+
+rw [ms_il2_def]
+
+THEN rw [MAP_KEYS_def, make_loc_map_inj]
+
+THEN `s_uloc (il2_to_il3 P) = (SND (make_loc_map P))` by metis_tac [least_unused_loc_is_next_to_use]
+
+THEN metis_tac [locs_to_map_total_thm, map_fun_def, map_range_thm, make_loc_map_def,EQ_IMP_THM, map_range_2_thm, FST, SND, make_loc_map_def])
+
+\end{lstlisting}
+
+\section{Overall proof of correctness}\label{chaincorrect}
+\begin{lstlisting}[language=ML,basicstyle=\tiny,breaklines=true,extendedchars=true,literate={∈}{{$\in$}}1 {⊌}{{$\uplus$}}1 {∈}{{$\in$}}1]
+open HolKernel boolLib bossLib l1_to_il1_compilerTheory il1_to_il2_compilerTheory store_creationTheory il1_il2_correctnessTheory l1_il1_correctnessTheory lcsymtacs il2_to_il3_compilerTheory listTheory pairTheory pred_setTheory l1_il1_totalTheory bigstep_il1Theory ast_l1Theory store_equivalenceTheory finite_mapTheory il3_to_vsm0_correctnessTheory il3_store_propertiesTheory il2_il3_correctnessTheory bs_ss_equivalenceTheory smallstep_vsm0_clockedTheory bigstep_il1_clockedTheory vsm0_clocked_equivTheory clocked_equivTheory relationTheory smallstep_il2Theory vsm_compositionTheory integerTheory vsm0_optTheory constant_foldingTheory
+
+val _ = new_theory "compiler"
+
+val il2_vsm_correctness_1 = store_thm("il2_vsm_correctness",``
+!P pc c stk st.
+exec_clocked P (SOME (pc, c, stk, st)) NONE /\ ms_il2 P st ==>
+
+vsm_exec_c (il2_to_il3 P) (SOME (pc, c, astack (il2_to_il3 P) (MAP_KEYS (map_fun (FST (make_loc_map P))) st) stk)) NONE``,
+
+rw []
+THEN imp_res_tac IL2_IL3_EQ_1
+THEN imp_res_tac vsm_exec_correctness_1_thm
+
+THEN `ms_il2 P st ==> (!l.l ∈ FDOM (MAP_KEYS (map_fun (FST (make_loc_map P))) st) <=> (l < s_uloc (il2_to_il3 P)))` by metis_tac [min_store_imp_all_locs_in_range]
+
+THEN metis_tac [])
+
+val il2_vsm_correctness_2 = store_thm("il2_vsm_correctness",``
+!P pc c stk st pc' c' stk' st'.
+exec_clocked P (SOME (pc, c, stk, st)) (SOME (pc', c', stk', st')) /\ ms_il2 P st ==>
+
+?n astk.vsm_exec_c (il2_to_il3 P) (SOME (pc, c, astack (il2_to_il3 P) (MAP_KEYS (map_fun (FST (make_loc_map P))) st) stk)) (SOME (pc', c', astk)) /\ (stk' = TAKE n astk)``,
+
+rw []
+THEN imp_res_tac IL2_IL3_EQ_2
+THEN imp_res_tac vsm_exec_correctness_2_thm
+
+THEN `ms_il2 P st ==> (!l.l ∈ FDOM (MAP_KEYS (map_fun (FST (make_loc_map P))) st) <=> (l < s_uloc (il2_to_il3 P)))` by metis_tac [min_store_imp_all_locs_in_range]
+
+THEN metis_tac [])
+
+val compile_il2_def = Define `compile_il2 e = il1_to_il2 (l1_to_il1 e 0)`
+
+val compile_def = Define `compile e = il2_to_il3 (compile_il2 e)`
+
+val compile_opt_def = Define `compile_opt e = comp_nopr (comp_pp (compile e))`
+
+val push_zeroes_def = Define `(push_zeroes 0 = []) /\ (push_zeroes (SUC n) = SNOC (VSM_Push 0) (push_zeroes n))`
+
+val full_compile_def = Define `full_compile e = (push_zeroes (s_uloc (compile e))) ++ compile_opt e`
+
+val create_il2_store_def = Define `
+(create_il2_store [] = FEMPTY) /\
+(create_il2_store (IL2_Store l::xs) = (create_il2_store xs) |+ (l, 0)) /\
+(create_il2_store (IL2_Load l::xs) = (create_il2_store xs) |+ (l, 0)) /\
+(create_il2_store (_::xs) = (create_il2_store xs))`
+
+val ms_il2_st_thm = prove(``!e.ms_il2 e (create_il2_store e)``,
+
+Induct_on `e` THEN rw [ms_il2_def, create_il2_store_def, make_loc_map_def, locs_to_map_def, get_locations_def, FST]
+
+THEN Cases_on `h` THEN fs [create_il2_store_def, get_locations_def] THEN rw []
+THEN fs [make_loc_map_def, ms_il2_def]
+
+THEN fs [locs_to_map_def]
+
+THEN `?m n.locs_to_map (get_locations e) = (m, n)` by metis_tac [locs_to_map_total_thm]
+
+THEN rw [LET_DEF]
+
+THEN metis_tac [ABSORPTION_RWT])
+
+fun btotal f x = f x handle HOL_ERR _ => false
+
+fun P id tm =
+  btotal ((equal id) o fst o dest_var) tm orelse
+  P id (snd(listSyntax.dest_cons tm))
+
+fun tac P (g as (asl,w)) =
+  let
+    val ts = mk_set(List.concat (map (find_terms (btotal P)) (w::asl)))
+    val ths = mapfilter (fn tm => map (C SPEC (ASSUME tm)) ts) asl
+  in
+    map_every assume_tac (List.concat ths)
+  end g
+
+
+val union_abs_thm = prove(``!x y.x ⊌ y ⊌ x = x ⊌ y``,
+Induct_on `x` THEN rw [FUNION_FEMPTY_1, FUNION_FEMPTY_2]
+THEN rw [FUNION_FUPDATE_1, FUNION_FUPDATE_2])
+
+
+val il2_store_etc = prove(``!x y.create_il2_store (x ++ y) = create_il2_store x ⊌ create_il2_store y``, Induct_on `x` THEN 
+rw [create_il2_store_def, FUNION_FEMPTY_1] THEN Cases_on `h` THEN rw [create_il2_store_def, FUNION_FUPDATE_1])
+
+val con_store_etc = prove(``!x y.con_store (x ⊌ y) = (con_store x) ⊌ (con_store y)``, rw [con_store_def]
+
+THEN Induct_on `x` THEN Induct_on `y` THEN rw [FUNION_FEMPTY_1, FUNION_FEMPTY_2]
+THEN fs [GSYM MAP_APPEND_EQUIV_THM, FUNION_FUPDATE_1, FUNION_FUPDATE_2])
+
+val zeroed_def = Define `zeroed m = !l.l ∈ FDOM m ==> (m ' l = 0)`
+
+val equiv_etc = prove(``!a b c d.equiv a b /\ equiv c d ==> equiv (a ⊌ c) (b ⊌ d)``,
+rw [equiv_def] THEN Cases_on `User k ∈ FDOM a`
+THEN metis_tac [FUNION_DEF])
+
+val il2_store_etc2 = prove(``!l e.l ∈ FDOM (create_il2_store e) ==> ((create_il2_store e) ' l = 0)``,
+Induct_on `e`
+THEN rw [create_il2_store_def, FDOM_FEMPTY] THEN Cases_on `h` THEN
+fs [create_il2_store_def] THEN rw [] THEN Cases_on `i = l` THEN
+rw [FAPPLY_FUPDATE_THM])
+
+
+val store_equiv_gen_thm = store_thm("store_equiv_gen_thm", ``!e n.equiv (con_store (create_store e)) (create_il2_store (il1_to_il2 (l1_to_il1 e n)))``,
+
+Induct_on `e` THEN
+fs [compile_il2_def, il1_to_il2_def, il1e_to_il2_def, l1_to_il1_def, l1_to_il1_pair_def]
+THEN rw []
+
+THEN1 (
+rw [create_store_def]
+THEN Cases_on `l` THEN
+fs [l1_to_il1_pair_def] THEN rw []
+THEN (TRY (Cases_on `b`)) THEN
+
+ rw [il1_to_il2_def, create_il2_store_def, il2_store_etc, il1e_to_il2_def, con_store_def, MAP_KEYS_FEMPTY, EQUIV_REFL_THM])
+
+THEN tac (P "n'")
+THEN tac (P "n")
+THEN tac (P "lc2")
+THEN tac (P "lc3")
+THEN tac (P "lc")
+THEN rfs [LET_THM]
+
+THEN rw []
+
+
+THEN fs [il1_to_il2_def, il1e_to_il2_def]
+
+THEN fs [il2_store_etc, create_il2_store_def, FUNION_FEMPTY_1, FUNION_FEMPTY_2, FUNION_FUPDATE_1, FUNION_FUPDATE_2]
+
+THENL [Cases_on `Compiler lc3 ∈ FDOM (create_il2_store (il1_to_il2 sl1))` THEN
+       Cases_on `Compiler lc3 ∈ FDOM (create_il2_store (il1e_to_il2 e1'))`,
+Cases_on `Compiler lc3 ∈ FDOM (create_il2_store (il1_to_il2 sl1))`
+THEN Cases_on `Compiler lc3 ∈ FDOM (create_il2_store (il1e_to_il2 e1'))`,
+Cases_on `Compiler lc4 ∈ FDOM (create_il2_store (il1_to_il2 sl1))`
+THEN Cases_on `Compiler lc4 ∈ FDOM (create_il2_store (il1e_to_il2 e1'))`,
+Cases_on `User n ∈ FDOM (create_il2_store (il1_to_il2 sl))`
+THEN (Cases_on `User n ∈ FDOM (create_il2_store (il1e_to_il2 e'))`), all_tac, all_tac, all_tac]
+
+THEN fs [] THEN rw [create_store_def] THEN fs [con_store_etc] THEN
+fs [equiv_def] THEN rw [] THEN `(create_il2_store (il1_to_il2 sl1) ⊌
+ create_il2_store (il1e_to_il2 e1') ⊌
+ create_il2_store (il1_to_il2 sl2) ⊌
+ create_il2_store (il1e_to_il2 e2') ⊌
+ create_il2_store (il1_to_il2 sl1)) = (create_il2_store (il1_to_il2 sl1) ⊌
+ create_il2_store (il1e_to_il2 e1') ⊌
+ create_il2_store (il1_to_il2 sl2) ⊌
+ create_il2_store (il1e_to_il2 e2'))` by metis_tac [FUNION_ASSOC, union_abs_thm]
+THEN rw []
+
+THEN rw [GSYM FUNION_ASSOC, FUNION_DEF, FAPPLY_FUPDATE_THM, il2_store_etc2]
+THEN (TRY (metis_tac [il2_store_etc2])) THEN Cases_on `n=k` THEN rw [] THEN
+fs [con_store_def, GSYM MAP_APPEND_EQUIV_THM, MAP_KEYS_FEMPTY, FAPPLY_FUPDATE_THM]
+THEN rw [il2_store_etc2]
+
+THEN rw [DISJ_ASSOC, EQ_IMP_THM] THEN TRY (metis_tac []))
+
+val l1_to_il2_correctness_1_thm = prove(
+``!c e v s' c'.bs_l1_c c (e, create_store e) NONE ==> exec_clocked (compile_il2 e) (SOME (0, c, [], con_store (create_store e))) NONE``,
+rw [] THEN imp_res_tac L1_TO_IL1_CORRECTNESS_LEMMA THEN fs [FST, SND]
+THEN rw [compile_il2_def] THEN
+rw [l1_to_il1_def]
+THEN  `equiv (con_store (create_store e)) (con_store (create_store e))` by metis_tac [EQUIV_REFL_THM]
+THEN (imp_res_tac EQ_SYM THEN res_tac THEN rfs [] THEN rw [])
+
+THEN `bs_il1_c c (IL1_Seq s (IL1_Expr te), con_store (create_store e)) NONE` by rw [Once bs_il1_c_cases]
+THEN imp_res_tac IL1_IL2_CORRECTNESS_1_THM
+THEN metis_tac [])
+
+
+val l1_to_il2_correctness_2_thm = prove(
+``!c e v s' c'.bs_l1_c c (e, create_store e) (SOME (v, s', c')) ==> ?s''.exec_clocked (compile_il2 e) (SOME (0, c, [], con_store (create_store e))) (SOME (&LENGTH (compile_il2 e), c', [(il1_il2_val (l1_il1_val v))], s''))``,
+rw [] THEN imp_res_tac L1_TO_IL1_CORRECTNESS_LEMMA THEN fs [FST, SND] THEN rw [compile_il2_def] THEN
+rw [l1_to_il1_def]
+
+THEN `?st ex lc1'.l1_to_il1_pair 0 e = (st, ex, lc1')` by metis_tac [L1_TO_IL1_TOTAL_THM]
+
+
+THEN `equiv (con_store (create_store e)) (con_store (create_store e))` by metis_tac
+[EQUIV_REFL_THM] THEN (imp_res_tac EQ_SYM THEN res_tac THEN rfs [] THEN rw [])
+ THEN `bs_il1_c c (IL1_Seq st (IL1_Expr ex), con_store (create_store e)) (SOME (l1_il1_val v, fs', c'))` by (rw [Once bs_il1_c_cases] THEN metis_tac [bs_il1_c_cases])
+THEN imp_res_tac IL1_IL2_CORRECTNESS_2_THM
+THEN metis_tac [])
+
+val length_prog_thm = prove(``!e.LENGTH (compile e) = LENGTH (compile_il2 e)``,
+rw [compile_def, compile_il2_def, il2_to_il3_def])
+
+val make_stack_def = Define `make_stack e = astack (compile e)
+            (MAP_KEYS (map_fun (FST (make_loc_map (compile_il2 e))))
+               (create_il2_store (compile_il2 e))) []`
+
+val push_thm = prove(``!n c.vsm_exec_c (push_zeroes n) (SOME (0, c, [])) (SOME (&LENGTH (push_zeroes n), c, GENLIST_AUX (\x.0) n []))``,
+
+rw [] THEN Induct_on `n` THEN1 fs [push_zeroes_def, GENLIST_AUX, vsm_exec_c_def, RTC_REFL]
+
+THEN fs [vsm_exec_c_def]
+
+THEN rw [Once RTC_CASES2] THEN DISJ2_TAC
+
+THEN Q.EXISTS_TAC `(SOME (&LENGTH (push_zeroes n), c, GENLIST_AUX (\x.0) n []))`
+
+THEN rw [push_zeroes_def]
+
+THEN fs [GSYM vsm_exec_c_def]
+
+THEN rw [SNOC_APPEND]
+
+THEN1 (match_mp_tac APPEND_TRACE_SAME_VSM0_THM THEN rw [])
+
+THEN rw_tac (srw_ss () ++ intSimps.INT_ARITH_ss) [vsm_exec_c_one_cases, vsm_exec_c_instr_cases, fetch_append_thm, fetch_def]
+THEN (WEAKEN_TAC (fn x => true)) THEN fs [GSYM GENLIST_GENLIST_AUX, GENLIST_CONS]
+THEN rw [GENLIST_FUN_EQ])
+
+val constant_list_reverse = prove(``!x xs.(!n.(n < LENGTH xs) ==> (EL n xs = x)) ==> (REVERSE xs = xs)``,
+rw [] THEN match_mp_tac LIST_EQ THEN rw [EL_REVERSE] THEN `PRE (LENGTH xs - x') < LENGTH xs` by decide_tac THEN metis_tac [])
+
+val genlist_thm = prove(``!n'.(!n.(n < LENGTH (GENLIST (\l.0) n')) ==> (EL n (GENLIST (\l.0) n') = 0))``,
+rw [])
+
+val create_il2_store_zero = prove(``!p x. x ∈ FDOM (create_il2_store p) ==> (create_il2_store p ' x = 0)``,
+Induct_on `p` THEN rw [] THEN fs [create_il2_store_def] THEN Cases_on `h`
+THEN fs [create_il2_store_def] THEN metis_tac [FAPPLY_FUPDATE_THM])
+
+val push2_thm = prove(``!e.make_stack e = REVERSE (GENLIST (\l.0) (s_uloc (compile e)))``,
+
+rw [make_stack_def, astack_def]
+
+THEN match_mp_tac LIST_EQ THEN rw []
+
+THEN `ms_il2 (compile_il2 e) (create_il2_store (compile_il2 e))` by metis_tac [ms_il2_st_thm]
+
+THEN `x ∈
+        FDOM
+          (MAP_KEYS
+             (map_fun (FST (make_loc_map (compile_il2 e))))
+             (create_il2_store (compile_il2 e)))` by metis_tac [compile_def, compile_il2_def, ms_il2_st_thm, EQ_IMP_THM, min_store_imp_all_locs_in_range]
+
+THEN imp_res_tac map_deref_thm THEN fs [MAP_KEYS_def] THEN res_tac THEN fs []
+THEN metis_tac [il2_store_etc2])
+
+
+val push3_thm = store_thm("push3_thm", ``!e c.vsm_exec_c (push_zeroes (s_uloc (compile e))) (SOME (0, c, [])) (SOME (&LENGTH (push_zeroes (s_uloc (compile e))), c, make_stack e))``,
+rw []
+THEN `make_stack e = GENLIST_AUX (\x.0) (s_uloc (compile e)) []` by (fs [push2_thm, GSYM GENLIST_GENLIST_AUX] THEN
+match_mp_tac LIST_EQ THEN rw [] THEN rw [EL_REVERSE] THEN `PRE (s_uloc (compile e) - x) < s_uloc (compile e)` by decide_tac THEN rw []) THEN metis_tac [push_thm])
+
+val thmtest1 = prove(``!P P' c c' stk stk' c'' stk'' endpc.vsm_exec_c P (SOME (0, c, stk)) (SOME (&LENGTH P, c', stk')) /\ vsm_exec_c P' (SOME (0, c', stk')) (SOME (&LENGTH P', c'', stk'')) /\ (&LENGTH P' + &LENGTH P = endpc) ==>
+vsm_exec_c (P ++ P') (SOME (0, c, stk)) (SOME (endpc, c'', stk''))``,
+rw [vsm_exec_c_def]
+THEN
+match_mp_tac (GEN_ALL(CONJUNCT2 (SPEC_ALL (REWRITE_RULE [EQ_IMP_THM] RTC_CASES_RTC_TWICE)))) 
+THEN fs [GSYM vsm_exec_c_def]
+
+THEN rw [GSYM incr_pc_vsm0_def]
+THEN Q.EXISTS_TAC `(SOME (&LENGTH P, c', stk'))` THEN rw [] THENL [all_tac, REWRITE_TAC [Once (GSYM INT_ADD_LID)]
+THEN rw [GSYM incr_pc_vsm0_def]] THEN
+metis_tac [APPEND_TRACE_SAME_VSM0_THM, APPEND_TRACE_SAME_2_VSM0_THM])
+
+val init_stack_1_thm = prove(``!e c.vsm_exec_c (compile e) (SOME (0, c, make_stack e)) NONE ==> vsm_exec_c (full_compile e) (SOME (0, c, [])) NONE``,
+
+rw [full_compile_def, vsm_exec_c_def]
+THEN
+match_mp_tac (GEN_ALL(CONJUNCT2 (SPEC_ALL (REWRITE_RULE [EQ_IMP_THM] RTC_CASES_RTC_TWICE)))) 
+THEN fs [GSYM vsm_exec_c_def]
+
+THEN Q.EXISTS_TAC `(SOME (&LENGTH (push_zeroes (s_uloc (compile e))), c, make_stack e))`
+ THEN rw [] THEN1 (match_mp_tac APPEND_TRACE_SAME_VSM0_THM THEN metis_tac [push3_thm])
+
+THEN REWRITE_TAC [Once (GSYM INT_ADD_LID)]
+THEN REWRITE_TAC [Once (CONJUNCT2 (SPEC_ALL (Q.SPEC `&LENGTH (push_zeroes (s_uloc (compile e)))` (GEN_ALL (GSYM incr_pc_vsm0_def)))))]
+THEN rw [GSYM incr_pc_vsm0_def]
+
+THEN match_mp_tac APPEND_TRACE_SAME_2_VSM0_THM
+THEN rw [compile_opt_def, comp_pp_1_thm, comp_nopr_1_thm])
+
+val init_stack_2_thm = prove(``!e c astk c'.vsm_exec_c (compile e) (SOME (0, c, make_stack e)) (SOME (&LENGTH (compile e), c', astk)) ==>
+vsm_exec_c (full_compile e) (SOME (0, c, [])) (SOME (&LENGTH (full_compile e), c', astk))``,
+rw [full_compile_def]
+THEN match_mp_tac thmtest1
+THEN Q.LIST_EXISTS_TAC [`c`, `make_stack e`] THEN rw [push3_thm] THEN
+RW_TAC (srw_ss () ++ intSimps.INT_ARITH_ss) [compile_opt_def, comp_pp_2_thm, comp_nopr_2_thm])
+
+val c_opts_def = Define `c_opts e = full_compile (cfold e)`
+
+val total_c_lem_1 = store_thm("total_c_lem_1", ``!c e t.l1_type e (FDOM (create_store e)) t /\ bs_l1_c c (e, create_store e) NONE ==> vsm_exec_c (c_opts e) (SOME (0, c, [])) NONE``,
+rw [c_opts_def] THEN match_mp_tac init_stack_1_thm
+THEN imp_res_tac cf_1
+THEN rw [make_stack_def] THEN imp_res_tac l1_to_il2_correctness_1_thm
+
+THEN `equiv (con_store (create_store (cfold e))) (create_il2_store (compile_il2 (cfold e)))` by metis_tac [compile_il2_def, store_equiv_gen_thm]
+
+THEN imp_res_tac L1_TO_IL1_CORRECTNESS_LEMMA THEN fs [FST] THEN res_tac
+
+
+THEN `?st ex lc1.l1_to_il1_pair 0 (cfold e) = (st, ex, lc1)` by metis_tac [L1_TO_IL1_TOTAL_THM]
+THEN fs []
+THEN (imp_res_tac EQ_SYM THEN res_tac THEN rfs [] THEN rw [])
+THEN `ms_il2 (compile_il2 (cfold e)) (create_il2_store (compile_il2 (cfold e)))` by metis_tac [ms_il2_st_thm]
+
+THEN `bs_il1_c c (IL1_Seq st (IL1_Expr ex), create_il2_store (compile_il2 (cfold e))) NONE` by rw [Once bs_il1_c_cases]
+THEN imp_res_tac IL1_IL2_CORRECTNESS_1_THM THEN imp_res_tac il2_vsm_correctness_1
+THEN fs[compile_def] THEN fs [compile_il2_def, l1_to_il1_def] THEN rfs [LET_DEF])
+
+val total_c_lem_2 = store_thm("total_c_lem_2", ``!c e v s' c' t. l1_type e (FDOM (create_store e)) t /\
+    bs_l1_c c (e, create_store e) (SOME (v, s', c')) ==> 
+    ?astk.
+        vsm_exec_c (compile (cfold e)) (SOME (0, c, make_stack (cfold e))) (SOME (&LENGTH (compile (cfold e)), c', (il1_il2_val (l1_il1_val v))::astk))``,
+
+rw [make_stack_def]
+THEN imp_res_tac cf_2
+THEN imp_res_tac l1_to_il2_correctness_2_thm
+
+THEN `equiv (con_store (create_store (cfold e))) (create_il2_store (compile_il2 (cfold e)))` by metis_tac [compile_il2_def, store_equiv_gen_thm]
+
+THEN `!st lc1' ex.
+        ((st,ex,lc1') = l1_to_il1_pair 0 (FST (cfold e,create_store (cfold e)))) ⇒
+        ∀fs.
+          equiv (con_store (SND (cfold e,create_store (cfold e)))) fs ⇒
+          ∃fs'.
+            bs_il1_c c (st,fs) (SOME (IL1_ESkip, fs', c')) ∧
+            bs_il1_expr (ex,fs') (l1_il1_val v) ∧
+            equiv (con_store s'') fs'` by (rw [] THEN imp_res_tac L1_TO_IL1_CORRECTNESS_LEMMA THEN fs [FST] THEN res_tac THEN metis_tac [])
+
+THEN fs [FST, SND]
+THEN `?st ex lc1.l1_to_il1_pair 0 (cfold e) = (st, ex, lc1)` by metis_tac [L1_TO_IL1_TOTAL_THM]
+
+THEN fs []
+THEN res_tac
+
+THEN `bs_il1_c c (l1_to_il1 (cfold e) 0, create_il2_store (compile_il2 (cfold e))) (SOME (l1_il1_val v, fs', c'))` by (rw [l1_to_il1_def, Once bs_il1_c_cases] THEN Q.LIST_EXISTS_TAC [`c'`, `fs'`] THEN rw [Once bs_il1_c_cases])
+
+THEN `exec_clocked (il1_to_il2 (l1_to_il1 (cfold e) 0))
+          (SOME (0, c, [],create_il2_store (compile_il2 (cfold e))))
+          (SOME (&LENGTH (il1_to_il2 (l1_to_il1 (cfold e) 0)), c',
+           [il1_il2_val (l1_il1_val v)],fs'))` by metis_tac [IL1_IL2_CORRECTNESS_2_THM]
+
+THEN `ms_il2 (compile_il2 (cfold e)) (create_il2_store (compile_il2 (cfold e)))` by metis_tac [ms_il2_st_thm]
+
+THEN fs [GSYM compile_il2_def]
+
+THEN imp_res_tac il2_vsm_correctness_2
+
+THEN res_tac
+
+THEN `?atsk.astk' = (il1_il2_val (l1_il1_val v))::atsk` by (Cases_on `astk'` THEN fs [TAKE_def]
+THEN Cases_on `n' = 0` THEN fs [])
+
+THEN metis_tac [c_opts_def, compile_def, length_prog_thm])
+
+val total_c_lem_1_2 = store_thm("total_c_lem_2", ``!c e v s' c' t. l1_type e (FDOM (create_store e)) t /\
+    bs_l1_c c (e, create_store e) (SOME (v, s', c')) ==> 
+    ?astk.
+        vsm_exec_c (c_opts e) (SOME (0, c, [])) (SOME (&LENGTH (c_opts e), c', (il1_il2_val (l1_il1_val v))::astk))``, metis_tac [total_c_lem_2, init_stack_2_thm, c_opts_def])
+
+val CORRECTNESS_THM = store_thm("CORRECTNESS_THM",
+``!e v s' t.l1_type e (FDOM (create_store e)) t /\ bs_l1 (e, create_store e) v s' ==> ?stk'.vsm_exec (c_opts e) (0, []) (&LENGTH (c_opts e), il1_il2_val (l1_il1_val v)::stk')``,
+rw []
+THEN imp_res_tac UNCLOCKED_IMP_CLOCKED THEN
+`!c'. ?c astk.vsm_exec_c (c_opts e) (SOME (0, SUC c, [])) (SOME (&LENGTH (c_opts e), SUC c', il1_il2_val (l1_il1_val v)::astk))` by metis_tac [total_c_lem_1_2]
+
+THEN ` ?c astk.
+          vsm_exec_c (c_opts e) (SOME (0,SUC c,[]))
+            (SOME
+               (&LENGTH (c_opts e),SUC 0,
+                il1_il2_val (l1_il1_val v)::astk))` by metis_tac []
+
+THEN imp_res_tac VSM0_CLOCKED_IMP_UNCLOCKED THEN fs [] THEN metis_tac [])
+
+val _ = export_theory ()
+
+\end{lstlisting}
+
+\chapter{Project Proposal}\label{project-proposal}
+
+\input{proposal}
+
+\end{document}

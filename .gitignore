@@ -9,3 +9,7 @@
 *.grm-sig.sml
 l1c
 l1c.o
+diss.pdf
+*.bbl
+munge.exe
+dissertation/diss.tex

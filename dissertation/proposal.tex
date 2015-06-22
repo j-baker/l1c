@@ -1,0 +1,187 @@
+% Note: this file can be compiled on its own, but is also included by
+% diss.tex (using the docmute.sty package to ignore the preamble)
+\documentclass[12pt,a4paper,twoside]{article}
+\usepackage[pdfborder={0 0 0}]{hyperref}
+\usepackage[margin=25mm]{geometry}
+\usepackage{graphicx}
+\begin{document}
+
+\vfil
+
+\centerline{\Large Computer Science Project Proposal}
+\vspace{0.4in}
+\centerline{\Large Verified compiler for toy language}
+\vspace{0.4in}
+\centerline{\large J. Baker, Pembroke College}
+\vspace{0.3in}
+\centerline{\large October 24, 2014}
+
+\vfil
+
+\noindent
+{\bf Project Supervisor:} Ramana Kumar
+\vspace{0.2in}
+
+\noindent
+{\bf Director of Studies:} Chris Hadley
+\vspace{0.2in}
+\noindent
+ 
+\noindent
+{\bf Project Overseers:} Prof. Jean Bacon  \& Prof. Ross Anderson
+
+
+% Main document
+
+\section*{Introduction, The Problem To Be Addressed}
+
+In any modern system, compilers must form part of the trusted computing base --
+for confidence in their software, engineers must assume that their compilers
+contain few bugs. Most programs compile and run successfully -- there are a
+relatively small number of compilers in the world and so were there simple bugs
+in compilers, they'd be found on a daily basis. This means that many bugs must
+simply have a greater number of preconditions, which means that it's frequently
+very difficult to discover and diagnose such bugs. Comparatively simple
+techniques can be used to find many bugs, for example the paper `Compiler
+Validation via Equivalence Modulo Inputs' is based on a very simple technique
+which found hundreds of bugs in common compilers.
+
+Apart from standard software engineering techniques, one way of reducing the
+number of compiler bugs that can be found is by using a verified compiler.
+A verified compiler is generally written inside of the logic of a theorem
+prover (such as HOL, Isabelle or Coq), together with a proof that the
+semantics in the source language are equivalent to the semantics in the
+target. Since compilation is performed in phases, we might only formally
+verify certain phrases. There exist a number of verified compilers in
+existence, the one in most widespread use being CompCert, a C compiler.
+
+Compilers are ideal candidates for formal verification because they have very
+clear specifications and desire complete correctness. When a compiler developer
+proposes an optimisation or improvement, they must implicitly justify to
+themself that the optimisation is safe; in an ideal world, verifying a compiler
+is no more than simply writing this justification down.
+
+Nevertheless, formally verified compilers are typically not frequently used
+(except perhaps in aerospace engineering), because formally reasoning about
+the semantics of programming languages can be difficult. As one high-profile
+example, the module system in ML is the way it is partially because no one
+could work out how to make a better system work within ML's constraints
+(which involved a proof of soundness). Many optimisations have complex
+reasoning behind their safety, and this can frequently be difficult to
+encode as a machine-checkable proof without considerable work.
+
+Thus, my project is to write a simple verified compiler for the languages presented
+in the Part 1B Semantics of Programming Languages course. The languages presented
+here contain an incrementally increasing set of features, from a while loop
+and simple arithmetic to union, product types and lambdas, so contain
+a relatively complicated yet modular set of features which each offer different
+verification challenges. The compiler would target the `vsm2' stack machine
+presented in the Compiler Construction Part IB course. This `architecture' provides
+most of the control flow of a standard CPU, with a few helper ops that serve
+to make compiling the most advanced features not a research project (\texttt{MAKE\_CLOSURE,
+CALL\_CLOSURE}).
+
+\section*{Starting Point}
+There are a number of formally verified compilers in existence. Most have
+been seen only by research groups, but I understand CompCert to be used
+in industry.
+
+I've done no practical work in this area before. I have a basic working knowledge
+of HOL4, which I hope to expand, as at the moment it can be easily compared to a
+part 1A student's knowledge of ML. I've read a number of papers in the field
+over the years, and recently I've been slowly working my way through Nipkow's book
+`Concrete Semantics' which aims to teach operational semantics through the use
+of theorem provers. I'm largely going on personal interest, at least until I build
+enough knowledge to push through the problems I face.
+
+I shall be using the HOL4 theorem prover, but I am not sure of any other tools
+that I might require. A common technique for verifying parsers is to use parser
+combinators, but I have not been focusing on that aspect of the project.
+
+\section*{Resources Required}
+
+I plan to use my two Apple laptops for this project, backing up to GitHub and Google Drive. I require no other special resources.
+
+\section*{Work to be done}
+
+The project breaks down into the following sub-projects:
+
+\begin{enumerate}
+\item
+Writing a formal mechanised semantics for L1
+
+\item
+Writing a formal mechanised semantics for vsm2
+
+\item
+Writing a compiler from L1 to vsm2 in HOL.
+
+\item
+Test compiler by evaluation in the logic.
+
+\item
+Writing a parser from concrete L1 syntax to L1 AST.
+
+\item
+Write a statement of correctness for the compiler, and sketch the proof.
+
+\item
+Finish the proof.
+
+\end{enumerate}
+
+\section*{Success Criterion for the Main Result}
+
+To demonstrate a compiler for the language L1, targeting vsm2. Proof of correctness, perhaps cheating
+on a few of the harder subgoals.
+
+\section*{Possible Extensions}
+\begin{itemize}
+\item
+Verify the parser.
+\item
+Compile L2 as well as L1, i.e. including functions.
+\item
+Verify compilation of L2 features.
+\item
+Compile also L3 (which adds union and product types).
+\item
+Verified interpreter for VSM2, allowing verified execution on real hardware.
+\end{itemize}
+
+\section*{Timetable: Workplan and Milestones to be achieved.}
+
+Planned starting date is 20/10/2014.
+
+\begin{enumerate}
+
+\item {\bf Michaelmas weeks 2-3 (16/10 -- 29/10)} Formalise semantics of L1 and relevant parts of vsm2 in HOL.
+
+\item {\bf Michaelmas week 4-6 (30/10 -- 19/11)} Prove useful theorems about L1 and vsm2 languages (determinacy, progress, etc).
+
+\item {\bf Michaelmas weeks 7-8 (20/11 -- 3/12)} Write basics of compiler of L1 to vsm2, perhaps
+through intermediate languages.
+
+\item {\bf Michaelmas vacation} Write statement of correctness for compiler and start proof.
+
+\item {\bf Lent week 0 (12/1 -- 14/1)} Write progress report.
+
+\item {\bf Lent week 1-4 (15/1 -- 11/2)} Finish proof of correctness.
+
+\item {\bf Lent week 5 (12/2 -- 18/2)} Write parser so that text might be used as input as opposed to
+data structures.
+
+\item {\bf Lent week 6 (19/2 -- 25/2)} Produce artifacts for standalone use of compiler. An ML program
+that transparently calls the HOL4 logic where necessary.
+
+\item {\bf Lent week 7-8 (26/2 -- 11/3)} Extensions.
+
+\item {\bf Easter vacation} Additional work on extensions, complete main sections of dissertation. Send dissertation to DoS and supervisor for feedback.
+
+\item {\bf Easter term 0-2 (20/4 -- 6/5)} Complete dissertation. Send to supervisor for feedback.
+
+\item {\bf Easter term 3 (7/5 -- 13/5)} Proof reading and submission. Send to DoS and supervisor for final feedback.
+
+\end{enumerate}
+
+\end{document}

@@ -1,0 +1,21 @@
+INCLUDES=compiler/compiler compiler/parser compiler/printer
+
+EXTRA_CLEANS = l1c.o l1c dissertation/diss.tex diss.pdf munge.exe diss.bbl
+
+all: diss l1c
+
+diss: diss.tex
+	latexmk -pdf dissertation/diss -cd -outdir=..
+	latexmk -c dissertation/diss
+	latexmk -c dissertation/diss -cd
+	@rm -f dissertation/diss.bbl
+
+munge.exe: l1c
+	mkmunge.exe compiler/semantics/vsm0/optimisations/vsm0_optTheory compiler/semantics/l1/optimisations/constant_foldingTheory compiler/semantics/vsm0/proofs/vsm0_clocked_equivTheory compiler/semantics/l1/proofs/clocked_equivTheory compiler/compiler/compilerTheory compiler/compiler/divergence_preservationTheory compiler/semantics/l1/store_creationTheory compiler/compiler/il2_to_il3/il2_to_il3_compilerTheory compiler/compiler/il2_to_il3/proofs/il3_store_propertiesTheory compiler/compiler/il2_to_il3/proofs/il2_il3_correctnessTheory compiler/compiler/il3_to_vsm0/proofs/il3_to_vsm0_correctnessTheory compiler/semantics/il1/ast_il1Theory compiler/semantics/il2/ast_il2Theory compiler/semantics/il2/proofs/il2_compositionTheory compiler/compiler/il1_to_il2/proofs/il1_il2_correctnessTheory compiler/semantics/l1/proofs/smallstep_determinacyTheory compiler/semantics/l1/proofs/smallstep_progressTheory compiler/semantics/l1/proofs/smallstep_type_preservationTheory
+
+diss.tex: munge.exe
+	./munge.exe dissertation/overrides < dissertation/diss.htex > dissertation/diss.tex
+
+l1c:
+	hol < compiler/frontend.sml
+	cc -o l1c l1c.o -lpolymain -lpolyml -Wl,-no_pie
