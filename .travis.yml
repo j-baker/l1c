@@ -14,3 +14,4 @@ addons:
     packages:
     - polyml
     - texlive
+    - latexmk
