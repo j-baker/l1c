@@ -1,5 +1,4 @@
 language: c
-sudo: false
 install: compiler/build/install-deps.sh
 script: ulimit -Sv 2970000 && Holmake all
 env: PATH=$PATH:$HOME/HOL/bin LD_LIBRARY_PATH=$HOME/polyml/lib LIBRARY_PATH=$HOME/polyml/lib
