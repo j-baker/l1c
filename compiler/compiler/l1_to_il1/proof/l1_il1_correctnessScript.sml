@@ -118,14 +118,6 @@ val IL1_SEQ_ASSOC_THM = store_thm("IL1_SEQ_ASSOC_THM",
 ``!e1 e2 e3 s c x.bs_il1_c c (IL1_Seq e1 (IL1_Seq e2 e3), s) x <=> bs_il1_c c (IL1_Seq (IL1_Seq e1 e2) e3, s) x``,
 rw [EQ_IMP_THM] THEN fs [Q.SPECL [`A`, `IL1_Seq A B, D`] bs_il1_c_cases] THEN rw [] THEN metis_tac [])
 
-val EXPR_PURE_THM = store_thm("EXPR_DOES_NOTHING_THM",
-``!st es s s' v c c'.bs_il1_c c (IL1_Seq st (IL1_Expr es), s) (SOME (v, s', c')) ==> bs_il1_c c (st, s) (SOME (IL1_ESkip, s', c'))``,
-rw [] THEN
-`bs_il1_c c (st, s) (SOME (IL1_ESkip, s', c')) /\ bs_il1_c c' (IL1_Expr es, s') (SOME (v, s', c'))` by ALL_TAC THEN
-IMP_RES_TAC IL1_SEQ_BACK_THM THEN imp_res_tac IL1_DETERMINACY_THM THEN rw [] THEN
-`(s'' = s') /\ (c' = cl')` by fs [Once bs_il1_c_cases] THEN
-metis_tac [])
-
 val EXPR_PURE_2_THM = store_thm("EXPR_PURE_2_THM",
 ``!e s v s' c c'.bs_il1_c c (IL1_Expr e, s) (SOME (v, s', c')) ==> (s = s') /\ (c = c')``,
 rw [Once bs_il1_c_cases])
