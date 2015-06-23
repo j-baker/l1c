@@ -1,5 +1,5 @@
 language: c
-install: sudo apt-get install polyml && compiler/build/install-deps.sh
+install: sudo apt-get install polyml libpolyml-dev && compiler/build/install-deps.sh
 sudo: required
 script: ulimit -Sv 2970000 && Holmake all
 env: PATH=$HOME/HOL/bin:$HOME/latexmk:$PATH:$HOME/HOL/bin
