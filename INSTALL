@@ -1,0 +1,20 @@
+At time of writing the current development version of HOL4
+is required to use this software. So, clone from
+
+https://github.com/HOL-Theorem-Prover/HOL
+
+and install using that software's installation instructions.
+HOL4 must be installed with polyml, which is good as it's
+much faster using that method.
+
+If you wish to build the dissertation, a moderately recent
+version of LaTeX is required. A number of extensions are
+required, notably recent versions of latexmk and the proof
+enviroment. To my knowledge, these are installed automatically
+with MacTeX but not with ubuntu
+(although texlive-full includes both).
+
+Once the dependencies are built, the software can be built with
+Holmake, the relevant targets being all, l1c, and dissertation.
+Dissertation produces the file diss.pdf, l1c produces the executable
+l1c.
