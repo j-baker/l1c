@@ -16,14 +16,6 @@ if which poly >/dev/null; then
     exit 0
 fi
 
-svn checkout --quiet svn://svn.code.sf.net/p/polyml/code/trunk polyml
-pushd polyml/polyml
-./configure --prefix=$HOME/polyml --enable-shared
-make
-make compiler
-make install
-popd
-
 # HOL
 
 git clone --quiet https://github.com/mn200/HOL.git
