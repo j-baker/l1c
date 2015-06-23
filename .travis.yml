@@ -11,4 +11,5 @@ notifications:
 addons:
   apt:
     packages:
-    - texlive-full
+    - texlive
+    - texlive-latex-extra
