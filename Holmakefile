@@ -18,4 +18,4 @@ diss.tex: munge.exe
 
 l1c:
 	hol < compiler/frontend.sml
-	cc -o l1c l1c.o -lpolymain -lpolyml -Wl,-no_pie
+	cc -o l1c l1c.o -lpolymain -lpolyml
