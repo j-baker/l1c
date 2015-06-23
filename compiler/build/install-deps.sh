@@ -11,7 +11,7 @@ pushd $HOME
 export PATH=$PATH:$HOME/polyml/bin
 export LD_LIBRARY_PATH=$HOME/polyml/lib
 
-if which poly >/dev/null; then
+if which hol >/dev/null; then
     echo "Dependencies already appear to be present. Not rebuilding them."
     exit 0
 fi
