@@ -1,7 +1,7 @@
 language: c
 sudo: false
 install: compiler/build/install-deps.sh
-script: compiler/build/build-travis.sh
+script: holmake all
 env: PATH=$PATH:$HOME/HOL/bin LD_LIBRARY_PATH=$HOME/polyml/lib LIBRARY_PATH=$HOME/polyml/lib
 cache:
   directories:
@@ -13,3 +13,4 @@ addons:
   apt:
     packages:
     - polyml
+    - texlive
