@@ -1,7 +1,7 @@
 language: c
 sudo: false
 install: compiler/build/install-deps.sh
-script: holmake all
+script: Holmake all
 env: PATH=$PATH:$HOME/HOL/bin LD_LIBRARY_PATH=$HOME/polyml/lib LIBRARY_PATH=$HOME/polyml/lib
 cache:
   directories:
