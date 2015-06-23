@@ -1,4 +1,4 @@
-A simple verified toy compiler for a toy language
+l1c: A simple verified toy compiler for a toy language
 ==========================================================
 
 [![Build Status](https://magnum.travis-ci.com/j-baker/partii.svg?token=KqfCygaVMsrvPPnULqeX&branch=develop)](https://magnum.travis-ci.com/j-baker/partii)
@@ -6,7 +6,7 @@ A simple verified toy compiler for a toy language
 This project was written for my University of Cambridge BA
 Computer Science Part II dissertation.
 
-This is a verified compiler for the L1
+l1c is a verified compiler for the L1
 language presented in the Cambridge [Semantics of Programming Languages](http://www.cl.cam.ac.uk/teaching/1415/Semantics/notes.pdf) course.
 
 The target language is a slight modification of the vsm0 VM
