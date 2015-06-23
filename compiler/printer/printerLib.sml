@@ -26,6 +26,8 @@ fun op_to_string Nop = "nop"
   | op_to_string (Jump x) = "jump " ^ (Int.toString x) 
   | op_to_string (Jz x) = "jz " ^ (Int.toString x)
 
+fun syntax_fns s n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} s
+
 val s0 = syntax_fns "ast_vsm0" 0 HolKernel.dest_binder HolKernel.mk_monop
 val s1 = syntax_fns "ast_vsm0" 1 HolKernel.dest_monop HolKernel.mk_monop
 

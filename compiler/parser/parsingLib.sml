@@ -4,6 +4,8 @@ open ParseTree l1 ast_l1Theory
 
 fun snd (a, b, c, d) = b
 
+fun syntax_fns s n d m = HolKernel.syntax_fns {n = n, dest = d, make = m} s
+
 val s1 = syntax_fns "ast_l1" 1 HolKernel.dest_monop HolKernel.mk_monop
 val s2 = syntax_fns "ast_l1" 2 HolKernel.dest_binop HolKernel.mk_binop
 val s3 = syntax_fns "ast_l1" 3 HolKernel.dest_triop HolKernel.mk_triop
