@@ -13,10 +13,23 @@ pushd latexmk
 mv latexmk.pl latexmk
 popd
 
-if which hol >/dev/null; then
+export PATH=$PATH:$HOME/polyml/bin
+export LD_LIBRARY_PATH=$HOME/polyml/lib
+
+if which poly >/dev/null; then
     echo "Dependencies already appear to be present. Not rebuilding them."
     exit 0
 fi
+
+# Poly
+svn checkout --quiet svn://svn.code.sf.net/p/polyml/code/trunk polyml
+pushd polyml/polyml
+./configure --prefix=$HOME/polyml --enable-shared
+make
+make compiler
+make install
+popd
+
 
 # HOL
 
