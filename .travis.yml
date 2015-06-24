@@ -14,5 +14,3 @@ addons:
     packages:
     - texlive
     - texlive-latex-extra
-    - texlive-fonts-extra
-    - texlive-fonts-recommended
