@@ -17,7 +17,7 @@ export PATH=$PATH:$HOME/polyml/bin
 export LD_LIBRARY_PATH=$HOME/polyml/lib
 
 if which poly >/dev/null; then
-    echo "Dependencies already appear to be present. Not rebuilding them."
+    echo "Poly dependencies already appear to be present. Not rebuilding them."
     exit 0
 fi
 
@@ -30,6 +30,10 @@ make compiler
 make install
 popd
 
+if which hol >/dev/null; then
+    echo "Hol dependencies already appear to be present. Not rebuilding them."
+    exit 0
+fi
 
 # HOL
 
