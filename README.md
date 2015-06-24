@@ -1,7 +1,7 @@
 l1c: A simple verified toy compiler for a toy language
 ==========================================================
 
-[![Build Status](https://magnum.travis-ci.com/j-baker/partii.svg?token=KqfCygaVMsrvPPnULqeX&branch=develop)](https://magnum.travis-ci.com/j-baker/partii)
+[![Build Status](https://travis-ci.org/j-baker/l1c.svg?branch=master)](https://travis-ci.org/j-baker/l1c)
 
 This project was written for my University of Cambridge BA
 Computer Science Part II dissertation.
